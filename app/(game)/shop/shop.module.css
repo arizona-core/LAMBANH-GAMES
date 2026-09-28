@@ -1,6 +1,23 @@
+.clockOpen,
+.clockClosed {
+  gap: 10px;
+  box-shadow: none;
+}
+
+.clockOpen {
+  background: #e3f0dc;
+  color: var(--mint-strong);
+  border: 2px solid #b9d7ae;
+}
+
+.clockClosed {
+  background: #f3e6ce;
+  color: var(--ink-strong);
+  border: 2px solid var(--border);
+}
+
 .scene {
-  flex: 1;
-  min-height: 380px;
+  min-height: 250px;
   background: var(--bg-scene);
   border-radius: 22px;
   box-shadow: inset 0 3px 8px rgba(120, 70, 20, 0.12);
@@ -11,14 +28,14 @@
   justify-content: flex-end;
   background-image: url("/images/shop-building.webp");
   background-repeat: no-repeat;
-  background-position: center 64px;
-  background-size: 62%;
+  background-position: center 48px;
+  background-size: 46%;
 }
 
 .waiting {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 14px;
+  left: 14px;
   background: var(--strawberry-strong);
   color: #fff;
   font-weight: 800;
@@ -31,8 +48,8 @@
 
 .revenue {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 14px;
+  right: 14px;
   background: #fff;
   border-radius: 12px;
   padding: 6px 10px;
@@ -42,14 +59,21 @@
 
 .customers {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   justify-content: center;
-  margin-bottom: 10px;
-  min-height: 52px;
+  margin-bottom: 8px;
+  min-height: 48px;
 }
 
 .customer {
-  animation: bob 1.6s ease-in-out infinite;
+  animation: walk-in 0.5s ease-out, bob 1.6s ease-in-out 0.5s infinite;
+}
+
+@keyframes walk-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
 }
 
 @keyframes bob {
@@ -61,37 +85,18 @@
 .counter {
   background: var(--counter);
   border-radius: 0 0 22px 22px;
-  padding: 12px 14px 18px;
+  padding: 12px 14px 14px;
+  min-height: 64px;
   display: flex;
-  gap: 10px;
-}
-
-.slot {
-  flex: 1;
-  appearance: none;
-  cursor: pointer;
-  height: 92px;
-  border-radius: 12px;
-  background: var(--placeholder-bg);
-  border: 2px solid transparent;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 4px;
-  font-size: 11px;
+}
+
+.counterText {
+  color: #fff;
   font-weight: 800;
-  color: var(--ink);
-}
-
-.slotEmpty {
-  border: 2px dashed var(--placeholder-dash);
-  color: #8a6337;
-}
-
-.slotQty {
-  font-size: 12px;
+  font-size: 13px;
+  text-align: center;
 }
 
 .daily {
@@ -102,6 +107,16 @@
   border: 2px solid #c9b6ee;
 }
 
-.tip {
-  align-items: flex-start;
+.patience {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: #eee0c6;
+  overflow: hidden;
+}
+
+.patience > span {
+  display: block;
+  height: 100%;
+  transition: width 1s linear;
 }

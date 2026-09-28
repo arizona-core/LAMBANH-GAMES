@@ -23,6 +23,46 @@ const FALLBACK_ART: Record<string, React.ReactNode> = {
   ),
 };
 
+// Sốt: chai màu theo loại. Topping: chén nhỏ với hạt màu.
+const SAUCE_COLORS: Record<string, string> = {
+  sauce_garlic: "#E9D27A",
+  sauce_condensed: "#F7F0DC",
+  sauce_choco: "#5A2E14",
+  sauce_caramel: "#C9772E",
+  sauce_jam: "#C63A4E",
+};
+const TOPPING_COLORS: Record<string, string[]> = {
+  top_sprinkles: ["#E28B9B", "#6FA678", "#7C6BD6", "#E7B23C"],
+  top_cheese: ["#F4C542"],
+  top_cream: ["#FFFFFF"],
+  top_almond: ["#C9955C"],
+  top_chocochip: ["#4A2B1A"],
+};
+
+function sauceArt(color: string) {
+  return (
+    <>
+      <rect x="26" y="8" width="12" height="8" rx="2" fill="#B98F55" />
+      <path d="M22 18h20l2 8v26a4 4 0 0 1-4 4H24a4 4 0 0 1-4-4V26z" fill={color} stroke="#8A6337" strokeWidth="2" />
+      <rect x="24" y="32" width="16" height="10" rx="2" fill="#FFF6E9" opacity="0.85" />
+    </>
+  );
+}
+
+function toppingArt(colors: string[]) {
+  const dots = [
+    [24, 30], [32, 27], [40, 30], [28, 34], [36, 34],
+  ];
+  return (
+    <>
+      <path d="M10 34h44a22 16 0 0 1-44 0z" fill="#fff" stroke="#D9B98A" strokeWidth="2" />
+      {dots.map(([cx, cy], i) => (
+        <circle key={i} cx={cx} cy={cy} r="4" fill={colors[i % colors.length]} stroke="#8A6337" strokeWidth="1" />
+      ))}
+    </>
+  );
+}
+
 export function ItemImage({
   code,
   image,
@@ -41,7 +81,9 @@ export function ItemImage({
       </div>
     );
   }
-  const art = FALLBACK_ART[code];
+  const art =
+    FALLBACK_ART[code] ??
+    (SAUCE_COLORS[code] ? sauceArt(SAUCE_COLORS[code]) : TOPPING_COLORS[code] ? toppingArt(TOPPING_COLORS[code]) : null);
   if (art) {
     return (
       <div className="thumb" style={{ width: size, height: size }}>

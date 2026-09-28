@@ -31,15 +31,6 @@ export async function getInventoryMap(supabase: Supabase): Promise<Record<string
   return Object.fromEntries((data ?? []).map((r) => [r.ingredient_code, r.qty]));
 }
 
-export async function getBakedGoods(supabase: Supabase) {
-  const { data } = await supabase
-    .from("baked_goods")
-    .select("recipe_code, quality, qty, recipes(name, image, base_price, sort)")
-    .gt("qty", 0)
-    .order("quality", { ascending: false });
-  return (data ?? []).sort((a, b) => (a.recipes?.sort ?? 0) - (b.recipes?.sort ?? 0));
-}
-
 /** Hiệu ứng nâng cấp lớn nhất theo loại (chỉ để hiển thị; server tự tính lại). */
 export async function getUpgradeBonuses(supabase: Supabase) {
   const { data } = await supabase.from("upgrades").select("upgrade_code, upgrade_catalog(kind, effect)");

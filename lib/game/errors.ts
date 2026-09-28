@@ -25,6 +25,9 @@ const MESSAGES: Record<string, string> = {
   LISTING_UNAVAILABLE: "Tin rao này không còn nữa.",
   CANNOT_BUY_OWN: "Không thể mua hàng của chính mình.",
   ALREADY_CLAIMED: "Hôm nay bạn đã điểm danh rồi.",
+  CUSTOMER_GONE: "Khách đã đi mất rồi.",
+  CUSTOMER_NOT_ARRIVED: "Khách chưa tới quầy.",
+  ORDER_IN_PROGRESS: "Bạn đang làm dở một đơn khác, giao xong đã nhé.",
 };
 
 export function errorMessage(code: string): string {

@@ -2,18 +2,14 @@ import type { Metadata } from "next";
 import { BottomNav } from "@/components/BottomNav";
 import { Hud } from "@/components/Hud";
 import { todayVN } from "@/lib/game/format";
-import { getBakedGoods, getUpgradeBonuses, requirePlayer } from "@/lib/game/queries";
+import { requirePlayer } from "@/lib/game/queries";
 import { ShopScene } from "./ShopScene";
 
 export const metadata: Metadata = { title: "Tiệm" };
 
 export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
-  const { supabase, profile } = await requirePlayer();
-  const [goods, bonuses, params] = await Promise.all([
-    getBakedGoods(supabase),
-    getUpgradeBonuses(supabase),
-    searchParams,
-  ]);
+  const { profile } = await requirePlayer();
+  const params = await searchParams;
   const today = todayVN();
 
   return (
@@ -21,15 +17,6 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
       <div className="screen screen--with-nav">
         <Hud profile={profile} />
         <ShopScene
-          goods={goods.map((g) => ({
-            recipeCode: g.recipe_code,
-            quality: g.quality,
-            qty: g.qty,
-            name: g.recipes?.name ?? g.recipe_code,
-            image: g.recipes?.image ?? null,
-            basePrice: g.recipes?.base_price ?? 0,
-          }))}
-          displayBonus={bonuses.display}
           revenueToday={profile.revenue_day === today ? profile.revenue_today : 0}
           canClaimDaily={profile.last_checkin !== today}
           welcome={params.welcome === "1"}

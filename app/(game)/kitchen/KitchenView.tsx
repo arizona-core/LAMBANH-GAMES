@@ -1,14 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { CoinIcon, IconClock, IconLock } from "@/components/icons";
+import { CoinIcon, IconLock } from "@/components/icons";
 import { ItemImage } from "@/components/ItemImage";
 import { useAction } from "@/components/useAction";
 import { formatNumber } from "@/lib/game/format";
+import { COOK_METHODS, PACKAGING, type CookMethod, type Packaging } from "@/lib/game/orders";
 import type { Ingredient, RecipeWithIngredients } from "@/lib/types";
 
 type Tab = "recipes" | "pantry";
+
+const KIND_TITLE: Record<string, string> = {
+  base: "Nguyên liệu làm bánh",
+  sauce: "Nước chấm & sốt",
+  topping: "Topping",
+};
 
 export function KitchenView({
   level,
@@ -32,7 +38,7 @@ export function KitchenView({
     <>
       <div className="tabs" role="tablist">
         <button type="button" role="tab" className="tab" aria-selected={tab === "recipes"} onClick={() => setTab("recipes")}>
-          Công thức
+          Sổ công thức
         </button>
         <button type="button" role="tab" className="tab" aria-selected={tab === "pantry"} onClick={() => setTab("pantry")}>
           Kho nguyên liệu
@@ -41,6 +47,9 @@ export function KitchenView({
 
       {tab === "recipes" ? (
         <div className="stack" role="tabpanel">
+          <p className="small muted" style={{ margin: 0, fontWeight: 700 }}>
+            Bánh được làm theo đơn khi khách tới quầy. Nhớ công thức để làm nhanh và đúng!
+          </p>
           {recipes.map((r) => (
             <RecipeCard key={r.code} recipe={r} level={level} inventory={inventory} names={names} />
           ))}
@@ -48,13 +57,20 @@ export function KitchenView({
       ) : (
         <div role="tabpanel" className="stack">
           <p className="small muted" style={{ margin: 0, fontWeight: 700 }}>
-            Mua nguyên liệu từ nhà cung cấp. Giá rẻ hơn nữa? Ghé Chợ xem người chơi khác rao bán.
+            Mua từ nhà cung cấp. Giá rẻ hơn? Ghé Chợ xem người chơi khác rao bán.
           </p>
-          <div className="grid-2">
-            {ingredients.map((i) => (
-              <PantryCard key={i.code} ingredient={i} qty={inventory[i.code] ?? 0} coins={coins} />
-            ))}
-          </div>
+          {(["base", "sauce", "topping"] as const).map((kind) => (
+            <section key={kind} className="stack">
+              <h2 style={{ fontSize: 17 }}>{KIND_TITLE[kind]}</h2>
+              <div className="grid-2">
+                {ingredients
+                  .filter((i) => i.kind === kind)
+                  .map((i) => (
+                    <PantryCard key={i.code} ingredient={i} qty={inventory[i.code] ?? 0} coins={coins} />
+                  ))}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </>
@@ -73,15 +89,12 @@ function RecipeCard({
   names: Record<string, string>;
 }) {
   const locked = level < recipe.unlock_level;
-  const missing = recipe.recipe_ingredients.some((ri) => (inventory[ri.ingredient_code] ?? 0) < ri.qty);
 
   return (
     <article className="card row" style={{ opacity: locked ? 0.7 : 1, alignItems: "flex-start" }}>
       <ItemImage code={recipe.code} image={recipe.image} name={recipe.name} size={64} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <h2 style={{ fontSize: 17, fontFamily: "var(--font-body)", fontWeight: 800, color: "var(--ink)" }}>
-          {recipe.name}
-        </h2>
+        <h2 style={{ fontSize: 17, fontFamily: "var(--font-body)", fontWeight: 800, color: "var(--ink)" }}>{recipe.name}</h2>
         {locked ? (
           <p className="row small muted" style={{ margin: "6px 0 0", gap: 6, fontWeight: 700 }}>
             <IconLock size={16} /> Mở khoá ở Cấp {recipe.unlock_level}
@@ -99,22 +112,16 @@ function RecipeCard({
                 );
               })}
             </p>
-            <p className="row small muted" style={{ margin: 0, gap: 4, fontWeight: 700 }}>
-              <IconClock size={14} /> {recipe.min_play_seconds} giây · <CoinIcon /> ~{recipe.base_price}
+            <p className="row small muted" style={{ margin: 0, gap: 6, fontWeight: 700, flexWrap: "wrap" }}>
+              <span className="badge">{COOK_METHODS[recipe.cook_method as CookMethod]}</span>
+              <span className="badge">{PACKAGING[recipe.packaging as Packaging]}</span>
+              <span className="row" style={{ gap: 4 }}>
+                <CoinIcon /> ~{recipe.base_price}
+              </span>
             </p>
           </>
         )}
       </div>
-      {!locked &&
-        (missing ? (
-          <Link href="/kitchen?tab=pantry" className="btn btn--soft btn--sm" aria-label={`Mua nguyên liệu cho ${recipe.name}`}>
-            Thiếu đồ
-          </Link>
-        ) : (
-          <Link href={`/bake/${recipe.code}`} className="btn btn--primary btn--sm">
-            Làm
-          </Link>
-        ))}
     </article>
   );
 }
@@ -126,7 +133,7 @@ function PantryCard({ ingredient, qty, coins }: { ingredient: Ingredient; qty: n
 
   return (
     <div className="card stack" style={{ alignItems: "center", textAlign: "center", gap: 6 }}>
-      <ItemImage code={ingredient.code} image={ingredient.image} name={ingredient.name} size={64} />
+      <ItemImage code={ingredient.code} image={ingredient.image} name={ingredient.name} size={56} />
       <div style={{ fontWeight: 800 }}>{ingredient.name}</div>
       <div className="small muted" style={{ fontWeight: 700 }}>
         Trong kho: <strong style={{ color: "var(--ink)" }}>{qty}</strong>

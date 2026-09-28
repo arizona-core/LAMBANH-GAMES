@@ -53,20 +53,20 @@ kèm comment "trùng server" và test ở `tests/`.
 ```
 app/                      # Next.js App Router
   (auth)/                 # login, onboarding
-  (game)/                 # shop, kitchen, bake/[recipe], market, leaderboard, store, daily, settings
+  (game)/                 # shop, kitchen, order/[visitId], market, leaderboard, store, daily, settings
   auth/callback/          # nhận code Google OAuth → session
   manifest.ts, globals.css (design tokens + lớp dùng chung)
 proxy.ts                  # làm mới session + chặn route khi chưa đăng nhập (Next 16)
 components/               # HUD, BottomNav, ScreenHeader, ItemImage, Modal, useAction…
-game/                     # Phaser: scenes/BakeScene.ts, createBakeGame.ts (import động, chỉ browser)
+game/                     # Phaser: scenes/BakeScene.ts (trộn + nấu), createBakeGame.ts (import động, chỉ browser)
 lib/
   supabase/               # client.ts (browser), server.ts (SSR + getCurrentPlayer), env.ts
   api/actions.ts          # callAction(): gọi Edge Function có kiểu
-  game/                   # queries (đọc), scoring (xem trước), format, errors, constants
+  game/                   # queries, scoring, clock (giờ game), orders (kiểu đơn), format, errors, constants
   store/                  # Zustand (toast)
   types/                  # database.types.ts (auto-gen) + alias trong index.ts
 supabase/
-  migrations/             # 0001 schema+RLS · 0002 hàm kinh tế · 0003 dữ liệu danh mục
+  migrations/             # 0001 schema+RLS · 0002 hàm kinh tế · 0003 danh mục · 0004 gia cố · 0005 khách + đơn
   functions/              # _shared/action.ts + mỗi action 1 thư mục
   tests/database/         # pgTAP (npx supabase test db)
 tests/                    # Vitest cho lib/game

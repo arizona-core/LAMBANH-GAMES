@@ -57,17 +57,45 @@ expect("buy-ingredient chặn qty âm", !r.ok && r.error === "INVALID_INPUT", r)
 r = await call(a, "buy-ingredient", { code: "flour", qty: 1, coins: 999999 });
 expect("chặn field lạ (strict)", !r.ok && r.error === "INVALID_INPUT", r);
 
-r = await call(a, "start-bake", { recipe: "bread" });
-expect("start-bake", r.ok && r.data.session_id, r);
-const sessionId = r.data?.session_id;
-r = await call(a, "finish-bake", { sessionId, scores: [90, 90, 90] });
-expect("finish-bake quá nhanh bị chặn", !r.ok && r.error === "TOO_FAST", r);
-await sleep(6500);
-r = await call(a, "finish-bake", { sessionId, scores: [90, 90, 90] });
-expect("finish-bake", r.ok && r.data.quality === 5, r);
+// Khách + đơn hàng (phụ thuộc giờ game: 1 giây thật = 1 phút game, mở 7:00–24:00).
+r = await call(a, "customer-tick", {});
+expect("customer-tick", r.ok && Array.isArray(r.data.visits), r);
+if (!r.data?.clock?.open) {
+  console.log(`skip đơn hàng: tiệm đang đóng cửa (giờ game ${r.data?.clock?.hour}:${r.data?.clock?.minute})`);
+} else {
+  // Chờ khách đầu tiên tới quầy (tối đa ~60 giây).
+  let visit = null;
+  for (let i = 0; i < 16 && !visit; i++) {
+    const t = await call(a, "customer-tick", {});
+    visit = t.data?.visits?.find((v) => new Date(v.arrive_at) <= new Date(t.data.server_now));
+    if (!visit) await sleep(4000);
+  }
+  expect("có khách tới quầy", !!visit, null);
+  if (visit) {
+    const { data: needs } = await a.from("recipe_ingredients").select("ingredient_code, qty").eq("recipe_code", visit.recipe);
+    const { data: recipe } = await a.from("recipes").select("cook_method, packaging").eq("code", visit.recipe).single();
+    // Mua đủ nguyên liệu + sốt/topping khách gọi.
+    for (const n of needs) await call(a, "buy-ingredient", { code: n.ingredient_code, qty: n.qty });
+    for (const extra of [visit.sauce, visit.topping]) if (extra) await call(a, "buy-ingredient", { code: extra, qty: 1 });
 
-r = await call(a, "sell-npc", { recipe: "bread", quality: 5, qty: 1 });
-expect("sell-npc", r.ok && r.data.earned === 45, r);
+    r = await call(a, "accept-order", { visitId: visit.id });
+    expect("accept-order", r.ok && r.data.session_id, r);
+    const body = {
+      visitId: visit.id,
+      ingredients: needs.map((n) => n.ingredient_code),
+      method: recipe.cook_method,
+      scores: [95, 95],
+      sauce: visit.sauce,
+      topping: visit.topping,
+      packaging: recipe.packaging,
+    };
+    r = await call(a, "complete-order", body);
+    expect("complete-order quá nhanh bị chặn", !r.ok && r.error === "TOO_FAST", r);
+    await sleep(((r.ok ? 0 : 12) + 1) * 1000);
+    r = await call(a, "complete-order", body);
+    expect("complete-order làm đúng → ≥4 sao", r.ok && r.data.quality >= 4, r);
+  }
+}
 
 r = await call(a, "claim-daily", {});
 expect("claim-daily", r.ok, r);

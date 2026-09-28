@@ -53,6 +53,7 @@ export type Database = {
           started_at: string;
           status: string;
           user_id: string;
+          visit_id: string | null;
         };
         Insert: {
           completed_at?: string | null;
@@ -62,6 +63,7 @@ export type Database = {
           started_at?: string;
           status?: string;
           user_id: string;
+          visit_id?: string | null;
         };
         Update: {
           completed_at?: string | null;
@@ -71,6 +73,7 @@ export type Database = {
           started_at?: string;
           status?: string;
           user_id?: string;
+          visit_id?: string | null;
         };
         Relationships: [
           {
@@ -101,55 +104,198 @@ export type Database = {
             referencedRelation: "public_profiles";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "bake_sessions_visit_id_fkey";
+            columns: ["visit_id"];
+            isOneToOne: false;
+            referencedRelation: "customer_visits";
+            referencedColumns: ["id"];
+          },
         ];
       };
-      baked_goods: {
+      customer_visits: {
         Row: {
-          qty: number;
-          quality: number;
+          arrive_at: string;
+          created_at: string;
+          customer_id: number;
+          id: string;
+          leave_at: string;
+          paid: number | null;
+          quality: number | null;
           recipe_code: string;
+          reputation_delta: number | null;
+          result: Json | null;
+          sauce_code: string | null;
+          status: string;
+          tip: number | null;
+          topping_code: string | null;
           user_id: string;
         };
         Insert: {
-          qty?: number;
-          quality: number;
+          arrive_at: string;
+          created_at?: string;
+          customer_id: number;
+          id?: string;
+          leave_at: string;
+          paid?: number | null;
+          quality?: number | null;
           recipe_code: string;
+          reputation_delta?: number | null;
+          result?: Json | null;
+          sauce_code?: string | null;
+          status?: string;
+          tip?: number | null;
+          topping_code?: string | null;
           user_id: string;
         };
         Update: {
-          qty?: number;
-          quality?: number;
+          arrive_at?: string;
+          created_at?: string;
+          customer_id?: number;
+          id?: string;
+          leave_at?: string;
+          paid?: number | null;
+          quality?: number | null;
           recipe_code?: string;
+          reputation_delta?: number | null;
+          result?: Json | null;
+          sauce_code?: string | null;
+          status?: string;
+          tip?: number | null;
+          topping_code?: string | null;
           user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "baked_goods_recipe_code_fkey";
+            foreignKeyName: "customer_visits_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "customer_visits_recipe_code_fkey";
             columns: ["recipe_code"];
             isOneToOne: false;
             referencedRelation: "recipes";
             referencedColumns: ["code"];
           },
           {
-            foreignKeyName: "baked_goods_user_id_fkey";
+            foreignKeyName: "customer_visits_sauce_code_fkey";
+            columns: ["sauce_code"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "customer_visits_topping_code_fkey";
+            columns: ["topping_code"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "customer_visits_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "leaderboard";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "baked_goods_user_id_fkey";
+            foreignKeyName: "customer_visits_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "baked_goods_user_id_fkey";
+            foreignKeyName: "customer_visits_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "public_profiles";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      customers: {
+        Row: {
+          bio: string;
+          created_at: string;
+          dine_and_dash: boolean;
+          dine_dash_pct: number;
+          favorite_recipe: string;
+          favorite_sauce: string | null;
+          favorite_topping: string | null;
+          gender: string;
+          id: number;
+          impatient: boolean;
+          look: number;
+          min_quality: number;
+          name: string;
+          patience_seconds: number;
+          personality: string;
+          picky: boolean;
+          spend: number;
+        };
+        Insert: {
+          bio?: string;
+          created_at?: string;
+          dine_and_dash?: boolean;
+          dine_dash_pct?: number;
+          favorite_recipe: string;
+          favorite_sauce?: string | null;
+          favorite_topping?: string | null;
+          gender: string;
+          id: number;
+          impatient?: boolean;
+          look: number;
+          min_quality?: number;
+          name: string;
+          patience_seconds: number;
+          personality: string;
+          picky?: boolean;
+          spend?: number;
+        };
+        Update: {
+          bio?: string;
+          created_at?: string;
+          dine_and_dash?: boolean;
+          dine_dash_pct?: number;
+          favorite_recipe?: string;
+          favorite_sauce?: string | null;
+          favorite_topping?: string | null;
+          gender?: string;
+          id?: number;
+          impatient?: boolean;
+          look?: number;
+          min_quality?: number;
+          name?: string;
+          patience_seconds?: number;
+          personality?: string;
+          picky?: boolean;
+          spend?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "customers_favorite_recipe_fkey";
+            columns: ["favorite_recipe"];
+            isOneToOne: false;
+            referencedRelation: "recipes";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "customers_favorite_sauce_fkey";
+            columns: ["favorite_sauce"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "customers_favorite_topping_fkey";
+            columns: ["favorite_topping"];
+            isOneToOne: false;
+            referencedRelation: "ingredients";
+            referencedColumns: ["code"];
           },
         ];
       };
@@ -158,6 +304,7 @@ export type Database = {
           code: string;
           created_at: string;
           image: string | null;
+          kind: string;
           name: string;
           price: number;
           sort: number;
@@ -166,6 +313,7 @@ export type Database = {
           code: string;
           created_at?: string;
           image?: string | null;
+          kind?: string;
           name: string;
           price: number;
           sort?: number;
@@ -174,6 +322,7 @@ export type Database = {
           code?: string;
           created_at?: string;
           image?: string | null;
+          kind?: string;
           name?: string;
           price?: number;
           sort?: number;
@@ -334,6 +483,7 @@ export type Database = {
           shop_name: string;
           slug: string;
           updated_at: string;
+          visits_until: string | null;
           xp: number;
           _market_eligible: boolean | null;
         };
@@ -355,6 +505,7 @@ export type Database = {
           shop_name: string;
           slug: string;
           updated_at?: string;
+          visits_until?: string | null;
           xp?: number;
         };
         Update: {
@@ -375,6 +526,7 @@ export type Database = {
           shop_name?: string;
           slug?: string;
           updated_at?: string;
+          visits_until?: string | null;
           xp?: number;
         };
         Relationships: [];
@@ -416,10 +568,12 @@ export type Database = {
         Row: {
           base_price: number;
           code: string;
+          cook_method: string;
           created_at: string;
           image: string | null;
           min_play_seconds: number;
           name: string;
+          packaging: string;
           sort: number;
           unlock_level: number;
           xp: number;
@@ -427,10 +581,12 @@ export type Database = {
         Insert: {
           base_price: number;
           code: string;
+          cook_method?: string;
           created_at?: string;
           image?: string | null;
           min_play_seconds: number;
           name: string;
+          packaging?: string;
           sort?: number;
           unlock_level?: number;
           xp: number;
@@ -438,10 +594,12 @@ export type Database = {
         Update: {
           base_price?: number;
           code?: string;
+          cook_method?: string;
           created_at?: string;
           image?: string | null;
           min_play_seconds?: number;
           name?: string;
+          packaging?: string;
           sort?: number;
           unlock_level?: number;
           xp?: number;
@@ -699,15 +857,15 @@ export type Database = {
       };
     };
     Functions: {
-      _add_goods: {
-        Args: { p_qty: number; p_quality: number; p_recipe: string; p_user: string };
-        Returns: undefined;
-      };
       _add_inventory: {
         Args: { p_code: string; p_qty: number; p_user: string };
         Returns: undefined;
       };
+      _customer_tick_at: { Args: { p_now: string; p_user: string }; Returns: Json };
       _fail: { Args: { p_code: string }; Returns: undefined };
+      _game_clock: { Args: { p_at: string }; Returns: Json };
+      _game_minute: { Args: { p_at: string }; Returns: number };
+      _game_open: { Args: { p_at: string }; Returns: boolean };
       _is_bad_name: { Args: { p_text: string }; Returns: boolean };
       _level_for_xp: { Args: { p_xp: number }; Returns: number };
       _lock_profile: {
@@ -730,6 +888,7 @@ export type Database = {
           shop_name: string;
           slug: string;
           updated_at: string;
+          visits_until: string | null;
           xp: number;
         };
         SetofOptions: {
@@ -767,11 +926,26 @@ export type Database = {
       _today: { Args: Record<PropertyKey, never>; Returns: string };
       _upgrade_bonus: { Args: { p_kind: string; p_user: string }; Returns: number };
       _validate_names: { Args: { p_owner_name: string; p_shop_name: string }; Returns: undefined };
+      _visit_json: { Args: { p_visit: string }; Returns: Json };
+      accept_order: { Args: { p_user: string; p_visit: string }; Returns: Json };
       buy_ingredient: { Args: { p_code: string; p_qty: number; p_user: string }; Returns: Json };
       buy_listing: { Args: { p_listing: string; p_user: string }; Returns: Json };
       buy_upgrade: { Args: { p_code: string; p_user: string }; Returns: Json };
       cancel_listing: { Args: { p_listing: string; p_user: string }; Returns: Json };
       claim_daily: { Args: { p_user: string }; Returns: Json };
+      complete_order: {
+        Args: {
+          p_ingredients: string[];
+          p_method: string;
+          p_packaging: string;
+          p_sauce: string;
+          p_scores: number[];
+          p_topping: string;
+          p_user: string;
+          p_visit: string;
+        };
+        Returns: Json;
+      };
       create_listing: {
         Args: {
           p_item: string;
@@ -793,17 +967,9 @@ export type Database = {
         };
         Returns: Json;
       };
-      finish_bake: {
-        Args: { p_scores: number[]; p_session: string; p_user: string };
-        Returns: Json;
-      };
+      customer_tick: { Args: { p_user: string }; Returns: Json };
       market_fee: { Args: { p_price: number }; Returns: number };
       rename_shop: { Args: { p_shop_name: string; p_user: string }; Returns: Json };
-      sell_to_npc: {
-        Args: { p_qty: number; p_quality: number; p_recipe: string; p_user: string };
-        Returns: Json;
-      };
-      start_bake: { Args: { p_recipe: string; p_user: string }; Returns: Json };
       throttle: {
         Args: { p_action: string; p_max: number; p_user: string; p_window_seconds: number };
         Returns: boolean;

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { CoinIcon, IconLock } from "@/components/icons";
 import { ItemImage } from "@/components/ItemImage";
-import { Stars } from "@/components/Stars";
 import { useAction } from "@/components/useAction";
 import {
   MARKET_FEE_PERCENT,
@@ -17,10 +16,7 @@ import { marketFee } from "@/lib/game/scoring";
 import type { MarketFeedRow, MarketListing } from "@/lib/types";
 
 export type SellOption = {
-  key: string;
-  kind: "ingredient" | "baked";
   item: string;
-  quality: number | null;
   name: string;
   image: string | null;
   have: number;
@@ -100,7 +96,6 @@ function BuyList({ feed, coins, locked }: { feed: MarketFeedRow[]; coins: number
         <div style={{ fontWeight: 800 }}>
           {l.item_name} ×{l.qty}
         </div>
-        {l.quality && <Stars value={l.quality} size={12} />}
         <div className="small muted" style={{ fontWeight: 700 }}>
           bởi {l.seller_shop}
         </div>
@@ -126,8 +121,8 @@ function BuyList({ feed, coins, locked }: { feed: MarketFeedRow[]; coins: number
 
 function SellForm({ options, locked, onDone }: { options: SellOption[]; locked: boolean; onDone: () => void }) {
   const { run, busy } = useAction("create-listing");
-  const [key, setKey] = useState(options[0]?.key ?? "");
-  const opt = options.find((o) => o.key === key);
+  const [key, setKey] = useState(options[0]?.item ?? "");
+  const opt = options.find((o) => o.item === key);
   const [qty, setQty] = useState(1);
   const [price, setPrice] = useState<number | "">("");
 
@@ -145,11 +140,7 @@ function SellForm({ options, locked, onDone }: { options: SellOption[]; locked: 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!opt) return;
-    const input =
-      opt.kind === "ingredient"
-        ? { kind: "ingredient" as const, item: opt.item, qty: safeQty, price: p }
-        : { kind: "baked" as const, item: opt.item, quality: opt.quality!, qty: safeQty, price: p };
-    const res = await run(input, { success: () => "Đã đăng tin rao bán!" });
+    const res = await run({ kind: "ingredient", item: opt.item, qty: safeQty, price: p }, { success: () => "Đã đăng tin rao bán!" });
     if (res) {
       setPrice("");
       setQty(1);
@@ -172,9 +163,8 @@ function SellForm({ options, locked, onDone }: { options: SellOption[]; locked: 
           }}
         >
           {options.map((o) => (
-            <option key={o.key} value={o.key}>
-              {o.name}
-              {o.quality ? ` ${"★".repeat(o.quality)}` : ""} (có {o.have})
+            <option key={o.item} value={o.item}>
+              {o.name} (có {o.have})
             </option>
           ))}
         </select>
@@ -240,7 +230,7 @@ function MyListings({
   if (mine.length === 0) return <p className="empty">Bạn chưa rao bán gì.</p>;
 
   return mine.map((l) => {
-    const info = itemNames[`${l.kind}:${l.item_code}`] ?? { name: l.item_code, image: null };
+    const info = itemNames[l.item_code] ?? { name: l.item_code, image: null };
     return (
       <article key={l.id} className="card row" style={{ opacity: l.status === "active" ? 1 : 0.75 }}>
         <ItemImage code={l.item_code} image={info.image} name={info.name} size={48} />
@@ -248,7 +238,6 @@ function MyListings({
           <div style={{ fontWeight: 800 }}>
             {info.name} ×{l.qty}
           </div>
-          {l.quality && <Stars value={l.quality} size={12} />}
           <div className="small muted" style={{ fontWeight: 700 }}>
             {STATUS_LABEL[l.status]} · {formatNumber(l.price)} ₵
             {l.status === "sold" && l.fee !== null && ` (nhận ${formatNumber(l.price - l.fee)} ₵)`}

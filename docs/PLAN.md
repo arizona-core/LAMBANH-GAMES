@@ -90,6 +90,21 @@ nhiệm vụ. Không bán sức mạnh trực tiếp ảnh hưởng cạnh tranh
   ngẫu nhiên, nhiệm vụ/điểm danh.
 - **GĐ4 — Realtime + Android:** D6 (guild/chợ phiên realtime), tối ưu, đóng gói Android (TWA/Capacitor).
 
+### Thời gian & khách (đã làm)
+
+- **Đồng hồ game chung cả server:** 1 giây thật = 1 phút game (1 giờ game = 1 phút thật,
+  1 ngày game = 24 phút thật). Tiệm mở **7:00 → 24:00** (17 phút thật), đóng 0:00 → 7:00.
+- **500 khách NPC** cố định trong bảng `customers`: tên, tính cách, **hay hối** (chờ ít, bỏ đi thì
+  −1 uy tín), **hay quịt** (10–30% không trả tiền), **khó khăn** (đòi bánh ≥4–5★, thiếu sao chỉ trả
+  nửa giá), món/sốt/topping ưa thích, độ hào phóng (tip).
+- Khách **chỉ tới khi người chơi đang mở app** (client gọi `customer-tick` ~15 giây/lần),
+  ~45 lượt/ngày game (+1 mỗi 20 uy tín, tối đa 75), tối đa 4 khách chờ ở quầy.
+- **Làm theo đơn** (không có bánh làm sẵn): nhận đơn → chọn nguyên liệu → trộn → chọn cách nấu
+  (nướng/chiên/hấp) + canh lửa → nước chấm/sốt → topping → đóng gói (hộp/túi) → giao.
+  Chấm điểm: canh giờ ± lò; thiếu nguyên liệu −25, thừa −15, sai cách nấu −40, sai gói −10.
+  Tiền = giá bánh theo sao × tủ trưng bày + 2× giá sốt/topping + tip (nếu đúng sốt & topping khách gọi).
+- Chợ chỉ mua bán nguyên liệu, sốt, topping.
+
 ### Quy tắc kinh tế đã chốt (MVP)
 
 - Tiền khởi đầu 500 ₵ + 10 gem + nguyên liệu cơ bản. Cấp = 1 + ⌊√(XP/30)⌋.
@@ -99,8 +114,8 @@ nhiệm vụ. Không bán sức mạnh trực tiếp ảnh hưởng cạnh tranh
   50%–200% giá tham chiếu; tối đa 10 tin mở, 30 tin/ngày, 50 lượt mua/ngày; trần 3.000 ₵/ngày
   mua từ cùng 1 người bán và 20.000 ₵/ngày tiền bán ở chợ (chống chuyển xu giữa acc chính/phụ).
 - Chỉ doanh thu bán NPC tính vào BXH (chống acc phụ bơm doanh thu qua chợ).
-- Mini-game: server từ chối nộp kết quả sớm hơn `min_play_seconds`; phiên quá 30 phút bị hủy;
-  tối đa 150 mẻ/ngày, từ mẻ thứ 61 trong 24h bánh tối đa 3★ ("đầu bếp mệt"). Điểm canh giờ do
+- Đơn hàng: server từ chối giao sớm hơn `min_play_seconds`; tối đa 600 đơn/ngày, từ đơn thứ
+  301 trong 24h bánh tối đa 3★ ("đầu bếp mệt"). Điểm canh giờ do
   client gửi nên bot vẫn đạt điểm cao được — các trần trên giới hạn lợi ích; điểm được lưu trong
   `transactions_log.meta.scores` để phát hiện tài khoản bất thường.
 - Mọi Edge Function: tối đa 20 request / 10 giây cho mỗi (người chơi, hành động).

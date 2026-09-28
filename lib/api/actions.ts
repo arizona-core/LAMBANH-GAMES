@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import type { Avatar, ShopColor } from "@/lib/game/constants";
+import type { AcceptResult, CookMethod, OrderResult, Packaging, TickResult } from "@/lib/game/orders";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -14,31 +15,23 @@ type Actions = {
   "rename-shop": { input: { shopName: string }; output: { slug: string; gems: number } };
   "claim-daily": { input: Record<string, never>; output: { streak: number; coins: number; gems: number } };
   "buy-ingredient": { input: { code: string; qty: number }; output: { coins: number; spent: number } };
-  "start-bake": {
-    input: { recipe: string };
-    output: { session_id: string; min_play_seconds: number; oven_bonus: number };
-  };
-  "finish-bake": {
-    input: { sessionId: string; scores: [number, number, number] };
-    output: {
-      quality: number;
-      score: number;
-      xp_gained: number;
-      level: number;
-      leveled_up: boolean;
-      tired?: boolean;
-      expired?: true;
+  "customer-tick": { input: Record<string, never>; output: TickResult };
+  "accept-order": { input: { visitId: string }; output: AcceptResult };
+  "complete-order": {
+    input: {
+      visitId: string;
+      ingredients: string[];
+      method: CookMethod;
+      scores: [number, number];
+      sauce: string | null;
+      topping: string | null;
+      packaging: Packaging;
     };
-  };
-  "sell-npc": {
-    input: { recipe: string; quality: number; qty: number };
-    output: { earned: number; unit_price: number; reputation_gained: number };
+    output: OrderResult;
   };
   "buy-upgrade": { input: { code: string }; output: { coins: number; gems: number } };
   "create-listing": {
-    input:
-      | { kind: "ingredient"; item: string; qty: number; price: number }
-      | { kind: "baked"; item: string; quality: number; qty: number; price: number };
+    input: { kind: "ingredient"; item: string; qty: number; price: number };
     output: { listing_id: string };
   };
   "buy-listing": { input: { listingId: string }; output: { paid: number; fee: number; coins: number } };

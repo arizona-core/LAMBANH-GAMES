@@ -2,49 +2,79 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { CoinIcon, IconCalendar, IconPlus } from "@/components/icons";
-import { ItemImage } from "@/components/ItemImage";
-import { Modal } from "@/components/Modal";
-import { Stars } from "@/components/Stars";
-import { useAction } from "@/components/useAction";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CustomerAvatar, TraitChips } from "@/components/CustomerAvatar";
+import { IconCalendar, IconClock } from "@/components/icons";
+import { callAction } from "@/lib/api/actions";
+import { formatGameTime, gameClock } from "@/lib/game/clock";
+import { errorMessage } from "@/lib/game/errors";
 import { formatNumber } from "@/lib/game/format";
-import { npcUnitPrice } from "@/lib/game/scoring";
+import { orderText, type Visit } from "@/lib/game/orders";
+import { useToast } from "@/lib/store/toast";
 import styles from "./shop.module.css";
 
-export type DisplayGood = {
-  recipeCode: string;
-  quality: number;
-  qty: number;
-  name: string;
-  image: string | null;
-  basePrice: number;
-};
-
-const CUSTOMER_COLORS = [
-  ["#F6C99B", "#8FB6E0"],
-  ["#E7C6A6", "#E0A9B4"],
-  ["#F6C99B", "#A8CDA0"],
-];
-
-const TUTORIAL_KEY = "sweetshop.tutorial.v1";
+const TUTORIAL_KEY = "sweetshop.tutorial.v2";
+const TICK_MS = 15_000;
 
 export function ShopScene({
-  goods,
-  displayBonus,
   revenueToday,
   canClaimDaily,
   welcome,
 }: {
-  goods: DisplayGood[];
-  displayBonus: number;
   revenueToday: number;
   canClaimDaily: boolean;
   welcome: boolean;
 }) {
-  const [selected, setSelected] = useState<DisplayGood | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const router = useRouter();
+  const push = useToast((s) => s.push);
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [offset, setOffset] = useState(0); // server_now − Date.now()
+  const [now, setNow] = useState(() => Date.now());
   const [showTip, setShowTip] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const errorShown = useRef(false);
+
+  const tick = useCallback(async () => {
+    if (document.visibilityState !== "visible") return;
+    const res = await callAction("customer-tick", {});
+    if (!res.ok) {
+      if (!errorShown.current) push(errorMessage(res.error), "error");
+      errorShown.current = true;
+      return;
+    }
+    errorShown.current = false;
+    setOffset(new Date(res.data.server_now).getTime() - Date.now());
+    setVisits(res.data.visits);
+    setLoaded(true);
+    if (res.data.left > 0) {
+      push(
+        res.data.reputation_lost > 0
+          ? `${res.data.left} khách bỏ đi vì chờ lâu (−${res.data.reputation_lost} uy tín)`
+          : `${res.data.left} khách đã bỏ đi`,
+        "error",
+      );
+      router.refresh();
+    }
+  }, [push, router]);
+
+  // Nhịp sinh khách: chỉ chạy khi đang mở app (tab đang hiển thị).
+  useEffect(() => {
+    const first = setTimeout(tick, 0);
+    const id = setInterval(tick, TICK_MS);
+    const onVisible = () => document.visibilityState === "visible" && tick();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [tick]);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     try {
@@ -63,12 +93,26 @@ export function ShopScene({
     } catch {}
   }
 
-  const totalGoods = goods.reduce((n, g) => n + g.qty, 0);
-  const customers = Math.min(3, totalGoods);
-  const slots = [0, 1, 2].map((i) => goods[i] ?? null);
+  const serverNow = now + offset;
+  const clock = gameClock(serverNow);
+  const present = visits.filter(
+    (v) => new Date(v.arrive_at).getTime() <= serverNow && new Date(v.leave_at).getTime() > serverNow,
+  );
+  const cooking = present.find((v) => v.status === "cooking");
+  const queue = present.filter((v) => v.status === "waiting");
 
   return (
     <>
+      <div className={`card row ${clock.open ? styles.clockOpen : styles.clockClosed}`} role="timer" aria-live="off">
+        <IconClock />
+        <strong style={{ fontSize: 18, fontVariantNumeric: "tabular-nums" }}>{formatGameTime(clock)}</strong>
+        <span className="small" style={{ fontWeight: 800 }}>
+          {clock.open
+            ? `Đang mở cửa · đóng lúc 24:00 (còn ${Math.ceil(clock.secondsToClose / 60)} phút)`
+            : `Đóng cửa · mở lúc 07:00 (còn ${clock.secondsToOpen} giây)`}
+        </span>
+      </div>
+
       {canClaimDaily && (
         <Link href="/daily" className={`card row ${styles.daily}`}>
           <IconCalendar />
@@ -80,7 +124,13 @@ export function ShopScene({
 
       <section className={styles.scene} aria-label="Cửa tiệm">
         <div className={styles.waiting}>
-          {customers > 0 ? `${customers} khách đang chờ` : "Chưa có khách — hãy làm bánh!"}
+          {!clock.open
+            ? "Tiệm đang đóng cửa"
+            : present.length > 0
+              ? `${present.length} khách ở quầy`
+              : loaded
+                ? "Đang chờ khách…"
+                : "Đang mở cửa…"}
         </div>
         <div className={styles.revenue}>
           <div className="small muted" style={{ fontSize: 11, fontWeight: 700 }}>
@@ -88,53 +138,34 @@ export function ShopScene({
           </div>
           <div style={{ fontWeight: 800, color: "var(--mint-strong)" }}>+ {formatNumber(revenueToday)} ₵</div>
         </div>
-
         <div className={styles.customers} aria-hidden="true">
-          {CUSTOMER_COLORS.slice(0, customers).map(([skin, shirt], i) => (
-            <svg key={i} width="40" height="52" viewBox="0 0 40 52" className={styles.customer} style={{ animationDelay: `${i * 0.3}s` }}>
-              <circle cx="20" cy="14" r="10" fill={skin} />
-              <path d="M6 52c0-10 6-18 14-18s14 8 14 18z" fill={shirt} />
-            </svg>
+          {present.slice(0, 4).map((v) => (
+            <div key={v.id} className={styles.customer}>
+              <CustomerAvatar look={v.customer.look} gender={v.customer.gender} size={48} />
+            </div>
           ))}
         </div>
-
         <div className={styles.counter}>
-          {slots.map((g, i) =>
-            g ? (
-              <button
-                key={`${g.recipeCode}-${g.quality}`}
-                type="button"
-                className={styles.slot}
-                onClick={() => setSelected(g)}
-                aria-label={`${g.name} ${g.quality} sao, còn ${g.qty}. Bán cho khách`}
-              >
-                <ItemImage code={g.recipeCode} image={g.image} name={g.name} size={44} />
-                <span className={styles.slotQty}>×{g.qty}</span>
-                <Stars value={g.quality} size={10} />
-              </button>
-            ) : (
-              <Link key={`empty-${i}`} href="/kitchen" className={`${styles.slot} ${styles.slotEmpty}`}>
-                <IconPlus size={20} />
-                <span>Trống</span>
-              </Link>
-            ),
+          {cooking ? (
+            <Link href={`/order/${cooking.id}`} className="btn btn--white btn--block">
+              Đang làm đơn của {cooking.customer.name.split(" ").pop()} — tiếp tục
+            </Link>
+          ) : (
+            <span className={styles.counterText}>
+              {clock.open ? "Nhận đơn của khách bên dưới để bắt đầu làm bánh" : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
+            </span>
           )}
         </div>
       </section>
 
-      {goods.length > 3 && (
-        <button type="button" className="btn btn--white btn--sm" onClick={() => setShowAll(true)}>
-          Xem cả tủ bánh ({goods.length} loại)
-        </button>
-      )}
-
       {showTip && (
-        <div className={`card row ${styles.tip}`} role="note">
+        <div className="card row" role="note" style={{ alignItems: "flex-start" }}>
           <img src="/images/mascot-chef.webp" alt="" width={64} height={64} />
           <div style={{ flex: 1 }}>
             <strong>Bếp trưởng Cam</strong>
             <p className="small" style={{ margin: "2px 0 8px" }}>
-              Vào bếp làm chiếc bánh đầu tiên, rồi chạm vào bánh trong tủ kính để bán cho khách nhé!
+              Tiệm mở từ 7:00 đến 24:00 (1 giờ game = 1 phút). Khách tới sẽ gọi món — nhận đơn, bỏ đúng nguyên liệu, nấu,
+              thêm sốt &amp; topping khách thích, đóng gói rồi giao trước khi khách hết kiên nhẫn!
             </p>
             <button type="button" className="btn btn--soft btn--sm" onClick={dismissTip}>
               Đã hiểu
@@ -143,93 +174,69 @@ export function ShopScene({
         </div>
       )}
 
+      <section className="stack" aria-label="Khách đang chờ">
+        {queue.map((v) => (
+          <QueueCard key={v.id} visit={v} serverNow={serverNow} busy={!!cooking} />
+        ))}
+        {clock.open && queue.length === 0 && loaded && !cooking && (
+          <p className="empty" style={{ padding: 12 }}>
+            Chưa có khách chờ — khách tới liên tục trong giờ mở cửa.
+          </p>
+        )}
+      </section>
+
       <Link href="/kitchen" className="btn btn--primary btn--block btn--lg">
-        Vào bếp làm bánh
+        Vào bếp · công thức &amp; nguyên liệu
       </Link>
-
-      {showAll && (
-        <Modal title="Tủ bánh" onClose={() => setShowAll(false)}>
-          <div className="stack">
-            {goods.map((g) => (
-              <button
-                key={`${g.recipeCode}-${g.quality}`}
-                type="button"
-                className="card row"
-                style={{ border: 0, cursor: "pointer", textAlign: "left" }}
-                onClick={() => {
-                  setShowAll(false);
-                  setSelected(g);
-                }}
-              >
-                <ItemImage code={g.recipeCode} image={g.image} name={g.name} size={48} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 800 }}>{g.name}</div>
-                  <Stars value={g.quality} size={12} />
-                </div>
-                <span style={{ fontWeight: 800 }}>×{g.qty}</span>
-              </button>
-            ))}
-          </div>
-        </Modal>
-      )}
-
-      {selected && <SellModal good={selected} displayBonus={displayBonus} onClose={() => setSelected(null)} />}
     </>
   );
 }
 
-function SellModal({ good, displayBonus, onClose }: { good: DisplayGood; displayBonus: number; onClose: () => void }) {
-  const { run, busy } = useAction("sell-npc");
-  const [qty, setQty] = useState(1);
-  const unit = npcUnitPrice(good.basePrice, good.quality, displayBonus);
-
-  async function sell() {
-    const res = await run(
-      { recipe: good.recipeCode, quality: good.quality, qty },
-      { success: (d) => `Khách đã mua! +${formatNumber(d.earned)} ₵` },
-    );
-    if (res) onClose();
-  }
+function QueueCard({ visit, serverNow, busy }: { visit: Visit; serverNow: number; busy: boolean }) {
+  const arrive = new Date(visit.arrive_at).getTime();
+  const leave = new Date(visit.leave_at).getTime();
+  const left = Math.max(0, Math.ceil((leave - serverNow) / 1000));
+  const ratio = Math.max(0, Math.min(1, (leave - serverNow) / (leave - arrive)));
+  const c = visit.customer;
 
   return (
-    <Modal title="Bán cho khách" onClose={onClose}>
-      <div className="row">
-        <ItemImage code={good.recipeCode} image={good.image} name={good.name} size={64} />
-        <div>
-          <div style={{ fontWeight: 800, fontSize: 17 }}>{good.name}</div>
-          <Stars value={good.quality} />
-          <div className="small muted">Trong tủ: {good.qty}</div>
+    <article className="card stack" style={{ gap: 8 }}>
+      <div className="row" style={{ alignItems: "flex-start" }}>
+        <CustomerAvatar look={c.look} gender={c.gender} size={48} mood={ratio < 0.3 ? "angry" : "normal"} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+            <strong>{c.name}</strong>
+            <span className="badge">{c.personality}</span>
+          </div>
+          <TraitChips impatient={c.impatient} dineAndDash={c.dine_and_dash} picky={c.picky} minQuality={c.min_quality} />
+          <p className="small" style={{ margin: "4px 0 0", fontWeight: 800 }}>
+            Gọi: {orderText(visit)}
+          </p>
         </div>
       </div>
-
-      <div className="row" style={{ justifyContent: "center", gap: 14 }}>
-        <button type="button" className="icon-btn" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Bớt 1">
-          −
-        </button>
-        <span style={{ fontWeight: 800, fontSize: 22, minWidth: 40, textAlign: "center" }} aria-live="polite">
-          {qty}
-        </span>
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={() => setQty((q) => Math.min(good.qty, 50, q + 1))}
-          aria-label="Thêm 1"
+      <div className="row" style={{ gap: 8 }}>
+        <span
+          className={styles.patience}
+          role="progressbar"
+          aria-label="Kiên nhẫn của khách"
+          aria-valuenow={left}
+          aria-valuemin={0}
         >
-          +
-        </button>
-        <button type="button" className="btn btn--soft btn--sm" onClick={() => setQty(Math.min(good.qty, 50))}>
-          Tất cả
-        </button>
+          <span style={{ width: `${ratio * 100}%`, background: ratio < 0.3 ? "var(--danger)" : ratio < 0.6 ? "var(--coin)" : "var(--mint)" }} />
+        </span>
+        <span className="small muted" style={{ fontWeight: 800, minWidth: 34, textAlign: "right" }}>
+          {left}s
+        </span>
+        <Link
+          href={`/order/${visit.id}`}
+          className="btn btn--primary btn--sm"
+          aria-disabled={busy}
+          onClick={(e) => busy && e.preventDefault()}
+          style={busy ? { opacity: 0.55 } : undefined}
+        >
+          Nhận đơn
+        </Link>
       </div>
-
-      <p className="row small" style={{ justifyContent: "center", margin: 0, fontWeight: 700 }}>
-        Giá khách trả khoảng <CoinIcon /> {formatNumber(unit * qty)}
-        {displayBonus > 0 && <span className="muted">(tủ trưng bày +{displayBonus}%)</span>}
-      </p>
-
-      <button type="button" className="btn btn--primary btn--block btn--lg" onClick={sell} disabled={busy}>
-        {busy ? "Đang bán…" : `Bán ${qty} chiếc`}
-      </button>
-    </Modal>
+    </article>
   );
 }

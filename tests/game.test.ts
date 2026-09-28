@@ -91,3 +91,28 @@ describe("định dạng", () => {
     expect(todayVN(new Date("2026-09-27T18:00:00Z"))).toBe("2026-09-28");
   });
 });
+
+describe("đồng hồ game (1 giây thật = 1 phút game)", () => {
+  it("7:00 mở cửa, 6:59 đóng cửa", async () => {
+    const { gameClock, formatGameTime } = await import("@/lib/game/clock");
+    expect(gameClock(420_000).open).toBe(true);
+    expect(formatGameTime(gameClock(420_000))).toBe("07:00");
+    expect(gameClock(419_000).open).toBe(false);
+    expect(gameClock(419_000).secondsToOpen).toBe(1);
+  });
+
+  it("ngày game dài 24 phút thật", async () => {
+    const { gameClock } = await import("@/lib/game/clock");
+    expect(gameClock(1440_000).minuteOfDay).toBe(0);
+    expect(gameClock(1439_000).secondsToClose).toBe(1);
+  });
+});
+
+describe("mô tả đơn", () => {
+  it("ghép món · sốt · topping", async () => {
+    const { orderText } = await import("@/lib/game/orders");
+    expect(orderText({ recipe_name: "Bánh mì", sauce_name: "Sốt bơ tỏi", topping_name: null })).toBe(
+      "Bánh mì · sốt bơ tỏi · không topping",
+    );
+  });
+});

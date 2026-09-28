@@ -9,7 +9,8 @@ export const metadata: Metadata = { title: "Đăng nhập" };
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { user } = await getCurrentPlayer();
   if (user) redirect("/");
-  const { error } = await searchParams;
+  const { error, reason } = await searchParams;
+  const reasonText = typeof reason === "string" ? reason : null;
 
   return (
     <main className="app" style={{ background: "#F6D9A8" }}>
@@ -27,6 +28,12 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           {error && (
             <p role="alert" className="hint hint--bad" style={{ textAlign: "center" }}>
               Đăng nhập chưa thành công, thử lại nhé.
+              {reasonText && (
+                <>
+                  <br />
+                  <span style={{ fontWeight: 600 }}>Chi tiết: {reasonText}</span>
+                </>
+              )}
             </p>
           )}
           <LoginButtons devLogin={process.env.NODE_ENV === "development"} />

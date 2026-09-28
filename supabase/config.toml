@@ -440,13 +440,13 @@ verify_jwt = false
 [functions.buy-ingredient]
 verify_jwt = false
 
-[functions.start-bake]
+[functions.customer-tick]
 verify_jwt = false
 
-[functions.finish-bake]
+[functions.accept-order]
 verify_jwt = false
 
-[functions.sell-npc]
+[functions.complete-order]
 verify_jwt = false
 
 [functions.buy-upgrade]

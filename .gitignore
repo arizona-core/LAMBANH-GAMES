@@ -33,3 +33,6 @@ next-env.d.ts
 *.log
 .vercel
 coverage/
+
+# OAuth client secret tải từ Google Cloud — KHÔNG commit
+client_secret*.json
