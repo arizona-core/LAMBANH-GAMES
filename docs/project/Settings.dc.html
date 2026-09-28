@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Cài đặt</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:'Nunito',sans-serif}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;background:#FBEFDD;font-family:'Nunito',sans-serif;color:#4A2B1A;display:flex;flex-direction:column;overflow:hidden">
+
+  <div style="padding:44px 16px 8px;display:flex;align-items:center;gap:12px">
+    <a href="Home.dc.html" aria-label="Quay lại" style="width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 3px 0 #E4CFA8;display:flex;align-items:center;justify-content:center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A3E12" stroke-width="2.4"><path d="M15 5 8 12l7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:22px;color:#7A3E12">Cài đặt</div>
+  </div>
+
+  <div style="flex-grow:1;overflow:hidden;padding:8px 16px;display:flex;flex-direction:column;gap:14px">
+
+    <!-- profile -->
+    <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:12px;box-shadow:0 4px 0 #EADFC8">
+      <div style="width:52px;height:52px;border-radius:50%;background:#FFE0C4;border:2px solid #D98A3D"></div>
+      <div style="flex-grow:1">
+        <div style="font-weight:800;font-size:15px">Tiệm Bánh Nắng</div>
+        <div style="font-size:12px;color:#8A6A54">Chủ quán: Minh Anh · Lv.7</div>
+      </div>
+      <button style="border:none;background:#F3E6CE;color:#7A3E12;font-weight:800;font-size:11px;padding:7px 10px;border-radius:10px;cursor:pointer">Đổi tên · 20 gem</button>
+    </div>
+
+    <!-- audio group -->
+    <div style="background:#fff;border-radius:16px;padding:6px 14px;box-shadow:0 4px 0 #EADFC8">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F1E6D2">
+        <span style="font-weight:700;font-size:14px">Âm thanh</span>
+        <button aria-label="Bật âm thanh" aria-pressed="true" style="border:none;padding:0;width:46px;height:26px;border-radius:999px;background:#6FA678;position:relative;cursor:pointer"><span style="position:absolute;top:3px;left:23px;width:20px;height:20px;border-radius:50%;background:#fff"></span></button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F1E6D2">
+        <span style="font-weight:700;font-size:14px">Nhạc nền</span>
+        <button aria-label="Bật nhạc nền" aria-pressed="true" style="border:none;padding:0;width:46px;height:26px;border-radius:999px;background:#6FA678;position:relative;cursor:pointer"><span style="position:absolute;top:3px;left:23px;width:20px;height:20px;border-radius:50%;background:#fff"></span></button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0">
+        <span style="font-weight:700;font-size:14px">Thông báo đẩy</span>
+        <button aria-label="Tắt thông báo đẩy" aria-pressed="false" style="border:none;padding:0;width:46px;height:26px;border-radius:999px;background:#D9C3A0;position:relative;cursor:pointer"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff"></span></button>
+      </div>
+    </div>
+
+    <!-- account group -->
+    <div style="background:#fff;border-radius:16px;padding:6px 14px;box-shadow:0 4px 0 #EADFC8">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F1E6D2">
+        <span style="font-weight:700;font-size:14px">Ngôn ngữ</span>
+        <span style="font-size:13px;color:#8A6A54;font-weight:700">Tiếng Việt ›</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F1E6D2">
+        <span style="font-weight:700;font-size:14px">Tài khoản Google</span>
+        <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#3E7A4A;font-weight:800"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3E7A4A" stroke-width="3"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>Đã liên kết</span>
+      </div>
+      <a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:12px 0"><span style="font-weight:700;font-size:14px;color:#4A2B1A">Trợ giúp &amp; hỗ trợ</span><span style="color:#8A6A54">›</span></a>
+    </div>
+
+    <button style="margin-top:auto;height:50px;border:2px solid #E0A9A9;background:#fff;border-radius:16px;color:#C0453F;font-weight:800;font-size:15px;cursor:pointer">Đăng xuất</button>
+    <div style="text-align:center;font-size:11px;color:#A5763F;padding-bottom:8px">Sweet Shop v0.1.0</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return {}; } }
+</script>
+</body>
+</html>

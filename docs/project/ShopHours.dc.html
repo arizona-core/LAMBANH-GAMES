@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Giờ hoạt động</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button,input{font-family:'Nunito',sans-serif}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;background:#FBEFDD;font-family:'Nunito',sans-serif;color:#4A2B1A;display:flex;flex-direction:column;overflow:hidden">
+
+  <div style="padding:44px 16px 8px;display:flex;align-items:center;gap:12px">
+    <a href="Home.dc.html" aria-label="Quay lại" style="width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 3px 0 #E4CFA8;display:flex;align-items:center;justify-content:center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A3E12" stroke-width="2.4"><path d="M15 5 8 12l7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:22px;color:#7A3E12">Giờ hoạt động</div>
+  </div>
+
+  <div style="flex-grow:1;overflow:hidden;padding:8px 16px;display:flex;flex-direction:column;gap:14px">
+
+    <!-- status card -->
+    <div style="background:#E3F0DC;border:2px solid #6FA678;border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:12px;color:#3E7A4A;font-weight:700">Trạng thái tiệm</div>
+        <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:24px;color:#3E7A4A">Đang mở cửa</div>
+      </div>
+      <button aria-label="Đóng cửa tiệm" aria-pressed="true" style="border:none;padding:0;width:58px;height:32px;border-radius:999px;background:#6FA678;position:relative;cursor:pointer"><span style="position:absolute;top:4px;left:30px;width:24px;height:24px;border-radius:50%;background:#fff"></span></button>
+    </div>
+
+    <!-- schedule -->
+    <div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 4px 0 #EADFC8">
+      <div style="font-weight:800;font-size:14px;color:#6B4A32;margin-bottom:12px">Khung giờ mở cửa</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="flex:1">
+          <label for="open" style="display:block;font-size:11px;color:#8A6A54;font-weight:700;margin-bottom:5px">Mở cửa</label>
+          <input id="open" type="text" value="07:00" style="width:100%;box-sizing:border-box;height:48px;border:2px solid #E4CFA8;border-radius:12px;text-align:center;font-size:18px;font-weight:800;color:#4A2B1A">
+        </div>
+        <span style="margin-top:22px;color:#B98F55;font-weight:800">→</span>
+        <div style="flex:1">
+          <label for="close" style="display:block;font-size:11px;color:#8A6A54;font-weight:700;margin-bottom:5px">Đóng cửa</label>
+          <input id="close" type="text" value="22:00" style="width:100%;box-sizing:border-box;height:48px;border:2px solid #E4CFA8;border-radius:12px;text-align:center;font-size:18px;font-weight:800;color:#4A2B1A">
+        </div>
+      </div>
+    </div>
+
+    <!-- toggles -->
+    <div style="background:#fff;border-radius:16px;padding:6px 14px;box-shadow:0 4px 0 #EADFC8">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F1E6D2">
+        <div style="padding-right:10px">
+          <div style="font-weight:700;font-size:14px">Tự mở khi bạn online</div>
+          <div style="font-size:11px;color:#8A6A54;margin-top:2px">Khách vào ngay khi bạn chơi</div>
+        </div>
+        <button aria-label="Bật tự mở" aria-pressed="true" style="border:none;padding:0;width:46px;height:26px;border-radius:999px;background:#6FA678;position:relative;cursor:pointer;flex-shrink:0"><span style="position:absolute;top:3px;left:23px;width:20px;height:20px;border-radius:50%;background:#fff"></span></button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0">
+        <div style="padding-right:10px">
+          <div style="font-weight:700;font-size:14px">Thuê nhân viên trực đêm</div>
+          <div style="font-size:11px;color:#8A6A54;margin-top:2px">Bán cả khi offline · 200 ₵/ngày</div>
+        </div>
+        <button aria-label="Tắt thuê nhân viên" aria-pressed="false" style="border:none;padding:0;width:46px;height:26px;border-radius:999px;background:#D9C3A0;position:relative;cursor:pointer;flex-shrink:0"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff"></span></button>
+      </div>
+    </div>
+
+    <!-- tip -->
+    <div style="display:flex;gap:10px;background:#FCEBD3;border-radius:14px;padding:12px 14px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B5651D" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div style="font-size:12px;color:#8A5A2A;line-height:1.5">Mở lâu → nhiều khách hơn, nhưng tốn phí điện và <b>bánh để lâu sẽ mất độ tươi</b>, bị đánh giá thấp.</div>
+    </div>
+
+    <a href="Home.dc.html" style="margin-top:auto">
+      <div style="height:54px;border-radius:16px;background:{{accent}};box-shadow:0 4px 0 #7A3E12;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;font-family:'Fredoka',sans-serif">Lưu lịch mở cửa</div>
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#b5651d"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return { accent: this.props.accent ?? '#b5651d' }; } }
+</script>
+</body>
+</html>

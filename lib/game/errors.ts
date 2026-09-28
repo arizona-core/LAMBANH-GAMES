@@ -1,0 +1,32 @@
+const MESSAGES: Record<string, string> = {
+  UNAUTHORIZED: "Phiên đăng nhập đã hết, hãy đăng nhập lại.",
+  NETWORK: "Mất kết nối mạng. Thử lại nhé!",
+  INTERNAL: "Có lỗi ở máy chủ. Thử lại sau ít phút.",
+  INVALID_INPUT: "Dữ liệu không hợp lệ.",
+  NO_PROFILE: "Bạn chưa mở tiệm.",
+  PROFILE_EXISTS: "Bạn đã có tiệm rồi.",
+  INVALID_NAME: "Tên quán cần 3–32 ký tự, tên chủ quán 2–24 ký tự.",
+  NAME_NOT_ALLOWED: "Tên này không phù hợp, hãy chọn tên khác.",
+  SHOP_NAME_TAKEN: "Tên quán đã có người dùng.",
+  NOT_FOUND: "Không tìm thấy.",
+  INSUFFICIENT_COINS: "Không đủ xu.",
+  INSUFFICIENT_GEMS: "Không đủ gem.",
+  NOT_ENOUGH_ITEMS: "Không đủ nguyên liệu hoặc bánh.",
+  LEVEL_TOO_LOW: "Cần lên cấp cao hơn để mở khóa.",
+  RATE_LIMITED: "Bạn thao tác quá nhiều hôm nay. Nghỉ tay chút nhé!",
+  SESSION_NOT_FOUND: "Mẻ bánh này đã kết thúc.",
+  TOO_FAST: "Bánh chưa kịp chín! Đợi thêm chút.",
+  ALREADY_OWNED: "Bạn đã sở hữu món này.",
+  REQUIRES_PREVIOUS: "Cần mua cấp trước đó.",
+  MARKET_LOCKED: "Chợ mở khóa từ cấp 3 và sau 1 ngày mở tiệm.",
+  MARKET_LIMIT: "Đã chạm hạn mức giao dịch chợ hôm nay (chống chuyển xu giữa tài khoản).",
+  TOO_MANY_LISTINGS: "Tối đa 10 tin rao cùng lúc.",
+  PRICE_OUT_OF_RANGE: "Giá quá thấp hoặc quá cao so với giá thị trường.",
+  LISTING_UNAVAILABLE: "Tin rao này không còn nữa.",
+  CANNOT_BUY_OWN: "Không thể mua hàng của chính mình.",
+  ALREADY_CLAIMED: "Hôm nay bạn đã điểm danh rồi.",
+};
+
+export function errorMessage(code: string): string {
+  return MESSAGES[code] ?? MESSAGES.INTERNAL;
+}

@@ -1,0 +1,594 @@
+/* Sweet Shop — design tokens (docs/design-system.md) + lớp dùng chung. */
+
+:root {
+  --bg-cream: #fbefdd;
+  --bg-warm: #ead9be;
+  --bg-scene: #f6e7cc;
+  --surface: #ffffff;
+  --ink: #4a2b1a;
+  --ink-strong: #7a3e12;
+  --ink-muted: #7a5c47;          /* 5.4:1 trên nền kem (AA) */
+  --ink-soft: #7e6a52;           /* nav không active, 5.2:1 trên trắng */
+  --primary: #a45a17;            /* 5.2:1 với chữ trắng (AA) */
+  --primary-hover: #8f4d13;
+  --primary-shadow: #6e3810;
+  --caramel: #d98a3d;
+  --counter: #c9722e;
+  --strawberry: #e28b9b;
+  --strawberry-strong: #b84a60;  /* nền có chữ trắng */
+  --strawberry-shadow: #8f3549;
+  --mint: #6fa678;
+  --mint-strong: #3e7a4a;
+  --coin: #e7b23c;
+  --coin-border: #c9922a;
+  --gem: #7c6bd6;
+  --gem-strong: #6b5ac4;         /* nền có chữ trắng */
+  --gem-border: #5b4bb0;
+  --gem-bg: #efe3fb;
+  --border: #e4cfa8;
+  --shadow-card: #eadfc8;
+  --shadow-hud: #d9c3a0;
+  --placeholder-bg: #fff6e9;
+  --placeholder-dash: #d9b98a;
+  --danger: #b3261e;
+
+  --radius-card: 18px;
+  --radius-btn: 16px;
+  --font-display: var(--font-baloo), "Nunito", system-ui, sans-serif;
+  --font-body: var(--font-nunito), system-ui, sans-serif;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-warm);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  color: var(--ink-strong);
+  margin: 0;
+  line-height: 1.15;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Khung app (mobile-first, căn giữa trên desktop) ---------- */
+
+.app {
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-cream);
+  position: relative;
+}
+
+.app--warm {
+  background: var(--bg-warm);
+}
+
+.app--oven {
+  background: #f4d9ab;
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: calc(16px + var(--safe-top)) 16px 16px;
+}
+
+.screen--with-nav {
+  padding-bottom: calc(88px + var(--safe-bottom));
+}
+
+/* ---------- Nút "chunky" ---------- */
+
+.btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-btn);
+  font-weight: 800;
+  font-size: 15px;
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+  user-select: none;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(3px);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 0 var(--primary-shadow);
+}
+
+.btn--primary:active:not(:disabled) {
+  box-shadow: 0 1px 0 var(--primary-shadow);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn--soft {
+  background: #f3e6ce;
+  color: var(--ink-strong);
+  box-shadow: 0 3px 0 var(--border);
+}
+
+.btn--white {
+  background: var(--surface);
+  color: var(--ink-strong);
+  box-shadow: 0 3px 0 var(--shadow-hud);
+}
+
+.btn--gem {
+  background: var(--gem-strong);
+  color: #fff;
+  box-shadow: 0 3px 0 var(--gem-border);
+}
+
+.btn--mint {
+  background: var(--mint-strong);
+  color: #fff;
+  box-shadow: 0 3px 0 #2d5a36;
+}
+
+.btn--danger {
+  background: #fbe3e0;
+  color: var(--danger);
+  box-shadow: 0 3px 0 #efc3bd;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--lg {
+  min-height: 54px;
+  font-size: 17px;
+  font-family: var(--font-display);
+}
+
+.btn--xl {
+  min-height: 62px;
+  font-size: 22px;
+  letter-spacing: 1px;
+  border-radius: 20px;
+  font-family: var(--font-display);
+}
+
+.btn--sm {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+.icon-btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-strong);
+  flex-shrink: 0;
+}
+
+/* ---------- Thẻ, pill, tab ---------- */
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 0 var(--shadow-card);
+  padding: 12px 14px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 5px 12px 5px 6px;
+  box-shadow: 0 3px 0 var(--shadow-hud);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 1px 6px;
+  color: var(--ink-strong);
+  background: #f3d9ae;
+}
+
+.coin {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--coin);
+  border: 2px solid var(--coin-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 11px;
+  color: #5c420f;
+  flex-shrink: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tab {
+  flex: 1;
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 12px;
+  background: #f2e1c4;
+  color: var(--ink-muted);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.tab[aria-selected="true"] {
+  background: var(--primary);
+  color: #fff;
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+.small {
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--ink-muted);
+  padding: 28px 12px;
+  font-weight: 700;
+}
+
+.stars {
+  color: var(--coin);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.stars__off {
+  color: #d9c3a0;
+}
+
+/* ---------- Ô ảnh (ảnh thật hoặc placeholder gạch đứt) ---------- */
+
+.thumb {
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--placeholder-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.thumb--placeholder {
+  border: 2px dashed var(--placeholder-dash);
+}
+
+.thumb img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+}
+
+/* ---------- Form ---------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label,
+.field__label {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--ink-strong);
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  padding: 0 14px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.hint--ok {
+  color: var(--mint-strong);
+}
+
+.hint--bad {
+  color: var(--danger);
+}
+
+/* ---------- HUD & thanh điều hướng ---------- */
+
+.hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hud__shop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 6px 12px 6px 6px;
+  box-shadow: 0 3px 0 var(--shadow-hud);
+  min-width: 0;
+}
+
+.hud__name {
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.xpbar {
+  display: inline-block;
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: #e7c089;
+  overflow: hidden;
+}
+
+.xpbar > span {
+  display: block;
+  height: 100%;
+  background: var(--mint);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+
+.header h1 {
+  font-size: 22px;
+  flex: 1;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 8px calc(10px + var(--safe-bottom));
+  background: var(--surface);
+  box-shadow: 0 -3px 0 var(--border);
+  z-index: 20;
+}
+
+.bottom-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 56px;
+  padding: 2px 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.bottom-nav a[aria-current="page"] {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+/* ---------- Toast & modal ---------- */
+
+.toasts {
+  position: fixed;
+  top: calc(12px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+  animation: toast-in 0.18s ease-out;
+}
+
+.toast--success {
+  background: var(--mint-strong);
+}
+
+.toast--error {
+  background: var(--danger);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(74, 43, 26, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 40;
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-cream);
+  border-radius: 24px 24px 0 0;
+  padding: 20px 16px calc(20px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

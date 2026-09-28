@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Khách đặt bánh</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:'Nunito',sans-serif}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;background:#FBEFDD;font-family:'Nunito',sans-serif;color:#4A2B1A;display:flex;flex-direction:column;overflow:hidden">
+
+  <div style="padding:44px 16px 8px;display:flex;align-items:center;gap:12px">
+    <a href="Home.dc.html" aria-label="Quay lại" style="width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 3px 0 #E4CFA8;display:flex;align-items:center;justify-content:center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A3E12" stroke-width="2.4"><path d="M15 5 8 12l7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:22px;color:#7A3E12">Khách đặt bánh</div>
+  </div>
+
+  <div style="flex-grow:1;overflow:hidden;padding:8px 16px;display:flex;flex-direction:column;gap:12px">
+
+    <!-- customer speech -->
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:48px;height:48px;border-radius:50%;background:#D6E4F5;border:2px solid #A9C4E0;flex-shrink:0"></div>
+      <div style="background:#fff;border-radius:4px 16px 16px 16px;padding:12px 14px;box-shadow:0 3px 0 #EADFC8">
+        <div style="font-size:12px;font-weight:800;color:#5B7EA6;margin-bottom:3px">Chị Hoa <span style="font-size:9px;background:#EAF1FA;color:#5B7EA6;border-radius:6px;padding:1px 5px">Khách AI</span></div>
+        <div style="font-size:14px;line-height:1.5">"Cho chị đặt <b>3 bánh kem dâu</b> nhé, chiều nay chị lấy cho sinh nhật bé!"</div>
+      </div>
+    </div>
+
+    <!-- order card -->
+    <div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 4px 0 #EADFC8">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-weight:800;font-size:15px">Chi tiết đơn</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#C0453F;background:#FBE3E1;border-radius:8px;padding:4px 8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0453F" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Còn 4:30:00
+        </span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F1E6D2">
+        <div style="width:50px;height:50px;border-radius:12px;background:#FFF6E9;border:2px dashed #D9B98A;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B98F55" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m21 16-5-5L5 20" stroke-linecap="round"/></svg></div>
+        <div style="flex-grow:1"><div style="font-weight:800;font-size:14px">Bánh kem dâu</div><div style="font-size:11px;color:#8A6A54">Cần làm mới · độ tươi ≥ 90%</div></div>
+        <span style="font-weight:800;color:#6B4A32">×3</span>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px">
+        <span style="font-size:13px;color:#8A6A54;font-weight:700">Tiền thưởng</span>
+        <div style="text-align:right">
+          <div style="font-weight:800;color:#B5651D;font-size:16px">+ 1.200 ₵</div>
+          <div style="font-size:11px;color:#3E7A4A;font-weight:800">+ 15 uy tín · +2 ★</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- other pending -->
+    <div style="font-weight:800;font-size:13px;color:#6B4A32;margin-top:2px">Đơn đang chờ (2)</div>
+    <div style="display:flex;align-items:center;gap:10px;background:#F5EAD6;border-radius:14px;padding:10px 12px">
+      <div style="width:36px;height:36px;border-radius:50%;background:#F6D2DA"></div>
+      <div style="flex-grow:1"><div style="font-size:13px;font-weight:800">Anh Tú · 6 cupcake</div><div style="font-size:11px;color:#8A6A54">Còn 2:10 · +640 ₵</div></div>
+      <span style="color:#8A6A54">›</span>
+    </div>
+
+    <!-- actions -->
+    <div style="display:flex;gap:12px;margin-top:auto">
+      <button style="flex:1;height:54px;border:2px solid #D9C3A0;background:#fff;border-radius:16px;color:#8A6A54;font-weight:800;font-size:15px;cursor:pointer">Từ chối</button>
+      <a href="Kitchen.dc.html" style="flex:2">
+        <div style="height:54px;border-radius:16px;background:{{accent}};box-shadow:0 4px 0 #7A3E12;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;font-family:'Fredoka',sans-serif">Nhận đơn</div>
+      </a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#b5651d"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals(){ return { accent: this.props.accent ?? '#b5651d' }; } }
+</script>
+</body>
+</html>

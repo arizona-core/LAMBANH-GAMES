@@ -1,0 +1,35 @@
+# deps
+node_modules/
+.pnp/
+
+# next / build
+.next/
+out/
+dist/
+build/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+**/service-account*.json
+
+# supabase local
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/functions/.env
+
+# typescript / next
+*.tsbuildinfo
+next-env.d.ts
+*.pem
+
+# claude code — cá nhân, không commit
+.claude/settings.local.json
+
+# misc
+.DS_Store
+*.log
+.vercel
+coverage/

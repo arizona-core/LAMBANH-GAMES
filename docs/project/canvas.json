@@ -1,0 +1,180 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Settings.dc.html": { "x": 0, "y": 3432, "w": 390, "h": 844, "title": "13. Cài đặt", "is_interactive": true },
+    "ShopHours.dc.html": { "x": 470, "y": 3432, "w": 390, "h": 844, "title": "14. Giờ mở / đóng cửa", "is_interactive": true },
+    "CustomerOrder.dc.html": { "x": 940, "y": 3432, "w": 390, "h": 844, "title": "15. Khách đặt bánh", "is_interactive": true },
+    "Reviews.dc.html": { "x": 1410, "y": 3432, "w": 390, "h": 844, "title": "16. Đánh giá & trả lời", "is_interactive": true },
+    "Revenue.dc.html": { "x": 0, "y": 4576, "w": 390, "h": 844, "title": "17. Doanh thu", "is_interactive": true },
+    "EventInflation.dc.html": { "x": 470, "y": 4576, "w": 390, "h": 844, "title": "18. Sự kiện: Lạm phát", "is_interactive": true },
+    "EventFine.dc.html": { "x": 940, "y": 4576, "w": 390, "h": 844, "title": "19. Sự kiện: Bị công an phạt", "is_interactive": true },
+    "EventDineDash.dc.html": { "x": 1410, "y": 4576, "w": 390, "h": 844, "title": "20. Sự kiện: Khách quịt", "is_interactive": true },
+    "EventAIReview.dc.html": { "x": 0, "y": 5720, "w": 390, "h": 844, "title": "21. AI khách đánh giá", "is_interactive": true },
+    "Baking.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "7. Mini-game làm bánh",
+      "w": 390,
+      "x": 940,
+      "y": 1144
+    },
+    "CreateProfile.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "3. Tạo chủ quán & quán",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    },
+    "Daily.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "11. Nhiệm vụ & điểm danh",
+      "w": 390,
+      "x": 940,
+      "y": 2288
+    },
+    "Home.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "5. Tiệm chính (Home)",
+      "w": 390,
+      "x": 0,
+      "y": 1144
+    },
+    "Kitchen.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "6. Bếp & công thức",
+      "w": 390,
+      "x": 470,
+      "y": 1144
+    },
+    "Leaderboard.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "9. Bảng xếp hạng",
+      "w": 390,
+      "x": 0,
+      "y": 2288
+    },
+    "Login.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "2. Đăng nhập Google",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "1. Loading / Splash",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Market.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "8. Chợ người chơi",
+      "w": 390,
+      "x": 1410,
+      "y": 1144
+    },
+    "ShopVisit.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "10. Ghé thăm quán",
+      "w": 390,
+      "x": 470,
+      "y": 2288
+    },
+    "Store.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "12. Cửa hàng (doanh thu)",
+      "w": 390,
+      "x": 1410,
+      "y": 2288
+    },
+    "Tutorial.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "title": "4. Hướng dẫn đầu game",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-28T00:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "howto": {
+      "fill": "orange",
+      "text": "Cách dùng:\n• Các ô gạch đứt nét = chỗ thả ảnh nguyên liệu / dụng cụ từ Vecteezy.\n• Nhấn Play để bấm thử luồng: Loading → Đăng nhập → Tạo quán → Hướng dẫn → Tiệm.\n• Đổi màu thương hiệu ở tab Tweaks (biến 'accent').",
+      "w": 300,
+      "x": 1870,
+      "y": 0
+    },
+    "sec1": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "1 · Onboarding & màn hình chờ",
+      "w": 240,
+      "x": 0,
+      "y": -240
+    },
+    "sec2": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "2 · Gameplay chính",
+      "w": 240,
+      "x": 0,
+      "y": 904
+    },
+    "sec3": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "3 · Online, xã hội & doanh thu",
+      "w": 240,
+      "x": 0,
+      "y": 2048
+    },
+    "sec4": { "kind": "title1", "maxW": 1800, "text": "4 · Vận hành & quản lý tiệm", "w": 240, "x": 0, "y": 3192 },
+    "sec5": { "kind": "title1", "maxW": 1800, "text": "5 · Doanh thu & sự kiện", "w": 240, "x": 0, "y": 4336 },
+    "sec6": { "kind": "title1", "maxW": 1800, "text": "6 · Đánh giá tự động (AI)", "w": 240, "x": 0, "y": 5480 }
+  },
+  "order": [
+    "Main.dc.html",
+    "Login.dc.html",
+    "CreateProfile.dc.html",
+    "Tutorial.dc.html",
+    "Home.dc.html",
+    "Kitchen.dc.html",
+    "Baking.dc.html",
+    "Market.dc.html",
+    "Leaderboard.dc.html",
+    "ShopVisit.dc.html",
+    "Daily.dc.html",
+    "Store.dc.html",
+    "Settings.dc.html",
+    "ShopHours.dc.html",
+    "CustomerOrder.dc.html",
+    "Reviews.dc.html",
+    "Revenue.dc.html",
+    "EventInflation.dc.html",
+    "EventFine.dc.html",
+    "EventDineDash.dc.html",
+    "EventAIReview.dc.html"
+  ],
+  "pages": [],
+  "title": "Sweet Shop — Thiết kế UI game làm bánh"
+}

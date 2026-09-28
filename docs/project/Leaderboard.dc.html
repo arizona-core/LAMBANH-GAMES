@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Bảng xếp hạng</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit;text-decoration:none}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;background:#FBEFDD;font-family:'Nunito',sans-serif;color:#4A2B1A;display:flex;flex-direction:column;overflow:hidden">
+
+  <!-- header -->
+  <div style="padding:44px 16px 6px;display:flex;align-items:center;gap:12px">
+    <a href="Home.dc.html" aria-label="Quay lại" style="width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:0 3px 0 #E4CFA8;display:flex;align-items:center;justify-content:center">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7A3E12" stroke-width="2.4"><path d="M15 5 8 12l7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+    <div>
+      <div style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:22px;color:#7A3E12">Bảng xếp hạng</div>
+      <div style="font-size:11px;color:#A5763F;font-weight:700">Mùa Thu · còn 3 ngày</div>
+    </div>
+  </div>
+
+  <!-- tabs -->
+  <div style="display:flex;gap:8px;padding:8px 16px 12px">
+    <div style="flex:1;text-align:center;padding:8px 0;border-radius:12px;background:{{accent}};color:#fff;font-weight:800;font-size:13px">Doanh thu</div>
+    <div style="flex:1;text-align:center;padding:8px 0;border-radius:12px;background:#F2E1C4;color:#8A6A54;font-weight:800;font-size:13px">Số sao</div>
+    <div style="flex:1;text-align:center;padding:8px 0;border-radius:12px;background:#F2E1C4;color:#8A6A54;font-weight:800;font-size:13px">Bạn bè</div>
+  </div>
+
+  <!-- podium -->
+  <div style="display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:14px 16px 10px">
+    <div style="text-align:center;width:92px">
+      <div style="width:48px;height:48px;border-radius:50%;background:#D6E4F5;border:3px solid #A9C4E0;margin:0 auto"></div>
+      <div style="font-size:11px;font-weight:800;margin-top:4px;color:#4A2B1A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bakery King</div>
+      <div style="background:#C9DBEF;border-radius:12px 12px 0 0;height:66px;margin-top:6px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <span style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:24px;color:#5B7EA6">2</span>
+        <span style="font-size:10px;font-weight:800;color:#5B7EA6">18.4k</span>
+      </div>
+    </div>
+    <div style="text-align:center;width:100px">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="#E7B23C" style="display:block;margin:0 auto 2px"><path d="M12 2l2.5 5 5.5.8-4 3.9.9 5.5L12 20l-4.9 2.2.9-5.5-4-3.9 5.5-.8z"/></svg>
+      <div style="width:58px;height:58px;border-radius:50%;background:#FCE7B8;border:3px solid #E7B23C;margin:0 auto"></div>
+      <div style="font-size:12px;font-weight:800;margin-top:4px;color:#4A2B1A">Sweet Corner</div>
+      <div style="background:#F4C542;border-radius:12px 12px 0 0;height:86px;margin-top:6px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <span style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:30px;color:#7A5514">1</span>
+        <span style="font-size:11px;font-weight:800;color:#7A5514">24.1k</span>
+      </div>
+    </div>
+    <div style="text-align:center;width:92px">
+      <div style="width:48px;height:48px;border-radius:50%;background:#F6D2DA;border:3px solid #E0A9B4;margin:0 auto"></div>
+      <div style="font-size:11px;font-weight:800;margin-top:4px;color:#4A2B1A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Tiệm của Lan</div>
+      <div style="background:#EFC3CD;border-radius:12px 12px 0 0;height:52px;margin-top:6px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <span style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:22px;color:#B56679">3</span>
+        <span style="font-size:10px;font-weight:800;color:#B56679">15.9k</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- list -->
+  <div style="flex-grow:1;overflow:hidden;padding:6px 16px;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:9px 12px;box-shadow:0 3px 0 #EADFC8">
+      <span style="width:24px;text-align:center;font-weight:800;color:#8A6A54">4</span>
+      <div style="width:36px;height:36px;border-radius:50%;background:#DCE9D5;border:2px solid #B6CFAC"></div>
+      <span style="flex-grow:1;font-weight:800;font-size:14px">Mây Bakehouse</span>
+      <span style="font-weight:800;color:#B5651D;font-size:14px">14.2k</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:9px 12px;box-shadow:0 3px 0 #EADFC8">
+      <span style="width:24px;text-align:center;font-weight:800;color:#8A6A54">5</span>
+      <div style="width:36px;height:36px;border-radius:50%;background:#EDD9C0;border:2px solid #D2B48C"></div>
+      <span style="flex-grow:1;font-weight:800;font-size:14px">Cỏ May Cake</span>
+      <span style="font-weight:800;color:#B5651D;font-size:14px">13.0k</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:9px 12px;box-shadow:0 3px 0 #EADFC8">
+      <span style="width:24px;text-align:center;font-weight:800;color:#8A6A54">6</span>
+      <div style="width:36px;height:36px;border-radius:50%;background:#E0DAF0;border:2px solid #BEB2E0"></div>
+      <span style="flex-grow:1;font-weight:800;font-size:14px">Bơ &amp; Đường</span>
+      <span style="font-weight:800;color:#B5651D;font-size:14px">11.7k</span>
+    </div>
+
+    <!-- your rank -->
+    <div style="display:flex;align-items:center;gap:12px;background:#FCEBD3;border:2px solid {{accent}};border-radius:14px;padding:9px 12px;margin-top:4px">
+      <span style="width:24px;text-align:center;font-weight:800;color:#B5651D">42</span>
+      <div style="width:36px;height:36px;border-radius:50%;background:#FFE0C4;border:2px solid #D98A3D"></div>
+      <div style="flex-grow:1">
+        <div style="font-weight:800;font-size:14px;color:#7A3E12">Tiệm Bánh Nắng <span style="font-size:10px;background:{{accent}};color:#fff;border-radius:6px;padding:1px 6px">BẠN</span></div>
+      </div>
+      <span style="font-weight:800;color:#B5651D;font-size:14px">4.8k</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#b5651d"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return { accent: this.props.accent ?? '#b5651d' }; }
+}
+</script>
+</body>
+</html>

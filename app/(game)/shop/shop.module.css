@@ -1,0 +1,107 @@
+.scene {
+  flex: 1;
+  min-height: 380px;
+  background: var(--bg-scene);
+  border-radius: 22px;
+  box-shadow: inset 0 3px 8px rgba(120, 70, 20, 0.12);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-image: url("/images/shop-building.webp");
+  background-repeat: no-repeat;
+  background-position: center 64px;
+  background-size: 62%;
+}
+
+.waiting {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: var(--strawberry-strong);
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--strawberry-shadow);
+  max-width: 55%;
+}
+
+.revenue {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 6px 10px;
+  text-align: center;
+  box-shadow: 0 3px 0 var(--shadow-hud);
+}
+
+.customers {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-bottom: 10px;
+  min-height: 52px;
+}
+
+.customer {
+  animation: bob 1.6s ease-in-out infinite;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.counter {
+  background: var(--counter);
+  border-radius: 0 0 22px 22px;
+  padding: 12px 14px 18px;
+  display: flex;
+  gap: 10px;
+}
+
+.slot {
+  flex: 1;
+  appearance: none;
+  cursor: pointer;
+  height: 92px;
+  border-radius: 12px;
+  background: var(--placeholder-bg);
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.slotEmpty {
+  border: 2px dashed var(--placeholder-dash);
+  color: #8a6337;
+}
+
+.slotQty {
+  font-size: 12px;
+}
+
+.daily {
+  gap: 10px;
+  color: var(--gem-border);
+  background: var(--gem-bg);
+  box-shadow: none;
+  border: 2px solid #c9b6ee;
+}
+
+.tip {
+  align-items: flex-start;
+}

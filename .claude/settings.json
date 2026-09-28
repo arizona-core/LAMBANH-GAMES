@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev)",
+      "Bash(npm run build)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run test)",
+      "Bash(npm run test *)",
+      "Bash(npm run test:db)",
+      "Bash(npm run gen:types)",
+      "Bash(npx supabase start)",
+      "Bash(npx supabase stop)",
+      "Bash(npx supabase status)",
+      "Bash(npx supabase db reset)",
+      "Bash(npx supabase test db)",
+      "Bash(npx supabase migration new *)",
+      "Bash(npx supabase functions serve *)",
+      "Bash(npx supabase gen types *)",
+      "Bash(npm install)",
+      "Bash(npm ci)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(supabase start)",
+      "Bash(supabase stop)",
+      "Bash(supabase status)",
+      "Bash(supabase db reset)",
+      "Bash(supabase db diff *)",
+      "Bash(supabase migration new *)",
+      "Bash(supabase functions serve *)",
+      "Bash(supabase gen types *)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git log *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(supabase db push *)",
+      "Bash(supabase functions deploy *)",
+      "Bash(npx supabase db push *)",
+      "Bash(npx supabase functions deploy *)",
+      "Bash(vercel *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./supabase/.env)",
+      "Read(./**/service-account*.json)",
+      "Bash(cat *.env*)",
+      "Bash(cat .env*)",
+      "Bash(type .env*)",
+      "Bash(less .env*)",
+      "Bash(head .env*)",
+      "Bash(tail .env*)",
+      "Bash(more .env*)"
+    ]
+  }
+}
