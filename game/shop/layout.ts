@@ -30,12 +30,13 @@ export const DOOR = { tx: 0, ty: 5.2 };
 export const DOOR_INSIDE = { tx: 0.8, ty: 5.2 };
 /** Chỗ xếp hàng trước quầy (khách đầu hàng đứng sát quầy). */
 export const QUEUE = [
-  { tx: 5.8, ty: 1.6 },
-  { tx: 4.9, ty: 2.3 },
-  { tx: 4.0, ty: 3.0 },
-  { tx: 3.1, ty: 3.7 },
+  { tx: 6.3, ty: 1.55 },
+  { tx: 5.1, ty: 1.55 },
+  { tx: 3.9, ty: 1.55 },
+  { tx: 2.7, ty: 1.55 },
 ];
-export const COOKING_SPOT = { tx: 6.6, ty: 1.5 };
+/** Khách đang được làm bánh đứng đầu quầy, cạnh máy tính tiền. */
+export const COOKING_SPOT = { tx: 7.1, ty: 1.0 };
 
 /** Vị trí bàn: bàn cơ bản luôn có; bàn mua thêm lần lượt vào các vị trí sau. */
 export const TABLE_SPOTS = [

@@ -3,6 +3,8 @@ import { IsoShopScene, type IsoShopConfig, type SceneCustomer } from "./scenes/I
 
 /** Tạo cảnh tiệm isometric gắn vào `parent`. Chỉ gọi ở browser (import động từ client component). */
 export function createShopGame(parent: HTMLElement, cfg: IsoShopConfig) {
+  // Game khởi động bất đồng bộ: giữ danh sách khách mới nhất để scene đọc khi dựng xong.
+  const feed = { list: [] as SceneCustomer[] };
   const width = Math.min(parent.clientWidth || 360, 448);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -16,11 +18,14 @@ export function createShopGame(parent: HTMLElement, cfg: IsoShopConfig) {
     audio: { noAudio: true },
     scene: [],
   });
-  game.scene.add("iso-shop", IsoShopScene, true, cfg);
+  game.scene.add("iso-shop", IsoShopScene, true, { ...cfg, feed });
   const scene = () => game.scene.getScene("iso-shop") as IsoShopScene | null;
 
   return {
-    sync: (list: SceneCustomer[]) => scene()?.sync(list),
+    sync: (list: SceneCustomer[]) => {
+      feed.list = list;
+      scene()?.sync(list);
+    },
     setHour: (hour: number) => scene()?.setHour(hour),
     destroy: () => game.destroy(true),
   };

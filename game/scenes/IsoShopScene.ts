@@ -23,6 +23,7 @@ export type SceneCustomer = {
   id: string;
   status: "waiting" | "cooking" | "seated";
   image: string | null;
+  name: string;
   look: number;
   impatient: boolean;
   /** Thứ tự sắp xếp: arrive_at (hàng chờ) hoặc served_at (ghế). */
@@ -34,16 +35,23 @@ export type IsoShopConfig = {
   decor: string[]; // mã đồ trang trí đã mua
   chefImage: string | null;
   hour: number;
+  /** Danh sách khách mới nhất (wrapper cập nhật), scene đọc khi vừa dựng xong. */
+  feed?: { list: SceneCustomer[] };
 };
 
 type Pt = { tx: number; ty: number };
 type Actor = {
   box: Phaser.GameObjects.Container;
+  ring: Phaser.GameObjects.Arc;
   status: SceneCustomer["status"];
   target: string;
 };
 
-const SHIRTS = [0x8fb6e0, 0xe0a9b4, 0xa8cda0, 0xf3d9ae, 0xc9b6ee, 0xf4b183];
+const AVATAR_R = 14; // bán kính avatar khách (px)
+const HEAD_Y = -26; // tâm avatar so với chân
+const BG = [0xffe0c4, 0xf6d2da, 0xd9ead3, 0xd6e4f5];
+/** Viền avatar theo trạng thái: chờ = vàng, đang làm = cam, đang ăn = xanh. */
+const RING: Record<SceneCustomer["status"], number> = { waiting: 0xe7b23c, cooking: 0xd98a3d, seated: 0x6fa678 };
 const WALL_H = 78;
 const SPEED = 70; // px/giây
 
@@ -74,6 +82,7 @@ export class IsoShopScene extends Phaser.Scene {
   private firstSync = true;
   private pending: SceneCustomer[] | null = null;
   private loaded = new Set<string>();
+  private ready = false;
 
   constructor() {
     super("iso-shop");
@@ -84,6 +93,7 @@ export class IsoShopScene extends Phaser.Scene {
     this.theme = THEMES[cfg.theme] ?? THEMES.default;
     this.actors.clear();
     this.firstSync = true;
+    this.ready = false;
   }
 
   preload() {
@@ -106,7 +116,13 @@ export class IsoShopScene extends Phaser.Scene {
     this.drawCounter();
     this.drawDecor();
     this.setHour(this.cfg.hour);
-    if (this.pending) this.sync(this.pending);
+    this.ready = true;
+    const initial = this.pending ?? this.cfg.feed?.list ?? null;
+    if (initial) {
+      const list = initial;
+      this.pending = null;
+      this.sync(list);
+    }
   }
 
   // ---------------------------------------------------------------- vẽ phòng
@@ -197,21 +213,23 @@ export class IsoShopScene extends Phaser.Scene {
 
   private drawCounter() {
     const t = this.theme;
-    this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 26, t.counter);
-    // viền mặt quầy
-    this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 27, t.counterTop, 1).setAlpha(0.35);
+    // Quầy dài dọc trục x: xếp lớp theo góc trước-trái (gần tường) để khách đứng trước quầy
+    // luôn được vẽ đè lên quầy, còn chủ tiệm đứng sau quầy bị quầy che phần thân.
+    const depth = this.iso(COUNTER.tx - COUNTER.len / 2, COUNTER.ty + 0.4).y;
+    this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 26, t.counter).setDepth(depth);
+    this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 27, t.counterTop).setAlpha(0.35).setDepth(depth + 0.1);
     // Máy tính tiền + khay bánh trên quầy
-    this.box(COUNTER.tx + 1.1, COUNTER.ty, 0.35, 0.35, 40, 0x4a4a4a, 2);
-    this.box(COUNTER.tx - 0.8, COUNTER.ty, 0.6, 0.45, 32, 0xfff6e9, 2);
+    this.box(COUNTER.tx + 1.1, COUNTER.ty, 0.35, 0.35, 40, 0x4a4a4a).setDepth(depth + 0.2);
+    this.box(COUNTER.tx - 0.8, COUNTER.ty, 0.6, 0.45, 32, 0xfff6e9).setDepth(depth + 0.2);
 
     // Chủ tiệm sau quầy
     const c = this.iso(CHEF.tx, CHEF.ty);
-    const chef = this.add.container(c.x, c.y).setDepth(c.y - 5);
+    const chef = this.add.container(c.x, c.y).setDepth(depth - 1);
     chef.add(this.add.ellipse(0, 0, 18, 7, 0x000000, 0.15));
     chef.add(this.add.rectangle(0, -14, 16, 22, 0xffffff).setStrokeStyle(1, 0xe4cfa8));
     if (this.textures.exists("chef")) {
-      chef.add(this.add.circle(0, -34, 11, 0xfff6e9));
-      chef.add(this.add.image(0, -34, "chef").setDisplaySize(24, 24));
+      chef.add(this.add.circle(0, -38, AVATAR_R + 3, 0xffffff));
+      chef.add(this.add.image(0, -38, "chef").setDisplaySize(AVATAR_R * 2, AVATAR_R * 2));
     } else {
       chef.add(this.add.circle(0, -32, 9, 0xf6c99b));
       chef.add(this.add.rectangle(0, -44, 16, 8, 0xffffff).setStrokeStyle(1, 0xe4cfa8));
@@ -381,23 +399,66 @@ export class IsoShopScene extends Phaser.Scene {
     return `cust:${image}`;
   }
 
+  /** Cắt ảnh chân dung thành hình tròn (tạo 1 lần cho mỗi ảnh). */
+  private roundKey(image: string) {
+    const key = `round:${image}`;
+    if (this.textures.exists(key)) return key;
+    const src = this.textures.get(this.headKey(image)).getSourceImage() as HTMLImageElement;
+    const size = 96;
+    const tex = this.textures.createCanvas(key, size, size);
+    if (!tex) return null;
+    const ctx = tex.getContext();
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = "#FFF6E9";
+    ctx.fillRect(0, 0, size, size);
+    const scale = Math.max(size / src.width, size / src.height);
+    const w = src.width * scale;
+    const h = src.height * scale;
+    ctx.drawImage(src, (size - w) / 2, (size - h) / 2 - size * 0.04, w, h);
+    ctx.restore();
+    tex.refresh();
+    return key;
+  }
+
+  // Khách hiển thị dạng 2D "standee": avatar tròn (ảnh chân dung hoặc "?") + tên, đổ bóng dưới chân.
   private makeActor(c: SceneCustomer, at: Pt) {
     const p = this.iso(at.tx, at.ty);
     const box = this.add.container(p.x, p.y);
-    box.add(this.add.ellipse(0, 0, 16, 6, 0x000000, 0.15));
-    box.add(this.add.rectangle(0, -11, 14, 18, SHIRTS[c.look % SHIRTS.length]).setStrokeStyle(1, 0x000000, 0.1));
-    const key = c.image ? this.headKey(c.image) : null;
-    if (key && this.textures.exists(key)) {
-      box.add(this.add.circle(0, -28, 10, 0xfff6e9));
-      box.add(this.add.image(0, -28, key).setDisplaySize(22, 22));
+    box.add(this.add.ellipse(0, 0, 22, 8, 0x000000, 0.18));
+    box.add(this.add.rectangle(0, -9, 3, 14, 0x7a3e12, 0.5)); // chân đế
+    const ring = this.add.circle(0, HEAD_Y, AVATAR_R + 3, RING[c.status]);
+    box.add(ring);
+
+    const headKey = c.image ? this.headKey(c.image) : null;
+    const round = headKey && this.textures.exists(headKey) ? this.roundKey(c.image!) : null;
+    if (round) {
+      box.add(this.add.image(0, HEAD_Y, round).setDisplaySize(AVATAR_R * 2, AVATAR_R * 2));
     } else {
-      box.add(this.add.circle(0, -27, 9, [0xffe0c4, 0xf6d2da, 0xd9ead3, 0xd6e4f5][c.look % 4]).setStrokeStyle(1, 0x7a3e12, 0.4));
+      box.add(this.add.circle(0, HEAD_Y, AVATAR_R, BG[c.look % 4]));
       box.add(
-        this.add.text(0, -27, "?", { fontFamily: "Baloo 2, sans-serif", fontSize: "13px", color: "#7A3E12", fontStyle: "700" }).setOrigin(0.5),
+        this.add
+          .text(0, HEAD_Y, "?", { fontFamily: "Baloo 2, sans-serif", fontSize: "17px", color: "#7A3E12", fontStyle: "700" })
+          .setOrigin(0.5),
       );
     }
+    const short = c.name.split(" ").pop() ?? c.name;
+    box.add(
+      this.add
+        .text(0, HEAD_Y + AVATAR_R + 9, short, {
+          fontFamily: "Nunito, sans-serif",
+          fontSize: "10px",
+          color: "#4A2B1A",
+          fontStyle: "800",
+          backgroundColor: "#FFFFFFCC",
+          padding: { x: 3, y: 0 },
+        })
+        .setOrigin(0.5),
+    );
     box.setDepth(p.y);
-    const actor: Actor = { box, status: c.status, target: `${at.tx},${at.ty}` };
+    const actor: Actor = { box, ring, status: c.status, target: `${at.tx},${at.ty}` };
     this.actors.set(c.id, actor);
     return actor;
   }
@@ -425,7 +486,7 @@ export class IsoShopScene extends Phaser.Scene {
 
   private bubble(actor: Actor, text: string, color: string) {
     const t = this.add
-      .text(actor.box.x, actor.box.y - 46, text, { fontFamily: "Nunito, sans-serif", fontSize: "12px", color, fontStyle: "800", backgroundColor: "#ffffff", padding: { x: 4, y: 1 } })
+      .text(actor.box.x, actor.box.y + HEAD_Y - AVATAR_R - 14, text, { fontFamily: "Nunito, sans-serif", fontSize: "12px", color, fontStyle: "800", backgroundColor: "#ffffff", padding: { x: 4, y: 1 } })
       .setOrigin(0.5)
       .setDepth(6000);
     this.tweens.add({ targets: t, y: t.y - 14, alpha: 0, delay: 700, duration: 700, onComplete: () => t.destroy() });
@@ -433,7 +494,7 @@ export class IsoShopScene extends Phaser.Scene {
 
   /** Nạp ảnh chân dung khách còn thiếu rồi đồng bộ. */
   sync(list: SceneCustomer[]) {
-    if (!this.sys?.isActive() || !this.seats.length) {
+    if (!this.ready) {
       this.pending = list;
       return;
     }
@@ -480,6 +541,7 @@ export class IsoShopScene extends Phaser.Scene {
         this.walk(actor, [to]);
       }
       if (c.status === "seated" && actor.status !== "seated") this.bubble(actor, "Cảm ơn!", "#3E7A4A");
+      if (actor.status !== c.status) actor.ring.setFillStyle(RING[c.status]);
       actor.status = c.status;
       actor.target = key;
     }
