@@ -2,7 +2,7 @@
 // client gửi "ý định", server kiểm tra và quyết định kết quả.
 import { createClient } from "@/lib/supabase/client";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/env";
-import type { Avatar, ShopColor } from "@/lib/game/constants";
+import type { Avatar, AvatarKind, ShopColor } from "@/lib/game/constants";
 import type { AcceptResult, CookMethod, OrderResult, Packaging, TickResult } from "@/lib/game/orders";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -12,7 +12,10 @@ type Actions = {
     input: { ownerName: string; shopName: string; avatar: Avatar; color: ShopColor };
     output: { slug: string };
   };
-  "update-avatar": { input: { avatar: Avatar; color: ShopColor | null }; output: { avatar: string } };
+  "update-avatar": { input: { avatar: AvatarKind; color: ShopColor | null }; output: { avatar: string } };
+  "set-avatar-photo": { input: { path: string }; output: { avatar_url: string } };
+  "update-bio": { input: { bio: string }; output: { bio: string } };
+  heartbeat: { input: Record<string, never>; output: { last_seen_at: string } };
   "set-theme": { input: { theme: string }; output: { theme: string } };
   "reply-review": { input: { reviewId: string; reply: string }; output: { reputation_gained: number } };
   "rename-shop": { input: { shopName: string }; output: { slug: string; gems: number } };

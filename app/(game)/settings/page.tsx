@@ -16,7 +16,7 @@ export default async function SettingsPage() {
       <div className="screen">
         <ScreenHeader title="Cài đặt" />
         <section className="card row" aria-label="Hồ sơ">
-          <Avatar avatar={profile.avatar} size={56} ring={SHOP_COLORS[profile.color as ShopColor]?.hex} />
+          <Avatar avatar={profile.avatar} photo={profile.avatar_url} size={56} ring={SHOP_COLORS[profile.color as ShopColor]?.hex} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: 17 }}>{profile.shop_name}</div>
             <div className="small muted" style={{ fontWeight: 700 }}>
@@ -27,7 +27,16 @@ export default async function SettingsPage() {
             </div>
           </div>
         </section>
-        <SettingsView gems={profile.gems} email={user.email ?? ""} avatar={profile.avatar} color={profile.color} />
+        <SettingsView
+          gems={profile.gems}
+          email={user.email ?? ""}
+          avatar={profile.avatar}
+          avatarUrl={profile.avatar_url}
+          color={profile.color}
+          bio={profile.bio}
+          userId={profile.id}
+          slug={profile.slug}
+        />
       </div>
     </main>
   );

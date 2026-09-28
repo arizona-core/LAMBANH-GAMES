@@ -12,7 +12,7 @@ export function Hud({ profile }: { profile: Profile }) {
   return (
     <div className="hud">
       <Link href="/settings" className="hud__shop" aria-label="Hồ sơ & cài đặt">
-        <Avatar avatar={profile.avatar} ring={ring} />
+        <Avatar avatar={profile.avatar} photo={profile.avatar_url} ring={ring} />
         <div style={{ minWidth: 0 }}>
           <div className="hud__name">{profile.shop_name}</div>
           <div className="row" style={{ gap: 6, marginTop: 3 }}>

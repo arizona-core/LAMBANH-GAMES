@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(69);
+select plan(76);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -196,6 +196,17 @@ select lives_ok($q$ select public.update_avatar('00000000-0000-0000-0000-0000000
 select is((select avatar || '/' || color from public.profiles where id = '00000000-0000-0000-0000-00000000000a'), 'p_alien/ocean', 'đã lưu avatar mới');
 select throws_ok($q$ select public.update_avatar('00000000-0000-0000-0000-00000000000a', 'hacker', null) $q$,
   'P0001', 'INVALID_INPUT', 'avatar ngoài danh sách bị chặn');
+
+-- ---------------------------------------------------------------- hồ sơ công khai
+select lives_ok($q$ select public.update_bio('00000000-0000-0000-0000-00000000000a', 'Tiệm bánh nhà làm, mở cửa 7h sáng!') $q$, 'cập nhật tiểu sử');
+select throws_ok($q$ select public.update_bio('00000000-0000-0000-0000-00000000000a', 'quán vcl') $q$, 'P0001', 'NAME_NOT_ALLOWED', 'tiểu sử lọc từ bậy');
+select ok((public.heartbeat('00000000-0000-0000-0000-00000000000a') ->> 'last_seen_at') is not null, 'heartbeat ghi lần hoạt động');
+select is((public.set_avatar_photo('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a/1790000000000.webp') ->> 'avatar_url'),
+  '00000000-0000-0000-0000-00000000000a/1790000000000.webp', 'đặt avatar ảnh tải lên');
+select is((select avatar from public.profiles where id = '00000000-0000-0000-0000-00000000000a'), 'custom', 'avatar = custom');
+select is((public.update_avatar('00000000-0000-0000-0000-00000000000a', 'a2', null) ->> 'old_url'),
+  '00000000-0000-0000-0000-00000000000a/1790000000000.webp', 'đổi sang avatar có sẵn trả về ảnh cũ để xoá');
+select ok((select avatar_url is null from public.profiles where id = '00000000-0000-0000-0000-00000000000a'), 'avatar_url đã được xoá');
 
 -- ---------------------------------------------------------------- RLS / quyền client
 set local role authenticated;

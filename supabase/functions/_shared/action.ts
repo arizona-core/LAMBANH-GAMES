@@ -11,7 +11,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // service_role CHỈ tồn tại ở đây (server). Không bao giờ gửi xuống client.
-const admin: SupabaseClient = createClient(SUPABASE_URL, SERVICE_KEY, {
+export const admin: SupabaseClient = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
@@ -45,7 +45,7 @@ const THROTTLE_WINDOW_SECONDS = 10;
 
 type Rpc = (fn: string, args: Record<string, unknown>) => Promise<unknown>;
 
-class ActionError extends Error {}
+export class ActionError extends Error {}
 
 const rpc: Rpc = async (fn, args) => {
   const { data, error } = await admin.rpc(fn, args);

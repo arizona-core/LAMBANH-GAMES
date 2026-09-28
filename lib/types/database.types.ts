@@ -474,6 +474,8 @@ export type Database = {
         Row: {
           active_theme: string;
           avatar: string;
+          avatar_url: string | null;
+          bio: string;
           checkin_streak: number;
           coins: number;
           color: string;
@@ -481,6 +483,7 @@ export type Database = {
           gems: number;
           id: string;
           last_checkin: string | null;
+          last_seen_at: string | null;
           level: number;
           owner_name: string;
           reputation: number;
@@ -497,6 +500,8 @@ export type Database = {
         Insert: {
           active_theme?: string;
           avatar: string;
+          avatar_url?: string | null;
+          bio?: string;
           checkin_streak?: number;
           coins?: number;
           color: string;
@@ -504,6 +509,7 @@ export type Database = {
           gems?: number;
           id: string;
           last_checkin?: string | null;
+          last_seen_at?: string | null;
           level?: number;
           owner_name: string;
           reputation?: number;
@@ -519,6 +525,8 @@ export type Database = {
         Update: {
           active_theme?: string;
           avatar?: string;
+          avatar_url?: string | null;
+          bio?: string;
           checkin_streak?: number;
           coins?: number;
           color?: string;
@@ -526,6 +534,7 @@ export type Database = {
           gems?: number;
           id?: string;
           last_checkin?: string | null;
+          last_seen_at?: string | null;
           level?: number;
           owner_name?: string;
           reputation?: number;
@@ -859,6 +868,7 @@ export type Database = {
       leaderboard: {
         Row: {
           avatar: string | null;
+          avatar_url: string | null;
           color: string | null;
           id: string | null;
           level: number | null;
@@ -911,35 +921,56 @@ export type Database = {
       };
       public_profiles: {
         Row: {
+          active_theme: string | null;
           avatar: string | null;
+          avatar_url: string | null;
+          bio: string | null;
           color: string | null;
+          created_at: string | null;
           id: string | null;
+          last_seen_at: string | null;
           level: number | null;
           owner_name: string | null;
           reputation: number | null;
           revenue_total: number | null;
+          review_avg: number | null;
+          review_count: number | null;
           shop_name: string | null;
           slug: string | null;
         };
         Insert: {
+          active_theme?: string | null;
           avatar?: string | null;
+          avatar_url?: string | null;
+          bio?: string | null;
           color?: string | null;
+          created_at?: string | null;
           id?: string | null;
+          last_seen_at?: string | null;
           level?: number | null;
           owner_name?: string | null;
           reputation?: number | null;
           revenue_total?: number | null;
+          review_avg?: never;
+          review_count?: never;
           shop_name?: never;
           slug?: string | null;
         };
         Update: {
+          active_theme?: string | null;
           avatar?: string | null;
+          avatar_url?: string | null;
+          bio?: string | null;
           color?: string | null;
+          created_at?: string | null;
           id?: string | null;
+          last_seen_at?: string | null;
           level?: number | null;
           owner_name?: string | null;
           reputation?: number | null;
           revenue_total?: number | null;
+          review_avg?: never;
+          review_count?: never;
           shop_name?: never;
           slug?: string | null;
         };
@@ -963,6 +994,8 @@ export type Database = {
         Returns: {
           active_theme: string;
           avatar: string;
+          avatar_url: string | null;
+          bio: string;
           checkin_streak: number;
           coins: number;
           color: string;
@@ -970,6 +1003,7 @@ export type Database = {
           gems: number;
           id: string;
           last_checkin: string | null;
+          last_seen_at: string | null;
           level: number;
           owner_name: string;
           reputation: number;
@@ -1026,6 +1060,8 @@ export type Database = {
         Returns: undefined;
       };
       _today: { Args: Record<PropertyKey, never>; Returns: string };
+      _traffic_level: { Args: { p_minute_of_day: number }; Returns: string };
+      _traffic_mult: { Args: { p_minute_of_day: number }; Returns: number };
       _upgrade_bonus: { Args: { p_kind: string; p_user: string }; Returns: number };
       _validate_names: { Args: { p_owner_name: string; p_shop_name: string }; Returns: undefined };
       _visit_json: { Args: { p_visit: string }; Returns: Json };
@@ -1070,15 +1106,18 @@ export type Database = {
         Returns: Json;
       };
       customer_tick: { Args: { p_user: string }; Returns: Json };
+      heartbeat: { Args: { p_user: string }; Returns: Json };
       market_fee: { Args: { p_price: number }; Returns: number };
       rename_shop: { Args: { p_shop_name: string; p_user: string }; Returns: Json };
       reply_review: { Args: { p_reply: string; p_review: string; p_user: string }; Returns: Json };
+      set_avatar_photo: { Args: { p_url: string; p_user: string }; Returns: Json };
       set_theme: { Args: { p_theme: string; p_user: string }; Returns: Json };
       throttle: {
         Args: { p_action: string; p_max: number; p_user: string; p_window_seconds: number };
         Returns: boolean;
       };
       update_avatar: { Args: { p_avatar: string; p_color: string; p_user: string }; Returns: Json };
+      update_bio: { Args: { p_bio: string; p_user: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;

@@ -15,6 +15,7 @@ giữa người chơi thật. Không có thanh toán bằng tiền thật: xu v�
 | Đăng nhập | `/login` | Google OAuth. Ở local có thêm form "đăng nhập dev". |
 | Mở tiệm | `/onboarding` | Nhập tên chủ quán và tên quán (không được trùng, có lọc từ bậy), chọn avatar và màu. |
 | Tiệm | `/shop` | Cảnh 2.5D isometric (Phaser): khách vào cửa → xếp hàng → quầy → ngồi ghế; đồng hồ game (7:00–24:00), nhận đơn. |
+| Người chơi | `/players`, `/players/[slug]` | Danh sách tiệm (online/offline, tìm kiếm), hồ sơ quán: avatar, tiểu sử, doanh thu, uy tín, hạng, đánh giá. |
 | Đánh giá | `/reviews` | Điểm trung bình, phân bố sao, lọc; khách tự viết nhận xét theo tính cách; trả lời (+1 uy tín). |
 | Bếp | `/kitchen` | Sổ 9 công thức (nguyên liệu, cách nấu, đóng gói), kho nguyên liệu/sốt/topping. |
 | Làm đơn | `/order/[visitId]` | 7 bước: nguyên liệu → cách nấu → trộn & nấu (Phaser) → sốt → topping → đóng gói → giao. |

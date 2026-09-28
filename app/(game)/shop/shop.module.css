@@ -152,3 +152,12 @@
     opacity: 0.5;
   }
 }
+
+.onlineDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2fb35a;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(47, 179, 90, 0.2);
+}

@@ -104,6 +104,9 @@ nhiệm vụ. Không bán sức mạnh trực tiếp ảnh hưởng cạnh tranh
   Chấm điểm: canh giờ ± lò; thiếu nguyên liệu −25, thừa −15, sai cách nấu −40, sai gói −10.
   Tiền = giá bánh theo sao × tủ trưng bày + 2× giá sốt/topping + tip (nếu đúng sốt & topping khách gọi).
 - Chợ chỉ mua bán nguyên liệu, sốt, topping.
+- **Người chơi & hồ sơ:** online = hoạt động trong 90 giây (heartbeat 30 giây/lần khi mở app).
+  Avatar tải lên: Supabase Storage bucket `avatars` (≤ 256px webp thu nhỏ ở máy, ≤ 512 KB), mỗi người
+  1 thư mục; đổi avatar thì server xoá ảnh cũ. Tiểu sử quán ≤ 200 ký tự, lọc từ bậy.
 - **Đánh giá:** mỗi đơn giao xong khách tự viết đánh giá (sao = chất lượng, khách khó tính −1 nếu
   chưa 5★, sai sốt/topping −1); khách bỏ đi vì chờ lâu để lại 1★. Trả lời đánh giá (≥10 ký tự) +1 uy tín.
 - **Trang trí:** bàn ghế (mỗi chỗ ngồi +3 lượt khách/ngày, tối đa 90), đồ treo tường/sàn/trần

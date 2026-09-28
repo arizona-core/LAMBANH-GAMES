@@ -97,6 +97,7 @@ export class IsoShopScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.setCORS("anonymous");
     if (this.cfg.chefImage) this.load.image("chef", this.cfg.chefImage);
   }
 

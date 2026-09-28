@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element -- ảnh chân dung nhỏ đã tối ưu sẵn */
+import { avatarPhotoUrl } from "@/lib/game/avatar";
 import { AVATAR_BG, AVATAR_PHOTOS, type Avatar as AvatarKey } from "@/lib/game/constants";
 
 // 4 avatar đầu bếp vẽ bằng SVG (khác nhau ở màu da/tóc/mũ).
@@ -10,8 +11,19 @@ const LOOKS: Record<DrawnAvatar, { skin: string; hair: string; hat: boolean }> =
   a4: { skin: "#DDB08A", hair: "#2B2B2B", hat: false },
 };
 
-export function Avatar({ avatar, size = 40, ring }: { avatar: string; size?: number; ring?: string }) {
-  const photo = AVATAR_PHOTOS[avatar as AvatarKey];
+/** photo: đường dẫn ảnh tải lên trong Storage (dùng khi avatar = "custom"). */
+export function Avatar({
+  avatar,
+  photo: uploaded,
+  size = 40,
+  ring,
+}: {
+  avatar: string;
+  photo?: string | null;
+  size?: number;
+  ring?: string;
+}) {
+  const photo = avatar === "custom" ? avatarPhotoUrl(uploaded) : AVATAR_PHOTOS[avatar as AvatarKey];
   if (photo) {
     return (
       <img
@@ -25,7 +37,7 @@ export function Avatar({ avatar, size = 40, ring }: { avatar: string; size?: num
           borderRadius: "50%",
           objectFit: "cover",
           flexShrink: 0,
-          background: AVATAR_BG[avatar as AvatarKey],
+          background: AVATAR_BG[avatar as AvatarKey] ?? AVATAR_BG.custom,
           boxShadow: ring ? `0 0 0 2px ${ring}` : undefined,
         }}
       />

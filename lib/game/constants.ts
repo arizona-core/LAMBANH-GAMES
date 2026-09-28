@@ -1,5 +1,7 @@
 // a1..a4: avatar vẽ SVG; p_*: ảnh chân dung (public/images/customers). Trùng check ở DB (migration 0007).
 export const AVATARS = ["a1", "a2", "a3", "a4", "p_glasses", "p_olddad", "p_curly", "p_girl", "p_cap", "p_alien"] as const;
+/** Avatar có thể là 1 trong AVATARS hoặc "custom" (ảnh tự tải lên). */
+export type AvatarKind = Avatar | "custom";
 export type Avatar = (typeof AVATARS)[number];
 
 export const SHOP_COLORS = {
@@ -21,7 +23,7 @@ export const AVATAR_PHOTOS: Partial<Record<Avatar, string>> = {
   p_alien: "/images/customers/alien.webp",
 };
 
-export const AVATAR_BG: Record<Avatar, string> = {
+export const AVATAR_BG: Record<AvatarKind, string> = {
   a1: "#FFE0C4",
   a2: "#F6D2DA",
   a3: "#D9EAD3",
@@ -32,6 +34,7 @@ export const AVATAR_BG: Record<Avatar, string> = {
   p_girl: "#FFF6E9",
   p_cap: "#FFF6E9",
   p_alien: "#FFF6E9",
+  custom: "#FFF6E9",
 };
 
 export const RENAME_COST_GEMS = 20;

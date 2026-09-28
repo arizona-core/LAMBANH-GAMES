@@ -1,5 +1,6 @@
 // Truy vấn ĐỌC dùng chung cho Server Component (client Supabase + RLS của người chơi).
 import { redirect } from "next/navigation";
+import { ONLINE_WINDOW_MS } from "@/lib/game/avatar";
 import { getCurrentPlayer } from "@/lib/supabase/server";
 import type { RecipeWithIngredients } from "@/lib/types";
 
@@ -41,4 +42,11 @@ export async function getUpgradeBonuses(supabase: Supabase) {
     if (c && (c.kind === "oven" || c.kind === "display")) bonus[c.kind] = Math.max(bonus[c.kind], c.effect);
   }
   return { owned, ...bonus };
+}
+
+/** Số người chơi đang online (hoạt động trong ONLINE_WINDOW_MS gần nhất). */
+export async function countOnline(supabase: Supabase): Promise<number> {
+  const since = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString();
+  const { count } = await supabase.from("public_profiles").select("id", { count: "exact", head: true }).gte("last_seen_at", since);
+  return count ?? 0;
 }

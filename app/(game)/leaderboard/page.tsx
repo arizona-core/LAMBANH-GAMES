@@ -25,7 +25,9 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
   ]);
   const rows = top ?? [];
   const value = (r: LeaderboardRow) =>
-    by === "stars" ? `${formatCompact(r.reputation ?? 0)} ★` : `${formatCompact(r.revenue_total ?? 0)} ₵`;
+    by === "stars"
+      ? `${formatCompact(r.reputation ?? 0)} ★`
+      : `${formatCompact(r.revenue_total ?? 0)} ₵`;
   const rank = (r: LeaderboardRow) => (by === "stars" ? r.reputation_rank : r.revenue_rank) ?? 0;
   const podium = [rows[1], rows[0], rows[2]];
 
@@ -37,7 +39,15 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
         <section className={styles.banner} aria-label="Mùa giải">
           <img src="/images/rank/podium.webp" alt="" width={96} height={94} />
           <div style={{ flex: 1 }}>
-            <strong style={{ fontFamily: "var(--font-display)", fontSize: 19, color: "var(--ink-strong)" }}>Mùa 1</strong>
+            <strong
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 19,
+                color: "var(--ink-strong)",
+              }}
+            >
+              Mùa 1
+            </strong>
             <p className="small" style={{ margin: "2px 0 6px", fontWeight: 700 }}>
               Top 10 nhận xu &amp; gem, Top 1 được vương miện pha lê.
             </p>
@@ -49,7 +59,12 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
           <Link href="/leaderboard" role="tab" className="tab" aria-selected={by === "revenue"}>
             Doanh thu
           </Link>
-          <Link href="/leaderboard?by=stars" role="tab" className="tab" aria-selected={by === "stars"}>
+          <Link
+            href="/leaderboard?by=stars"
+            role="tab"
+            className="tab"
+            aria-selected={by === "stars"}
+          >
             Số sao
           </Link>
         </div>
@@ -61,13 +76,21 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
             <ol className={styles.podium} aria-label="Top 3">
               {podium.map((r, i) => {
                 const place = [2, 1, 3][i];
-                if (!r) return <li key={`empty-${i}`} className={styles.podiumItem} aria-hidden="true" />;
+                if (!r)
+                  return <li key={`empty-${i}`} className={styles.podiumItem} aria-hidden="true" />;
                 return (
                   <li key={r.id} className={styles.podiumItem} data-place={place}>
                     <div className={styles.avatarWrap}>
-                      {place === 1 && <img src="/images/rank/crown.webp" alt="Vương miện" className={styles.crown} />}
+                      {place === 1 && (
+                        <img
+                          src="/images/rank/crown.webp"
+                          alt="Vương miện"
+                          className={styles.crown}
+                        />
+                      )}
                       <Avatar
                         avatar={r.avatar ?? "a1"}
+                        photo={r.avatar_url}
                         size={place === 1 ? 68 : 54}
                         ring={place === 1 ? "#7c6bd6" : SHOP_COLORS[r.color as ShopColor]?.hex}
                       />
@@ -104,7 +127,9 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
                 <span className="row small" style={{ gap: 4, fontWeight: 800 }}>
                   <GemIcon /> {t.gems}
                 </span>
-                {t.from === 1 && <img src="/images/rank/crown.webp" alt="Vương miện" width={26} height={26} />}
+                {t.from === 1 && (
+                  <img src="/images/rank/crown.webp" alt="Vương miện" width={26} height={26} />
+                )}
               </li>
             ))}
           </ul>
@@ -124,35 +149,56 @@ export default async function LeaderboardPage({ searchParams }: PageProps<"/lead
   );
 }
 
-function Row({ r, rank, value, me }: { r: LeaderboardRow; rank: number; value: string; me?: boolean }) {
+function Row({
+  r,
+  rank,
+  value,
+  me,
+}: {
+  r: LeaderboardRow;
+  rank: number;
+  value: string;
+  me?: boolean;
+}) {
   return (
-    <li
-      className="card row"
-      style={{
-        gap: 8,
-        boxShadow: me ? "0 0 0 2px var(--primary), 0 4px 0 var(--shadow-card)" : undefined,
-        background: rank <= 10 ? "#fffaf0" : undefined,
-      }}
-    >
-      <RankBadge rank={rank} size={40} seal={!!me && rank > 10} />
-      <Avatar avatar={r.avatar ?? "a1"} size={34} />
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: "block", fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {r.shop_name}
-          {me && (
-            <span className="badge" style={{ marginLeft: 6 }}>
-              BẠN
-            </span>
-          )}
-        </span>
-        <span className="row" style={{ gap: 6 }}>
-          <span className="small muted" style={{ fontWeight: 800 }}>
-            Lv.{r.level}
+    <li style={{ listStyle: "none" }}>
+      <Link
+        href={`/players/${r.slug}`}
+        className="card row"
+        style={{
+          gap: 8,
+          boxShadow: me ? "0 0 0 2px var(--primary), 0 4px 0 var(--shadow-card)" : undefined,
+          background: rank <= 10 ? "#fffaf0" : undefined,
+        }}
+      >
+        <RankBadge rank={rank} size={40} seal={!!me && rank > 10} />
+        <Avatar avatar={r.avatar ?? "a1"} photo={r.avatar_url} size={34} />
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span
+            style={{
+              display: "block",
+              fontWeight: 800,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {r.shop_name}
+            {me && (
+              <span className="badge" style={{ marginLeft: 6 }}>
+                BẠN
+              </span>
+            )}
           </span>
-          <RewardPill rank={rank} compact />
+          <span className="row" style={{ gap: 6 }}>
+            <span className="small muted" style={{ fontWeight: 800 }}>
+              Lv.{r.level}
+            </span>
+            <RewardPill rank={rank} compact />
+          </span>
         </span>
-      </span>
-      <span style={{ fontWeight: 800, minWidth: 56, textAlign: "right" }}>{value}</span>
+        <span style={{ fontWeight: 800, minWidth: 56, textAlign: "right" }}>{value}</span>
+      </Link>
     </li>
   );
 }

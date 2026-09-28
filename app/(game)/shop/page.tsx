@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
 import { BottomNav } from "@/components/BottomNav";
 import { Hud } from "@/components/Hud";
+import { avatarPhotoUrl } from "@/lib/game/avatar";
 import { AVATAR_PHOTOS, type Avatar } from "@/lib/game/constants";
 import { todayVN } from "@/lib/game/format";
-import { requirePlayer } from "@/lib/game/queries";
+import { countOnline, requirePlayer } from "@/lib/game/queries";
 import { ShopScene } from "./ShopScene";
 
 export const metadata: Metadata = { title: "Tiệm" };
 
 export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   const { supabase, profile } = await requirePlayer();
-  const [params, { data: owned }, { data: reviews }] = await Promise.all([
+  const [params, { data: owned }, { data: reviews }, online] = await Promise.all([
     searchParams,
     supabase.from("upgrades").select("upgrade_code"),
     supabase.from("reviews").select("stars"),
+    countOnline(supabase),
   ]);
   const decor = (owned ?? []).map((u) => u.upgrade_code);
   const total = reviews?.length ?? 0;
@@ -30,7 +32,8 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
           welcome={params.welcome === "1"}
           decor={decor}
           theme={profile.active_theme}
-          chefImage={AVATAR_PHOTOS[profile.avatar as Avatar] ?? null}
+          chefImage={profile.avatar === "custom" ? avatarPhotoUrl(profile.avatar_url) : (AVATAR_PHOTOS[profile.avatar as Avatar] ?? null)}
+          onlineCount={Math.max(1, online)}
           reviewSummary={{ avg, total }}
         />
       </div>

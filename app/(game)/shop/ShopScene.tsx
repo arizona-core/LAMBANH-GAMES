@@ -29,6 +29,7 @@ export function ShopScene({
   theme,
   chefImage,
   reviewSummary,
+  onlineCount,
 }: {
   revenueToday: number;
   canClaimDaily: boolean;
@@ -37,6 +38,7 @@ export function ShopScene({
   theme: string;
   chefImage: string | null;
   reviewSummary: { avg: number; total: number };
+  onlineCount: number;
 }) {
   const router = useRouter();
   const push = useToast((s) => s.push);
@@ -220,6 +222,16 @@ export function ShopScene({
           )}
         </div>
       </section>
+
+      <Link href="/players" className="card row" style={{ gap: 10 }}>
+        <span className={styles.onlineDot} aria-hidden="true" />
+        <strong>Người chơi</strong>
+        <span className="small muted" style={{ fontWeight: 700 }}>
+          {onlineCount} đang online
+        </span>
+        <span className="spacer" />
+        <span className="btn btn--soft btn--sm">Xem</span>
+      </Link>
 
       <Link href="/reviews" className="card row" style={{ gap: 10 }}>
         <Stars value={Math.round(reviewSummary.avg)} size={16} />
