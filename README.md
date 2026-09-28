@@ -100,5 +100,5 @@ export SUPABASE_ACCESS_TOKEN=...       # Account → Access Tokens
 
 ## Ảnh
 
-Ảnh gốc Vecteezy nằm trong `assets/source/`. Chạy `npm run assets:build` để xuất bản webp đã tối ưu
+Ảnh gốc Vecteezy nằm trong `assets/source/` (ảnh khách: `assets/source/customers/`, đồ trang trí: `assets/source/decor/`). Chạy `npm run assets:build` để xuất bản webp đã tối ưu
 vào `public/images/` và tạo icon PWA. Giấy phép và ghi nguồn xem ở [assets/CREDITS.md](assets/CREDITS.md).

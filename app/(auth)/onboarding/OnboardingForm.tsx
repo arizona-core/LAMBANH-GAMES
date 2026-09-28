@@ -73,7 +73,7 @@ export function OnboardingForm({ suggestedOwner }: { suggestedOwner: string }) {
         <legend className="field__label" style={{ marginBottom: 8 }}>
           Chọn ảnh đại diện
         </legend>
-        <div className="row" style={{ gap: 14 }}>
+        <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
           {AVATARS.map((a, i) => (
             <label key={a} style={{ cursor: "pointer", position: "relative" }}>
               <input
@@ -85,7 +85,7 @@ export function OnboardingForm({ suggestedOwner }: { suggestedOwner: string }) {
                 className="sr-only"
                 aria-label={`Avatar ${i + 1}`}
               />
-              <Avatar avatar={a} size={60} ring={avatar === a ? "var(--primary)" : "transparent"} />
+              <Avatar avatar={a} size={54} ring={avatar === a ? "var(--primary)" : "transparent"} />
             </label>
           ))}
         </div>

@@ -17,6 +17,8 @@ export type VisitCustomer = {
   picky: boolean;
   min_quality: number;
   look: number;
+  /** Ảnh chân dung (người dùng gửi sau); null → dùng avatar vẽ bằng SVG. */
+  image: string | null;
 };
 
 export type Visit = {

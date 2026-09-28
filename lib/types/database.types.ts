@@ -228,6 +228,7 @@ export type Database = {
           favorite_topping: string | null;
           gender: string;
           id: number;
+          image: string | null;
           impatient: boolean;
           look: number;
           min_quality: number;
@@ -247,6 +248,7 @@ export type Database = {
           favorite_topping?: string | null;
           gender: string;
           id: number;
+          image?: string | null;
           impatient?: boolean;
           look: number;
           min_quality?: number;
@@ -266,6 +268,7 @@ export type Database = {
           favorite_topping?: string | null;
           gender?: string;
           id?: number;
+          image?: string | null;
           impatient?: boolean;
           look?: number;
           min_quality?: number;
@@ -673,6 +676,7 @@ export type Database = {
           kind: string;
           name: string;
           requires_code: string | null;
+          scene_slot: string | null;
           sort: number;
           tier: number;
           unlock_level: number;
@@ -688,6 +692,7 @@ export type Database = {
           kind: string;
           name: string;
           requires_code?: string | null;
+          scene_slot?: string | null;
           sort?: number;
           tier?: number;
           unlock_level?: number;
@@ -703,6 +708,7 @@ export type Database = {
           kind?: string;
           name?: string;
           requires_code?: string | null;
+          scene_slot?: string | null;
           sort?: number;
           tier?: number;
           unlock_level?: number;

@@ -178,7 +178,7 @@ export function OrderFlow({ visitId, ingredients, recipes }: { visitId: string; 
       </header>
 
       <section className={`card row ${styles.customer}`} aria-label="Khách hàng">
-        <CustomerAvatar look={c.look} gender={c.gender} size={52} mood={result ? (result.dashed ? "normal" : "happy") : secondsLeft < 20 ? "angry" : "normal"} />
+        <CustomerAvatar look={c.look} gender={c.gender} image={c.image} size={52} mood={result ? (result.dashed ? "normal" : "happy") : secondsLeft < 20 ? "angry" : "normal"} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
             <strong>{c.name}</strong>

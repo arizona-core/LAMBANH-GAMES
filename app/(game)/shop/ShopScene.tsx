@@ -12,6 +12,7 @@ import { errorMessage } from "@/lib/game/errors";
 import { formatNumber } from "@/lib/game/format";
 import { orderText, type Visit } from "@/lib/game/orders";
 import { useToast } from "@/lib/store/toast";
+import { ShopInterior, type DecorItem } from "./ShopInterior";
 import styles from "./shop.module.css";
 
 const TUTORIAL_KEY = "sweetshop.tutorial.v2";
@@ -21,10 +22,12 @@ export function ShopScene({
   revenueToday,
   canClaimDaily,
   welcome,
+  decor,
 }: {
   revenueToday: number;
   canClaimDaily: boolean;
   welcome: boolean;
+  decor: DecorItem[];
 }) {
   const router = useRouter();
   const push = useToast((s) => s.push);
@@ -96,16 +99,23 @@ export function ShopScene({
   const serverNow = now + offset;
   const clock = gameClock(serverNow);
   const present = visits.filter(
-    (v) => new Date(v.arrive_at).getTime() <= serverNow && new Date(v.leave_at).getTime() > serverNow,
+    (v) =>
+      new Date(v.arrive_at).getTime() <= serverNow && new Date(v.leave_at).getTime() > serverNow,
   );
   const cooking = present.find((v) => v.status === "cooking");
   const queue = present.filter((v) => v.status === "waiting");
 
   return (
     <>
-      <div className={`card row ${clock.open ? styles.clockOpen : styles.clockClosed}`} role="timer" aria-live="off">
+      <div
+        className={`card row ${clock.open ? styles.clockOpen : styles.clockClosed}`}
+        role="timer"
+        aria-live="off"
+      >
         <IconClock />
-        <strong style={{ fontSize: 18, fontVariantNumeric: "tabular-nums" }}>{formatGameTime(clock)}</strong>
+        <strong style={{ fontSize: 18, fontVariantNumeric: "tabular-nums" }}>
+          {formatGameTime(clock)}
+        </strong>
         <span className="small" style={{ fontWeight: 800 }}>
           {clock.open
             ? `Đang mở cửa · đóng lúc 24:00 (còn ${Math.ceil(clock.secondsToClose / 60)} phút)`
@@ -122,40 +132,51 @@ export function ShopScene({
         </Link>
       )}
 
-      <section className={styles.scene} aria-label="Cửa tiệm">
-        <div className={styles.waiting}>
-          {!clock.open
-            ? "Tiệm đang đóng cửa"
-            : present.length > 0
-              ? `${present.length} khách ở quầy`
-              : loaded
-                ? "Đang chờ khách…"
-                : "Đang mở cửa…"}
-        </div>
-        <div className={styles.revenue}>
-          <div className="small muted" style={{ fontSize: 11, fontWeight: 700 }}>
-            Doanh thu hôm nay
+      <section aria-label="Cửa tiệm">
+        <ShopInterior hour={clock.hour} open={clock.open} decor={decor}>
+          <div className={styles.waiting}>
+            {!clock.open
+              ? "Tiệm đang đóng cửa"
+              : present.length > 0
+                ? `${present.length} khách ở quầy`
+                : loaded
+                  ? "Đang chờ khách…"
+                  : "Đang mở cửa…"}
           </div>
-          <div style={{ fontWeight: 800, color: "var(--mint-strong)" }}>+ {formatNumber(revenueToday)} ₵</div>
-        </div>
-        <div className={styles.customers} aria-hidden="true">
-          {present.slice(0, 4).map((v) => (
-            <div key={v.id} className={styles.customer}>
-              <CustomerAvatar look={v.customer.look} gender={v.customer.gender} size={48} />
+          <div className={styles.revenue}>
+            <div className="small muted" style={{ fontSize: 11, fontWeight: 700 }}>
+              Doanh thu hôm nay
             </div>
-          ))}
-        </div>
-        <div className={styles.counter}>
-          {cooking ? (
-            <Link href={`/order/${cooking.id}`} className="btn btn--white btn--block">
-              Đang làm đơn của {cooking.customer.name.split(" ").pop()} — tiếp tục
-            </Link>
-          ) : (
-            <span className={styles.counterText}>
-              {clock.open ? "Nhận đơn của khách bên dưới để bắt đầu làm bánh" : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
-            </span>
-          )}
-        </div>
+            <div style={{ fontWeight: 800, color: "var(--mint-strong)" }}>
+              + {formatNumber(revenueToday)} ₵
+            </div>
+          </div>
+          <div className={styles.customers} aria-hidden="true">
+            {present.slice(0, 4).map((v) => (
+              <div key={v.id} className={styles.customer}>
+                <CustomerAvatar
+                  look={v.customer.look}
+                  gender={v.customer.gender}
+                  image={v.customer.image}
+                  size={48}
+                />
+              </div>
+            ))}
+          </div>
+          <div className={styles.counter}>
+            {cooking ? (
+              <Link href={`/order/${cooking.id}`} className="btn btn--white btn--block">
+                Đang làm đơn của {cooking.customer.name.split(" ").pop()} — tiếp tục
+              </Link>
+            ) : (
+              <span className={styles.counterText}>
+                {clock.open
+                  ? "Nhận đơn của khách bên dưới để bắt đầu làm bánh"
+                  : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
+              </span>
+            )}
+          </div>
+        </ShopInterior>
       </section>
 
       {showTip && (
@@ -164,8 +185,9 @@ export function ShopScene({
           <div style={{ flex: 1 }}>
             <strong>Bếp trưởng Cam</strong>
             <p className="small" style={{ margin: "2px 0 8px" }}>
-              Tiệm mở từ 7:00 đến 24:00 (1 giờ game = 1 phút). Khách tới sẽ gọi món — nhận đơn, bỏ đúng nguyên liệu, nấu,
-              thêm sốt &amp; topping khách thích, đóng gói rồi giao trước khi khách hết kiên nhẫn!
+              Tiệm mở từ 7:00 đến 24:00 (1 giờ game = 1 phút). Khách tới sẽ gọi món — nhận đơn, bỏ
+              đúng nguyên liệu, nấu, thêm sốt &amp; topping khách thích, đóng gói rồi giao trước khi
+              khách hết kiên nhẫn!
             </p>
             <button type="button" className="btn btn--soft btn--sm" onClick={dismissTip}>
               Đã hiểu
@@ -202,13 +224,24 @@ function QueueCard({ visit, serverNow, busy }: { visit: Visit; serverNow: number
   return (
     <article className="card stack" style={{ gap: 8 }}>
       <div className="row" style={{ alignItems: "flex-start" }}>
-        <CustomerAvatar look={c.look} gender={c.gender} size={48} mood={ratio < 0.3 ? "angry" : "normal"} />
+        <CustomerAvatar
+          look={c.look}
+          gender={c.gender}
+          image={c.image}
+          size={48}
+          mood={ratio < 0.3 ? "angry" : "normal"}
+        />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
             <strong>{c.name}</strong>
             <span className="badge">{c.personality}</span>
           </div>
-          <TraitChips impatient={c.impatient} dineAndDash={c.dine_and_dash} picky={c.picky} minQuality={c.min_quality} />
+          <TraitChips
+            impatient={c.impatient}
+            dineAndDash={c.dine_and_dash}
+            picky={c.picky}
+            minQuality={c.min_quality}
+          />
           <p className="small" style={{ margin: "4px 0 0", fontWeight: 800 }}>
             Gọi: {orderText(visit)}
           </p>
@@ -222,7 +255,13 @@ function QueueCard({ visit, serverNow, busy }: { visit: Visit; serverNow: number
           aria-valuenow={left}
           aria-valuemin={0}
         >
-          <span style={{ width: `${ratio * 100}%`, background: ratio < 0.3 ? "var(--danger)" : ratio < 0.6 ? "var(--coin)" : "var(--mint)" }} />
+          <span
+            style={{
+              width: `${ratio * 100}%`,
+              background:
+                ratio < 0.3 ? "var(--danger)" : ratio < 0.6 ? "var(--coin)" : "var(--mint)",
+            }}
+          />
         </span>
         <span className="small muted" style={{ fontWeight: 800, minWidth: 34, textAlign: "right" }}>
           {left}s

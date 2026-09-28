@@ -24,3 +24,15 @@
 | chef-cooking.webp | vibrant-rustic-3d-cartoon-chef-cooking… | (dự phòng) |
 | shop-building.png | bakery-shop-icon-3d-render… | Cảnh tiệm, icon PWA |
 | cake-shop-hero.png | cake-shop-generative-ai-png | Màn đăng nhập (ảnh AI) |
+
+## Ảnh khách & trang trí (thêm sau)
+
+| Thư mục nguồn | Xuất ra | Dùng cho |
+|---|---|---|
+| `assets/source/customers/` | `public/images/customers/*.webp` (160×160, cắt vuông) | Ảnh chân dung khách NPC + avatar chủ tiệm |
+| `assets/source/decor/` | `public/images/decor/*.webp` (≤256, nền trong suốt) | Đồ trang trí hiện trong cảnh tiệm |
+
+Hiện có 6 ảnh chân dung (Vecteezy): glasses-man, old-dad, curly-man, asian-girl, cap-man,
+alien (gán cho khách id 219, 410, 430, 7, 473, 6). Khách chưa có ảnh hiển thị dấu "?".
+Thêm ảnh: thả file vào thư mục nguồn → `npm run assets:build` → migration mới cập nhật
+`customers.image` / `upgrade_catalog.image`.

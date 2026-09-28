@@ -34,7 +34,46 @@ const ICONS = [
   ["app/apple-icon.png", 180, 0.12],
 ];
 
+// Thư mục ảnh hàng loạt: mọi file trong assets/source/<dir>/ → public/images/<dir>/<tên>.webp
+// (tên file được chuẩn hoá: chữ thường, bỏ dấu, khoảng trắng → "-").
+const FOLDERS = [
+  ["customers", 160, "cover"], // ảnh chân dung khách: cắt vuông
+  ["decor", 256, "inside"], // đồ trang trí: giữ nguyên tỉ lệ, nền trong suốt
+];
+
+function slug(name) {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function buildFolders() {
+  const { readdir } = await import("node:fs/promises");
+  for (const [dir, size, fit] of FOLDERS) {
+    let files = [];
+    try {
+      files = (await readdir(path.join(SRC, dir))).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
+    } catch {
+      continue; // chưa có thư mục
+    }
+    await mkdir(path.join("public/images", dir), { recursive: true });
+    for (const f of files) {
+      const dest = path.join("public/images", dir, `${slug(path.parse(f).name)}.webp`);
+      const info = await sharp(path.join(SRC, dir, f))
+        .resize(size, size, { fit, withoutEnlargement: true, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .webp({ quality: 82, alphaQuality: 90 })
+        .toFile(dest);
+      console.log(`${dest}  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(1)}KB`);
+    }
+  }
+}
+
 async function main() {
+  await buildFolders();
   for (const [src, out, size] of IMAGES) {
     const dest = path.join("public/images", out);
     await mkdir(path.dirname(dest), { recursive: true });

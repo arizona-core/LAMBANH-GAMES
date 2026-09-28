@@ -1,7 +1,9 @@
-import { AVATAR_BG, type Avatar as AvatarKey } from "@/lib/game/constants";
+/* eslint-disable @next/next/no-img-element -- ảnh chân dung nhỏ đã tối ưu sẵn */
+import { AVATAR_BG, AVATAR_PHOTOS, type Avatar as AvatarKey } from "@/lib/game/constants";
 
 // 4 avatar đầu bếp vẽ bằng SVG (khác nhau ở màu da/tóc/mũ).
-const LOOKS: Record<AvatarKey, { skin: string; hair: string; hat: boolean }> = {
+type DrawnAvatar = "a1" | "a2" | "a3" | "a4";
+const LOOKS: Record<DrawnAvatar, { skin: string; hair: string; hat: boolean }> = {
   a1: { skin: "#F6C99B", hair: "#6B3A16", hat: true },
   a2: { skin: "#E7C6A6", hair: "#3B2416", hat: false },
   a3: { skin: "#F0B98C", hair: "#A0561A", hat: true },
@@ -9,7 +11,27 @@ const LOOKS: Record<AvatarKey, { skin: string; hair: string; hat: boolean }> = {
 };
 
 export function Avatar({ avatar, size = 40, ring }: { avatar: string; size?: number; ring?: string }) {
-  const key = (avatar in LOOKS ? avatar : "a1") as AvatarKey;
+  const photo = AVATAR_PHOTOS[avatar as AvatarKey];
+  if (photo) {
+    return (
+      <img
+        src={photo}
+        alt=""
+        width={size}
+        height={size}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          objectFit: "cover",
+          flexShrink: 0,
+          background: AVATAR_BG[avatar as AvatarKey],
+          boxShadow: ring ? `0 0 0 2px ${ring}` : undefined,
+        }}
+      />
+    );
+  }
+  const key = (avatar in LOOKS ? avatar : "a1") as DrawnAvatar;
   const look = LOOKS[key];
   return (
     <svg

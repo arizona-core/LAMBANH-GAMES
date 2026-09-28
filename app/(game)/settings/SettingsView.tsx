@@ -2,18 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Avatar } from "@/components/Avatar";
+import { IconCheck } from "@/components/icons";
 import { Modal } from "@/components/Modal";
 import { useAction } from "@/components/useAction";
-import { RENAME_COST_GEMS } from "@/lib/game/constants";
+import { AVATARS, RENAME_COST_GEMS, SHOP_COLORS, type Avatar as AvatarKey, type ShopColor } from "@/lib/game/constants";
 import { createClient } from "@/lib/supabase/client";
 
 const PREFS_KEY = "sweetshop.prefs.v1";
 type Prefs = { sound: boolean; music: boolean; notifications: boolean };
 const DEFAULT_PREFS: Prefs = { sound: true, music: true, notifications: false };
 
-export function SettingsView({ gems, email }: { gems: number; email: string }) {
+export function SettingsView({ gems, email, avatar, color }: { gems: number; email: string; avatar: string; color: string }) {
   const router = useRouter();
   const [renaming, setRenaming] = useState(false);
+  const [editingAvatar, setEditingAvatar] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
 
   useEffect(() => {
@@ -59,6 +62,9 @@ export function SettingsView({ gems, email }: { gems: number; email: string }) {
         </div>
       </section>
 
+      <button type="button" className="btn btn--soft btn--block" onClick={() => setEditingAvatar(true)}>
+        Đổi ảnh đại diện &amp; màu quán · miễn phí
+      </button>
       <button type="button" className="btn btn--soft btn--block" onClick={() => setRenaming(true)}>
         Đổi tên quán · {RENAME_COST_GEMS} gem
       </button>
@@ -72,6 +78,9 @@ export function SettingsView({ gems, email }: { gems: number; email: string }) {
       </button>
 
       {renaming && <RenameModal gems={gems} onClose={() => setRenaming(false)} />}
+      {editingAvatar && (
+        <AvatarModal current={avatar as AvatarKey} currentColor={color as ShopColor} onClose={() => setEditingAvatar(false)} />
+      )}
     </>
   );
 }
@@ -100,6 +109,75 @@ function RenameModal({ gems, onClose }: { gems: number; onClose: () => void }) {
           {busy ? "Đang đổi…" : "Xác nhận"}
         </button>
       </form>
+    </Modal>
+  );
+}
+
+function AvatarModal({
+  current,
+  currentColor,
+  onClose,
+}: {
+  current: AvatarKey;
+  currentColor: ShopColor;
+  onClose: () => void;
+}) {
+  const { run, busy } = useAction("update-avatar");
+  const [avatar, setAvatar] = useState<AvatarKey>(current);
+  const [color, setColor] = useState<ShopColor>(currentColor);
+
+  async function save() {
+    const res = await run({ avatar, color }, { success: () => "Đã cập nhật ảnh đại diện!" });
+    if (res) onClose();
+  }
+
+  return (
+    <Modal title="Ảnh đại diện & màu quán" onClose={onClose}>
+      <div className="row" style={{ gap: 12, flexWrap: "wrap" }} role="radiogroup" aria-label="Ảnh đại diện">
+        {AVATARS.map((a, i) => (
+          <button
+            key={a}
+            type="button"
+            role="radio"
+            aria-checked={avatar === a}
+            aria-label={`Avatar ${i + 1}`}
+            onClick={() => setAvatar(a)}
+            style={{ border: 0, background: "none", padding: 2, cursor: "pointer" }}
+          >
+            <Avatar avatar={a} size={56} ring={avatar === a ? "var(--primary)" : "transparent"} />
+          </button>
+        ))}
+      </div>
+      <div className="row" style={{ gap: 10, flexWrap: "wrap" }} role="radiogroup" aria-label="Màu quán">
+        {(Object.keys(SHOP_COLORS) as ShopColor[]).map((c) => (
+          <button
+            key={c}
+            type="button"
+            role="radio"
+            aria-checked={color === c}
+            aria-label={SHOP_COLORS[c].label}
+            onClick={() => setColor(c)}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: "50%",
+              border: 0,
+              cursor: "pointer",
+              background: SHOP_COLORS[c].hex,
+              color: "#fff",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: color === c ? "0 0 0 3px var(--bg-cream), 0 0 0 5px var(--ink-strong)" : "none",
+            }}
+          >
+            {color === c && <IconCheck size={16} />}
+          </button>
+        ))}
+      </div>
+      <button type="button" className="btn btn--primary btn--block btn--lg" onClick={save} disabled={busy}>
+        {busy ? "Đang lưu…" : "Lưu"}
+      </button>
     </Modal>
   );
 }

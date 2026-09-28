@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(54);
+select plan(58);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -161,6 +161,13 @@ select throws_ok($$ select public.claim_daily('00000000-0000-0000-0000-000000000
   'P0001', 'ALREADY_CLAIMED', 'không điểm danh 2 lần/ngày');
 select ok(public.throttle('00000000-0000-0000-0000-00000000000a', 't', 1, 60), 'throttle lần 1 qua');
 select ok(not public.throttle('00000000-0000-0000-0000-00000000000a', 't', 1, 60), 'throttle lần 2 bị chặn');
+
+-- ---------------------------------------------------------------- avatar
+select is((select count(*) from public.customers where image is not null)::int, 6, '6 khách đã có ảnh chân dung');
+select lives_ok($q$ select public.update_avatar('00000000-0000-0000-0000-00000000000a', 'p_alien', 'ocean') $q$, 'đổi avatar ảnh + màu');
+select is((select avatar || '/' || color from public.profiles where id = '00000000-0000-0000-0000-00000000000a'), 'p_alien/ocean', 'đã lưu avatar mới');
+select throws_ok($q$ select public.update_avatar('00000000-0000-0000-0000-00000000000a', 'hacker', null) $q$,
+  'P0001', 'INVALID_INPUT', 'avatar ngoài danh sách bị chặn');
 
 -- ---------------------------------------------------------------- RLS / quyền client
 set local role authenticated;

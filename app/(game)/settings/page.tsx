@@ -27,7 +27,7 @@ export default async function SettingsPage() {
             </div>
           </div>
         </section>
-        <SettingsView gems={profile.gems} email={user.email ?? ""} />
+        <SettingsView gems={profile.gems} email={user.email ?? ""} avatar={profile.avatar} color={profile.color} />
       </div>
     </main>
   );
