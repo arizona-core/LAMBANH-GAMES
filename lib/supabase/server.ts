@@ -21,14 +21,23 @@ export async function createClient() {
   });
 }
 
-// Trả về user + profile hiện tại (hoặc null). Dùng getUser() để xác minh với Auth server.
-// cache(): layout và page trong cùng 1 request chỉ gọi Auth/DB một lần.
+export type PlayerUser = { id: string; email: string | null; user_metadata: Record<string, unknown> };
+
+// Trả về user + profile hiện tại (hoặc null).
+// getClaims(): xác minh chữ ký JWT ngay tại server (khoá bất đối xứng, JWKS được cache) nên
+// không tốn 1 lượt gọi sang Auth server mỗi request như getUser(); Supabase tự quay về
+// getUser() nếu project còn dùng khoá đối xứng cũ.
+// cache(): layout và page trong cùng 1 request chỉ xác minh + đọc hồ sơ một lần.
 export const getCurrentPlayer = cache(async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, profile: null };
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return { supabase, user: null, profile: null };
+  const user: PlayerUser = {
+    id: claims.sub,
+    email: typeof claims.email === "string" ? claims.email : null,
+    user_metadata: (claims.user_metadata as Record<string, unknown> | undefined) ?? {},
+  };
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
   return { supabase, user, profile };
 });

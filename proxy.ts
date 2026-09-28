@@ -23,9 +23,10 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims(): xác minh JWT tại chỗ (không gọi Auth server mỗi lần điều hướng) và tự làm mới
+  // session khi token sắp hết hạn.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ?? null;
 
   const path = request.nextUrl.pathname;
   // Cho trang chủ có ?code=… (OAuth quay về Site URL) đi qua để app/page.tsx chuyển sang callback.

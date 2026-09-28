@@ -14,6 +14,8 @@ export function createShopGame(parent: HTMLElement, cfg: IsoShopConfig) {
     transparent: true,
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
     render: { antialias: true },
+    // Cảnh tiệm chủ yếu đứng yên → 30 khung hình/giây là đủ mượt, đỡ tốn pin/CPU điện thoại.
+    fps: { target: 30 },
     banner: false,
     audio: { noAudio: true },
     scene: [],
