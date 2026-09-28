@@ -36,3 +36,12 @@ Hiện có 6 ảnh chân dung (Vecteezy): glasses-man, old-dad, curly-man, asian
 alien (gán cho khách id 219, 410, 430, 7, 473, 6). Khách chưa có ảnh hiển thị dấu "?".
 Thêm ảnh: thả file vào thư mục nguồn → `npm run assets:build` → migration mới cập nhật
 `customers.image` / `upgrade_catalog.image`.
+
+## Ảnh bảng xếp hạng (Vecteezy)
+
+| File (assets/source/rank) | Xuất ra (public/images/rank) | Dùng cho |
+|---|---|---|
+| crown.png | crown.webp | Vương miện pha lê Top 1 |
+| seal.webp | seal.webp | Khung "hạng của bạn" |
+| podium.png | podium.webp | Banner mùa giải |
+| badges-sheet.webp (5 huy hiệu trong 1 ảnh) | badge-1..5.webp (tự cắt) | Huy hiệu hạng: 5 = Top 1, 4 = Top 2, 3 = Top 3, 2 = Top 4–10, 1 = hạng 11+ |

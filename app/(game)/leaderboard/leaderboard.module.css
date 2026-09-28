@@ -1,6 +1,31 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-card);
+  background: linear-gradient(135deg, #fff3d6, #fde2b8);
+  box-shadow: 0 4px 0 #efcf93;
+}
+
+.banner img {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.soon {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gem-border);
+  background: var(--gem-bg);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
 .podium {
   list-style: none;
-  margin: 8px 0 0;
+  margin: 18px 0 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -14,6 +39,31 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+}
+
+.avatarWrap {
+  position: relative;
+  display: flex;
+}
+
+.crown {
+  position: absolute;
+  left: 50%;
+  top: -34px;
+  width: 58px;
+  height: 58px;
+  transform: translateX(-50%) rotate(-8deg);
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(90, 60, 180, 0.35));
+  animation: shine 2.4s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes shine {
+  50% {
+    transform: translateX(-50%) rotate(-8deg) translateY(-3px);
+    filter: drop-shadow(0 4px 8px rgba(124, 107, 214, 0.6));
+  }
 }
 
 .podiumName {
@@ -32,8 +82,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 2px;
+  padding-top: 8px;
   color: #fff;
   font-weight: 800;
   font-size: 13px;
@@ -41,26 +92,21 @@
   box-shadow: 0 4px 0 var(--primary-shadow);
 }
 
-.podiumBar strong {
-  font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 1;
-}
-
 .podiumItem[data-place="1"] .podiumBar {
-  height: 110px;
-  background: #9a6a0c;
+  height: 118px;
+  background: linear-gradient(#b8860b, #9a6a0c);
   box-shadow: 0 4px 0 #6d4b08;
 }
 
 .podiumItem[data-place="2"] .podiumBar {
-  height: 86px;
-  background: #6b6f78;
+  height: 94px;
+  background: linear-gradient(#8a8f99, #6b6f78);
   box-shadow: 0 4px 0 #4c4f56;
 }
 
 .podiumItem[data-place="3"] .podiumBar {
-  height: 70px;
+  height: 80px;
+  background: linear-gradient(#b8733a, #9c5a1e);
 }
 
 .me {
@@ -69,4 +115,5 @@
   list-style: none;
   padding: 0;
   margin: 4px 0 0;
+  z-index: 5;
 }

@@ -72,8 +72,41 @@ async function buildFolders() {
   }
 }
 
+// Ảnh bảng xếp hạng. Bộ huy hiệu là 1 ảnh ngang chứa 5 huy hiệu → cắt 5 phần bằng nhau rồi trim nền.
+async function buildRank() {
+  const dir = path.join(SRC, "rank");
+  const out = "public/images/rank";
+  await mkdir(out, { recursive: true });
+  const single = [
+    ["crown.png", "crown.webp", 256],
+    ["seal.webp", "seal.webp", 192],
+    ["podium.png", "podium.webp", 480],
+  ];
+  for (const [src, dest, size] of single) {
+    const info = await sharp(path.join(dir, src))
+      .trim()
+      .resize(size, size, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 85, alphaQuality: 90 })
+      .toFile(path.join(out, dest));
+    console.log(`${out}/${dest}  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(1)}KB`);
+  }
+  const sheet = path.join(dir, "badges-sheet.webp");
+  const { width, height } = await sharp(sheet).metadata();
+  const w = Math.floor(width / 5);
+  for (let i = 0; i < 5; i++) {
+    const buf = await sharp(sheet).extract({ left: i * w, top: 0, width: w, height }).png().toBuffer();
+    const info = await sharp(buf)
+      .trim()
+      .resize(128, 128, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .webp({ quality: 85, alphaQuality: 90 })
+      .toFile(path.join(out, `badge-${i + 1}.webp`));
+    console.log(`${out}/badge-${i + 1}.webp  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(1)}KB`);
+  }
+}
+
 async function main() {
   await buildFolders();
+  await buildRank();
   for (const [src, out, size] of IMAGES) {
     const dest = path.join("public/images", out);
     await mkdir(path.dirname(dest), { recursive: true });
