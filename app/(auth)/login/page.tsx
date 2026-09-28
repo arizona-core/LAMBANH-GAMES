@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentPlayer } from "@/lib/supabase/server";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { LoginButtons } from "./LoginButtons";
 
 export const metadata: Metadata = { title: "Đăng nhập" };
@@ -37,6 +38,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             </p>
           )}
           <LoginButtons devLogin={process.env.NODE_ENV === "development"} />
+          <InstallAppButton />
           <p className="small muted" style={{ textAlign: "center", margin: 0 }}>
             Bằng việc tiếp tục, bạn đồng ý với Điều khoản &amp; Chính sách bảo mật.
           </p>

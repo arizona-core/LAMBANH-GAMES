@@ -28,7 +28,9 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  if (!user && !PUBLIC_PATHS.some((p) => path.startsWith(p))) {
+  // Cho trang chủ có ?code=… (OAuth quay về Site URL) đi qua để app/page.tsx chuyển sang callback.
+  const isOAuthReturn = path === "/" && request.nextUrl.searchParams.has("code");
+  if (!user && !isOAuthReturn && !PUBLIC_PATHS.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";

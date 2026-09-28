@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { IconCheck } from "@/components/icons";
 import { Modal } from "@/components/Modal";
 import { useAction } from "@/components/useAction";
@@ -62,6 +63,7 @@ export function SettingsView({ gems, email, avatar, color }: { gems: number; ema
         </div>
       </section>
 
+      <InstallAppButton />
       <button type="button" className="btn btn--soft btn--block" onClick={() => setEditingAvatar(true)}>
         Đổi ảnh đại diện &amp; màu quán · miễn phí
       </button>

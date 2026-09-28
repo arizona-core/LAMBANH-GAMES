@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomerAvatar, TraitChips } from "@/components/CustomerAvatar";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { Stars } from "@/components/Stars";
 import { IconCalendar, IconClock } from "@/components/icons";
 import { callAction } from "@/lib/api/actions";
@@ -160,6 +161,8 @@ export function ShopScene({
             : `Đóng cửa · mở lúc 07:00 (còn ${clock.secondsToOpen} giây)`}
         </span>
       </div>
+
+      <InstallAppButton variant="banner" />
 
       {canClaimDaily && (
         <Link href="/daily" className={`card row ${styles.daily}`}>
