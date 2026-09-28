@@ -126,6 +126,7 @@ export type Database = {
           reputation_delta: number | null;
           result: Json | null;
           sauce_code: string | null;
+          served_at: string | null;
           status: string;
           tip: number | null;
           topping_code: string | null;
@@ -143,6 +144,7 @@ export type Database = {
           reputation_delta?: number | null;
           result?: Json | null;
           sauce_code?: string | null;
+          served_at?: string | null;
           status?: string;
           tip?: number | null;
           topping_code?: string | null;
@@ -160,6 +162,7 @@ export type Database = {
           reputation_delta?: number | null;
           result?: Json | null;
           sauce_code?: string | null;
+          served_at?: string | null;
           status?: string;
           tip?: number | null;
           topping_code?: string | null;
@@ -469,6 +472,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          active_theme: string;
           avatar: string;
           checkin_streak: number;
           coins: number;
@@ -491,6 +495,7 @@ export type Database = {
           _market_eligible: boolean | null;
         };
         Insert: {
+          active_theme?: string;
           avatar: string;
           checkin_streak?: number;
           coins?: number;
@@ -512,6 +517,7 @@ export type Database = {
           xp?: number;
         };
         Update: {
+          active_theme?: string;
           avatar?: string;
           checkin_streak?: number;
           coins?: number;
@@ -609,6 +615,78 @@ export type Database = {
         };
         Relationships: [];
       };
+      reviews: {
+        Row: {
+          comment: string;
+          created_at: string;
+          customer_id: number;
+          id: string;
+          replied_at: string | null;
+          reply: string | null;
+          stars: number;
+          user_id: string;
+          visit_id: string;
+        };
+        Insert: {
+          comment: string;
+          created_at?: string;
+          customer_id: number;
+          id?: string;
+          replied_at?: string | null;
+          reply?: string | null;
+          stars: number;
+          user_id: string;
+          visit_id: string;
+        };
+        Update: {
+          comment?: string;
+          created_at?: string;
+          customer_id?: number;
+          id?: string;
+          replied_at?: string | null;
+          reply?: string | null;
+          stars?: number;
+          user_id?: string;
+          visit_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reviews_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "leaderboard";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "public_profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_visit_id_fkey";
+            columns: ["visit_id"];
+            isOneToOne: true;
+            referencedRelation: "customer_visits";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       transactions_log: {
         Row: {
           coins_delta: number;
@@ -670,6 +748,7 @@ export type Database = {
           cost_coins: number;
           cost_gems: number;
           created_at: string;
+          decor_type: string | null;
           description: string;
           effect: number;
           image: string | null;
@@ -677,6 +756,7 @@ export type Database = {
           name: string;
           requires_code: string | null;
           scene_slot: string | null;
+          seats: number;
           sort: number;
           tier: number;
           unlock_level: number;
@@ -686,6 +766,7 @@ export type Database = {
           cost_coins?: number;
           cost_gems?: number;
           created_at?: string;
+          decor_type?: string | null;
           description?: string;
           effect?: number;
           image?: string | null;
@@ -693,6 +774,7 @@ export type Database = {
           name: string;
           requires_code?: string | null;
           scene_slot?: string | null;
+          seats?: number;
           sort?: number;
           tier?: number;
           unlock_level?: number;
@@ -702,6 +784,7 @@ export type Database = {
           cost_coins?: number;
           cost_gems?: number;
           created_at?: string;
+          decor_type?: string | null;
           description?: string;
           effect?: number;
           image?: string | null;
@@ -709,6 +792,7 @@ export type Database = {
           name?: string;
           requires_code?: string | null;
           scene_slot?: string | null;
+          seats?: number;
           sort?: number;
           tier?: number;
           unlock_level?: number;
@@ -877,6 +961,7 @@ export type Database = {
       _lock_profile: {
         Args: { p_user: string };
         Returns: {
+          active_theme: string;
           avatar: string;
           checkin_streak: number;
           coins: number;
@@ -919,11 +1004,22 @@ export type Database = {
         Args: { p: Database["public"]["Tables"]["profiles"]["Row"] };
         Returns: boolean;
       };
+      _pick: { Args: { p_options: string[] }; Returns: string };
       _quality_pct: { Args: { p_quality: number }; Returns: number };
       _rate_limit: {
         Args: { p_kind: string; p_max: number; p_user: string; p_window: string };
         Returns: undefined;
       };
+      _review_comment: {
+        Args: {
+          c: Database["public"]["Tables"]["customers"]["Row"];
+          p_left: boolean;
+          p_stars: number;
+          p_wrong_extras: boolean;
+        };
+        Returns: string;
+      };
+      _seat_count: { Args: { p_user: string }; Returns: number };
       _slugify: { Args: { p_text: string }; Returns: string };
       _take_item: {
         Args: { p_code: string; p_kind: string; p_qty: number; p_quality: number; p_user: string };
@@ -976,10 +1072,13 @@ export type Database = {
       customer_tick: { Args: { p_user: string }; Returns: Json };
       market_fee: { Args: { p_price: number }; Returns: number };
       rename_shop: { Args: { p_shop_name: string; p_user: string }; Returns: Json };
+      reply_review: { Args: { p_reply: string; p_review: string; p_user: string }; Returns: Json };
+      set_theme: { Args: { p_theme: string; p_user: string }; Returns: Json };
       throttle: {
         Args: { p_action: string; p_max: number; p_user: string; p_window_seconds: number };
         Returns: boolean;
       };
+      update_avatar: { Args: { p_avatar: string; p_color: string; p_user: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;

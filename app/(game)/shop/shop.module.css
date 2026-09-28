@@ -41,30 +41,10 @@
   box-shadow: 0 3px 0 var(--shadow-hud);
 }
 
-.customers {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 8px;
-  min-height: 48px;
-}
 
-.customer {
-  animation: walk-in 0.5s ease-out, bob 1.6s ease-in-out 0.5s infinite;
-}
 
-@keyframes walk-in {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-}
 
-@keyframes bob {
-  50% {
-    transform: translateY(-4px);
-  }
-}
+
 
 .counter {
   background: var(--counter);
@@ -105,168 +85,21 @@
   transition: width 1s linear;
 }
 
-/* ---------- Nội thất tiệm ---------- */
+/* ---------- Cảnh isometric ---------- */
 
-.interior {
+.isoWrap {
   position: relative;
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
   border-radius: 22px;
   overflow: hidden;
-  background:
-    repeating-linear-gradient(90deg, #f6e7cc 0 22px, #f2dfbf 22px 44px);
+  background: linear-gradient(#f6e7cc, #ead9be);
   box-shadow: inset 0 3px 8px rgba(120, 70, 20, 0.12);
 }
 
-.window {
-  position: absolute;
-  top: 46px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 42%;
-  height: 92px;
-  border-radius: 14px 14px 6px 6px;
-  border: 6px solid #fff;
-  box-shadow: 0 3px 0 var(--shadow-hud);
-  overflow: hidden;
-  transition: background 2s linear;
+.isoWrap canvas {
+  display: block;
 }
 
-.windowBar {
-  position: absolute;
-  inset: 0 auto 0 50%;
-  width: 5px;
-  transform: translateX(-50%);
-  background: #fff;
-}
-
-.sun,
-.moon {
-  position: absolute;
-  top: 14px;
-  left: 18px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-}
-
-.sun {
-  background: #ffd76a;
-  box-shadow: 0 0 12px #ffe9a8;
-}
-
-.moon {
-  background: #f4f1de;
-  box-shadow: inset -6px -2px 0 #c9c6b0;
-}
-
-.sign {
-  position: absolute;
-  top: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #6b6f78;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  padding: 2px 10px;
-  border-radius: 6px;
-}
-
-.signOpen {
-  background: var(--mint-strong);
-}
-
-.shelf {
-  position: absolute;
-  z-index: 1;
-  top: 166px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50%;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-  border-bottom: 6px solid #a0561a;
-  padding: 0 4px 2px;
-}
-
-.shelf img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-}
-
-.floor {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 92px;
-  background:
-    linear-gradient(45deg, #e3c799 25%, transparent 25%, transparent 75%, #e3c799 75%) 0 0 / 28px 28px,
-    linear-gradient(45deg, #e3c799 25%, #ecd6ae 25%, #ecd6ae 75%, #e3c799 75%) 14px 14px / 28px 28px;
-  z-index: 0;
-}
-
-.interior > .customers,
-.interior > .counter {
-  position: relative;
-  z-index: 2;
-}
-
-.decor {
-  position: absolute;
-  z-index: 1;
-  pointer-events: auto;
-}
-
-.decor img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.slot_floor_left {
-  left: 10px;
-  bottom: 64px;
-  width: 70px;
-  height: 54px;
-}
-
-.slot_floor_right {
-  right: 10px;
-  bottom: 64px;
-  width: 44px;
-  height: 64px;
-}
-
-.slot_wall_left {
-  left: 12px;
-  top: 60px;
-  width: 64px;
-  height: 64px;
-}
-
-.slot_wall_right {
-  right: 12px;
-  top: 64px;
-  width: 78px;
-  height: 38px;
-}
-
-.slot_ceiling {
-  left: 18%;
-  top: 0;
-  width: 44px;
-  height: 44px;
-}
-
-.slot_window {
-  left: 50%;
-  top: 40px;
-  transform: translateX(-50%);
-  width: 46%;
-  height: 30px;
+.isoWrap > .waiting,
+.isoWrap > .revenue {
+  z-index: 3;
 }

@@ -15,12 +15,14 @@ export function StoreView({
   level,
   coins,
   gems,
+  activeTheme,
 }: {
   catalog: UpgradeCatalogItem[];
   owned: string[];
   level: number;
   coins: number;
   gems: number;
+  activeTheme: string;
 }) {
   const [tab, setTab] = useState<Tab>("upgrade");
   const ownedSet = new Set(owned);
@@ -46,17 +48,39 @@ export function StoreView({
         <GemInfo />
       ) : (
         <div role="tabpanel" className="stack">
-          {items.map((item) => (
-            <UpgradeCard
-              key={item.code}
-              item={item}
-              owned={ownedSet.has(item.code)}
-              prevOwned={!item.requires_code || ownedSet.has(item.requires_code)}
-              level={level}
-              coins={coins}
-              gems={gems}
-            />
-          ))}
+          {(tab === "decor" ? DECOR_GROUPS : [["", "Nâng cấp tiệm"] as const]).map(([type, title]) => {
+            const group = tab === "decor" ? items.filter((i) => (i.decor_type ?? "floor") === type) : items;
+            if (group.length === 0) return null;
+            return (
+              <section key={title} className="stack">
+                {tab === "decor" && (
+                  <h2 style={{ fontSize: 17 }}>
+                    {title}
+                    {type === "seating" && (
+                      <span className="small muted" style={{ fontFamily: "var(--font-body)", fontWeight: 700, marginLeft: 6 }}>
+                        mỗi chỗ ngồi thêm khách ghé đông hơn
+                      </span>
+                    )}
+                  </h2>
+                )}
+                {type === "theme" && (
+                  <ThemeDefault active={activeTheme === "default"} />
+                )}
+                {group.map((item) => (
+                  <UpgradeCard
+                    key={item.code}
+                    item={item}
+                    owned={ownedSet.has(item.code)}
+                    prevOwned={!item.requires_code || ownedSet.has(item.requires_code)}
+                    level={level}
+                    coins={coins}
+                    gems={gems}
+                    activeTheme={activeTheme}
+                  />
+                ))}
+              </section>
+            );
+          })}
         </div>
       )}
     </>
@@ -65,6 +89,45 @@ export function StoreView({
 
 const KIND_LABEL: Record<string, string> = { oven: "Lò nướng", display: "Tủ trưng bày", decor: "Trang trí" };
 
+const DECOR_GROUPS = [
+  ["seating", "Bàn ghế"],
+  ["wall", "Treo tường"],
+  ["floor", "Đặt sàn"],
+  ["ceiling", "Treo trần"],
+  ["theme", "Kiểu tiệm (theme)"],
+] as const;
+
+function UseThemeButton({ theme, active }: { theme: string; active: boolean }) {
+  const { run, busy } = useAction("set-theme");
+  if (active) {
+    return (
+      <span className="row small" style={{ gap: 4, color: "var(--mint-strong)", fontWeight: 800 }}>
+        <IconCheck size={16} /> Đang dùng
+      </span>
+    );
+  }
+  return (
+    <button type="button" className="btn btn--soft btn--sm" disabled={busy} onClick={() => run({ theme }, { success: () => "Đã đổi kiểu tiệm!" })}>
+      Dùng
+    </button>
+  );
+}
+
+function ThemeDefault({ active }: { active: boolean }) {
+  return (
+    <article className="card row">
+      <div className="thumb" style={{ width: 52, height: 52 }} aria-hidden="true">
+        <CoinIcon />
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 800 }}>Theme mặc định</div>
+        <div className="small muted" style={{ fontWeight: 700 }}>Tông kem – caramel</div>
+      </div>
+      <UseThemeButton theme="default" active={active} />
+    </article>
+  );
+}
+
 function UpgradeCard({
   item,
   owned,
@@ -72,6 +135,7 @@ function UpgradeCard({
   level,
   coins,
   gems,
+  activeTheme,
 }: {
   item: UpgradeCatalogItem;
   owned: boolean;
@@ -79,6 +143,7 @@ function UpgradeCard({
   level: number;
   coins: number;
   gems: number;
+  activeTheme: string;
 }) {
   const { run, busy } = useAction("buy-upgrade");
   const lockedByLevel = level < item.unlock_level;
@@ -86,7 +151,9 @@ function UpgradeCard({
   const usesGems = item.cost_gems > 0;
 
   let action: React.ReactNode;
-  if (owned) {
+  if (owned && item.decor_type === "theme") {
+    action = <UseThemeButton theme={item.code} active={activeTheme === item.code} />;
+  } else if (owned) {
     action = (
       <span className="row small" style={{ gap: 4, color: "var(--mint-strong)", fontWeight: 800 }}>
         <IconCheck size={16} /> Đã có

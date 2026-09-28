@@ -13,6 +13,8 @@ type Actions = {
     output: { slug: string };
   };
   "update-avatar": { input: { avatar: Avatar; color: ShopColor | null }; output: { avatar: string } };
+  "set-theme": { input: { theme: string }; output: { theme: string } };
+  "reply-review": { input: { reviewId: string; reply: string }; output: { reputation_gained: number } };
   "rename-shop": { input: { shopName: string }; output: { slug: string; gems: number } };
   "claim-daily": { input: Record<string, never>; output: { streak: number; coins: number; gems: number } };
   "buy-ingredient": { input: { code: string; qty: number }; output: { coins: number; spent: number } };

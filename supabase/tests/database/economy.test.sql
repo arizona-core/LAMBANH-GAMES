@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(58);
+select plan(64);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -105,6 +105,18 @@ select throws_ok($$ select public.complete_order('00000000-0000-0000-0000-000000
   array['flour', 'oil'], 'bake', array[95, 95], null, null, 'bag') $$,
   'P0001', 'CUSTOMER_GONE', 'không giao 1 đơn 2 lần');
 
+-- Đánh giá tự sinh sau khi giao
+select is((select stars from public.reviews where visit_id = '11111111-1111-1111-1111-111111111111')::int, 5,
+  'khách để lại đánh giá 5 sao');
+select ok((select char_length(comment) from public.reviews where visit_id = '11111111-1111-1111-1111-111111111111') > 5,
+  'đánh giá có lời nhận xét');
+select is((public.reply_review('00000000-0000-0000-0000-00000000000a',
+  (select id from public.reviews where visit_id = '11111111-1111-1111-1111-111111111111'),
+  'Cảm ơn bạn rất nhiều, hẹn gặp lại nhé!') ->> 'reputation_gained')::int, 1, 'trả lời lịch sự +1 uy tín');
+select throws_ok(format($q$ select public.reply_review('00000000-0000-0000-0000-00000000000a', %L, 'Cảm ơn lần nữa') $q$,
+  (select id from public.reviews where visit_id = '11111111-1111-1111-1111-111111111111')),
+  'P0001', 'ALREADY_REPLIED', 'mỗi đánh giá trả lời 1 lần');
+
 -- Làm sai quy trình: thiếu dầu, sai cách nấu, sai sốt → mất sao, không tip
 insert into public.customer_visits (id, user_id, customer_id, recipe_code, sauce_code, topping_code, arrive_at, leave_at)
 values ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-00000000000a', 1, 'bread',
@@ -136,6 +148,10 @@ insert into public.customer_visits (user_id, customer_id, recipe_code, arrive_at
 values ('00000000-0000-0000-0000-00000000000a', 3, 'bread', now() - interval '2 minutes', now() - interval '1 minute');
 select is((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', now()) ->> 'reputation_lost')::int, 1,
   'khách hay hối bỏ đi → chê quán');
+select is((select min(stars) from public.reviews r join public.customer_visits v on v.id = r.visit_id
+  where v.customer_id = 3 and v.status = 'left')::int, 1, 'khách bỏ đi để lại đánh giá 1 sao');
+select throws_ok($q$ select public.set_theme('00000000-0000-0000-0000-00000000000a', 'theme_xmas') $q$,
+  'P0001', 'NOT_OWNED', 'chưa mua theme thì không dùng được');
 
 -- ---------------------------------------------------------------- chợ (chỉ nguyên liệu)
 select throws_ok($$ select public.create_listing('00000000-0000-0000-0000-00000000000a', 'ingredient', 'flour', null, 5, 20) $$,

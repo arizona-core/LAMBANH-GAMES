@@ -23,6 +23,7 @@ export default async function StorePage() {
           level={profile.level}
           coins={profile.coins}
           gems={profile.gems}
+          activeTheme={profile.active_theme}
         />
       </div>
       <BottomNav />

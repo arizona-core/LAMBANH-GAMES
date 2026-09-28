@@ -27,6 +27,8 @@ const MESSAGES: Record<string, string> = {
   ALREADY_CLAIMED: "Hôm nay bạn đã điểm danh rồi.",
   CUSTOMER_GONE: "Khách đã đi mất rồi.",
   CUSTOMER_NOT_ARRIVED: "Khách chưa tới quầy.",
+  NOT_OWNED: "Bạn chưa sở hữu món này.",
+  ALREADY_REPLIED: "Bạn đã trả lời đánh giá này rồi.",
   ORDER_IN_PROGRESS: "Bạn đang làm dở một đơn khác, giao xong đã nhé.",
 };
 

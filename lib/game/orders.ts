@@ -23,7 +23,7 @@ export type VisitCustomer = {
 
 export type Visit = {
   id: string;
-  status: "waiting" | "cooking";
+  status: "waiting" | "cooking" | "served";
   arrive_at: string;
   leave_at: string;
   recipe: string;
@@ -43,6 +43,9 @@ export type TickResult = {
   reputation_lost: number;
   generated: number;
   visits: Visit[];
+  seats: number;
+  /** Khách vừa ăn xong đang ngồi ghế (served trong ~40 giây). */
+  seated: (Visit & { served_at: string })[];
 };
 
 export type AcceptResult = Visit & { session_id: string; min_play_seconds: number; oven_bonus: number };

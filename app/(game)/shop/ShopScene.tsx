@@ -3,8 +3,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomerAvatar, TraitChips } from "@/components/CustomerAvatar";
+import { Stars } from "@/components/Stars";
 import { IconCalendar, IconClock } from "@/components/icons";
 import { callAction } from "@/lib/api/actions";
 import { formatGameTime, gameClock } from "@/lib/game/clock";
@@ -12,7 +13,8 @@ import { errorMessage } from "@/lib/game/errors";
 import { formatNumber } from "@/lib/game/format";
 import { orderText, type Visit } from "@/lib/game/orders";
 import { useToast } from "@/lib/store/toast";
-import { ShopInterior, type DecorItem } from "./ShopInterior";
+import type { SceneCustomer } from "@/game/scenes/IsoShopScene";
+import { ShopIso } from "./ShopIso";
 import styles from "./shop.module.css";
 
 const TUTORIAL_KEY = "sweetshop.tutorial.v2";
@@ -23,15 +25,22 @@ export function ShopScene({
   canClaimDaily,
   welcome,
   decor,
+  theme,
+  chefImage,
+  reviewSummary,
 }: {
   revenueToday: number;
   canClaimDaily: boolean;
   welcome: boolean;
-  decor: DecorItem[];
+  decor: string[];
+  theme: string;
+  chefImage: string | null;
+  reviewSummary: { avg: number; total: number };
 }) {
   const router = useRouter();
   const push = useToast((s) => s.push);
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [seated, setSeated] = useState<(Visit & { served_at: string })[]>([]);
   const [offset, setOffset] = useState(0); // server_now − Date.now()
   const [now, setNow] = useState(() => Date.now());
   const [showTip, setShowTip] = useState(false);
@@ -49,6 +58,7 @@ export function ShopScene({
     errorShown.current = false;
     setOffset(new Date(res.data.server_now).getTime() - Date.now());
     setVisits(res.data.visits);
+    setSeated(res.data.seated ?? []);
     setLoaded(true);
     if (res.data.left > 0) {
       push(
@@ -104,6 +114,32 @@ export function ShopScene({
   );
   const cooking = present.find((v) => v.status === "cooking");
   const queue = present.filter((v) => v.status === "waiting");
+  const sitting = seated.filter((v) => new Date(v.served_at).getTime() + 40_000 > serverNow);
+
+  // Danh sách khách cho cảnh isometric — chỉ đổi khi có người tới/đi/đổi trạng thái.
+  const sceneKey = [...present.map((v) => v.id + v.status), ...sitting.map((v) => v.id + "s")].join("|");
+  const sceneCustomers = useMemo<SceneCustomer[]>(
+    () => [
+      ...present.map((v) => ({
+        id: v.id,
+        status: v.status as "waiting" | "cooking",
+        image: v.customer.image,
+        look: v.customer.look,
+        impatient: v.customer.impatient,
+        order: new Date(v.arrive_at).getTime(),
+      })),
+      ...sitting.map((v) => ({
+        id: v.id,
+        status: "seated" as const,
+        image: v.customer.image,
+        look: v.customer.look,
+        impatient: v.customer.impatient,
+        order: new Date(v.served_at).getTime(),
+      })),
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sceneKey],
+  );
 
   return (
     <>
@@ -132,52 +168,45 @@ export function ShopScene({
         </Link>
       )}
 
-      <section aria-label="Cửa tiệm">
-        <ShopInterior hour={clock.hour} open={clock.open} decor={decor}>
-          <div className={styles.waiting}>
-            {!clock.open
-              ? "Tiệm đang đóng cửa"
-              : present.length > 0
-                ? `${present.length} khách ở quầy`
-                : loaded
-                  ? "Đang chờ khách…"
-                  : "Đang mở cửa…"}
+      <section aria-label="Cửa tiệm" className={styles.isoWrap}>
+        <ShopIso config={{ theme, decor, chefImage, hour: clock.hour }} customers={sceneCustomers} />
+        <div className={styles.waiting}>
+          {!clock.open
+            ? "Tiệm đang đóng cửa"
+            : present.length > 0
+              ? `${present.length} khách ở quầy`
+              : loaded
+                ? "Đang chờ khách…"
+                : "Đang mở cửa…"}
+        </div>
+        <div className={styles.revenue}>
+          <div className="small muted" style={{ fontSize: 11, fontWeight: 700 }}>
+            Doanh thu hôm nay
           </div>
-          <div className={styles.revenue}>
-            <div className="small muted" style={{ fontSize: 11, fontWeight: 700 }}>
-              Doanh thu hôm nay
-            </div>
-            <div style={{ fontWeight: 800, color: "var(--mint-strong)" }}>
-              + {formatNumber(revenueToday)} ₵
-            </div>
-          </div>
-          <div className={styles.customers} aria-hidden="true">
-            {present.slice(0, 4).map((v) => (
-              <div key={v.id} className={styles.customer}>
-                <CustomerAvatar
-                  look={v.customer.look}
-                  gender={v.customer.gender}
-                  image={v.customer.image}
-                  size={48}
-                />
-              </div>
-            ))}
-          </div>
-          <div className={styles.counter}>
-            {cooking ? (
-              <Link href={`/order/${cooking.id}`} className="btn btn--white btn--block">
-                Đang làm đơn của {cooking.customer.name.split(" ").pop()} — tiếp tục
-              </Link>
-            ) : (
-              <span className={styles.counterText}>
-                {clock.open
-                  ? "Nhận đơn của khách bên dưới để bắt đầu làm bánh"
-                  : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
-              </span>
-            )}
-          </div>
-        </ShopInterior>
+          <div style={{ fontWeight: 800, color: "var(--mint-strong)" }}>+ {formatNumber(revenueToday)} ₵</div>
+        </div>
+        <div className={styles.counter}>
+          {cooking ? (
+            <Link href={`/order/${cooking.id}`} className="btn btn--white btn--block">
+              Đang làm đơn của {cooking.customer.name.split(" ").pop()} — tiếp tục
+            </Link>
+          ) : (
+            <span className={styles.counterText}>
+              {clock.open ? `${sitting.length} khách đang ngồi ăn · nhận đơn bên dưới` : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
+            </span>
+          )}
+        </div>
       </section>
+
+      <Link href="/reviews" className="card row" style={{ gap: 10 }}>
+        <Stars value={Math.round(reviewSummary.avg)} size={16} />
+        <strong>{reviewSummary.total ? reviewSummary.avg.toFixed(1).replace(".", ",") : "–"}</strong>
+        <span className="small muted" style={{ fontWeight: 700 }}>
+          {formatNumber(reviewSummary.total)} đánh giá của khách
+        </span>
+        <span className="spacer" />
+        <span className="btn btn--soft btn--sm">Xem</span>
+      </Link>
 
       {showTip && (
         <div className="card row" role="note" style={{ alignItems: "flex-start" }}>

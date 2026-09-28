@@ -14,12 +14,13 @@ giữa người chơi thật. Không có thanh toán bằng tiền thật: xu v�
 |---|---|---|
 | Đăng nhập | `/login` | Google OAuth. Ở local có thêm form "đăng nhập dev". |
 | Mở tiệm | `/onboarding` | Nhập tên chủ quán và tên quán (không được trùng, có lọc từ bậy), chọn avatar và màu. |
-| Tiệm | `/shop` | Đồng hồ game (mở 7:00–24:00), quầy khách NPC tự tới khi mở app, nhận đơn, doanh thu hôm nay. |
+| Tiệm | `/shop` | Cảnh 2.5D isometric (Phaser): khách vào cửa → xếp hàng → quầy → ngồi ghế; đồng hồ game (7:00–24:00), nhận đơn. |
+| Đánh giá | `/reviews` | Điểm trung bình, phân bố sao, lọc; khách tự viết nhận xét theo tính cách; trả lời (+1 uy tín). |
 | Bếp | `/kitchen` | Sổ 9 công thức (nguyên liệu, cách nấu, đóng gói), kho nguyên liệu/sốt/topping. |
 | Làm đơn | `/order/[visitId]` | 7 bước: nguyên liệu → cách nấu → trộn & nấu (Phaser) → sốt → topping → đóng gói → giao. |
 | Chợ | `/market` | Mua bán nguyên liệu/sốt/topping. Phí 5%, mở từ cấp 3 và sau 24 giờ mở tiệm. |
 | Bảng xếp hạng | `/leaderboard` | Xếp theo doanh thu hoặc số sao, podium top 3, hạng của bạn. |
-| Cửa hàng | `/store` | Nâng cấp lò (tăng chất lượng), tủ trưng bày (tăng giá bán), đồ trang trí (tăng uy tín). |
+| Cửa hàng | `/store` | Nâng cấp lò/tủ trưng bày; trang trí: bàn ghế (thêm chỗ ngồi → đông khách), đồ treo tường/sàn/trần, 4 theme đổi kiểu tiệm. |
 | Điểm danh | `/daily` | Chuỗi 7 ngày, thưởng xu và gem. |
 | Cài đặt | `/settings` | Đổi tên quán (20 gem), tùy chọn âm thanh, đăng xuất. |
 
@@ -70,7 +71,7 @@ Chưa cấu hình Google thì dùng khung **"Đăng nhập dev"** ở màn đăn
 
 ```bash
 npm run lint && npm run typecheck && npm run test   # ESLint, TypeScript, Vitest
-npm run test:db                                      # pgTAP: kinh tế, khách, đơn hàng, RLS (54 test)
+npm run test:db                                      # pgTAP: kinh tế, khách, đơn, đánh giá, RLS (64 test)
 node scripts/smoke-functions.mjs                     # gọi thật các Edge Function (cần giờ game mở cửa để test đơn)
 npm run build
 ```

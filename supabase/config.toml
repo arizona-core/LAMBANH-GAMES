@@ -464,3 +464,9 @@ verify_jwt = false
 [functions.update-avatar]
 verify_jwt = false
 
+[functions.set-theme]
+verify_jwt = false
+
+[functions.reply-review]
+verify_jwt = false
+
