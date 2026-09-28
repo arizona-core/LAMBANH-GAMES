@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(64);
+select plan(69);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -43,6 +43,18 @@ select is(public._game_clock(to_timestamp(420)) ->> 'hour', '7', '420 giây sau 
 select ok(public._game_open(to_timestamp(420)), '7:00 game mở cửa');
 select ok(not public._game_open(to_timestamp(419)), '6:59 game còn đóng');
 select ok(not public._game_open(to_timestamp(1440)), '0:00 game (ngày mới) đóng cửa');
+
+-- ---------------------------------------------------------------- đông / vắng theo giờ
+select is(public._traffic_level(12 * 60), 'rush', '12:00 trưa là giờ cao điểm');
+select is(public._traffic_level(14 * 60), 'quiet', '14:00 chiều vắng khách');
+select is(public._traffic_level(3 * 60), 'closed', '3:00 sáng đóng cửa');
+-- Mô phỏng 1 giờ game (60 giây thật) ở giờ cao điểm và giờ vắng: cao điểm nhiều khách hơn.
+create temp table t_traffic as
+  select sum(public._traffic_mult(12 * 60 + m)) as rush, sum(public._traffic_mult(14 * 60 + m)) as quiet
+  from generate_series(0, 59) m;
+select ok((select rush > quiet * 3 from t_traffic), 'cao điểm trưa đông hơn giờ vắng > 3 lần');
+select ok((select avg(public._traffic_mult(m)) from generate_series(420, 1439) m) between 0.9 and 1.2,
+  'trung bình cả ngày ≈ 1 (tổng khách/ngày không đổi nhiều)');
 
 -- ---------------------------------------------------------------- 500 khách
 select is((select count(*) from public.customers)::int, 500, 'có 500 khách NPC');

@@ -9,7 +9,7 @@ import { InstallAppButton } from "@/components/InstallAppButton";
 import { Stars } from "@/components/Stars";
 import { IconCalendar, IconClock } from "@/components/icons";
 import { callAction } from "@/lib/api/actions";
-import { formatGameTime, gameClock } from "@/lib/game/clock";
+import { formatGameTime, formatMinute, gameClock, nextRush, trafficLevel } from "@/lib/game/clock";
 import { errorMessage } from "@/lib/game/errors";
 import { formatNumber } from "@/lib/game/format";
 import { orderText, type Visit } from "@/lib/game/orders";
@@ -109,6 +109,8 @@ export function ShopScene({
 
   const serverNow = now + offset;
   const clock = gameClock(serverNow);
+  const traffic = trafficLevel(clock.minuteOfDay);
+  const rushNext = nextRush(clock.minuteOfDay);
   const present = visits.filter(
     (v) =>
       new Date(v.arrive_at).getTime() <= serverNow && new Date(v.leave_at).getTime() > serverNow,
@@ -161,6 +163,22 @@ export function ShopScene({
             : `Đóng cửa · mở lúc 07:00 (còn ${clock.secondsToOpen} giây)`}
         </span>
       </div>
+
+      {clock.open && (
+        <div className={`${styles.traffic} ${styles[`traffic_${traffic}`]}`} role="status">
+          <span className={styles.trafficDot} aria-hidden="true" />
+          <strong>
+            {traffic === "rush" ? "Giờ cao điểm — khách đông!" : traffic === "quiet" ? "Vắng khách" : "Khách bình thường"}
+          </strong>
+          <span className="small" style={{ fontWeight: 700 }}>
+            {traffic === "rush"
+              ? "Quầy chứa tới 6 khách, có khách đi theo nhóm"
+              : rushNext
+                ? `Cao điểm tiếp: ${formatMinute(rushNext.start)} (còn ${Math.ceil(rushNext.inSeconds / 60)} phút)`
+                : ""}
+          </span>
+        </div>
+      )}
 
       <InstallAppButton variant="banner" />
 

@@ -116,3 +116,22 @@ describe("mô tả đơn", () => {
     );
   });
 });
+
+describe("lượng khách theo giờ (trùng public._traffic_mult)", () => {
+  it("trưa & tối là cao điểm, chiều vắng, đêm đóng cửa", async () => {
+    const { trafficLevel } = await import("@/lib/game/clock");
+    expect(trafficLevel(12 * 60)).toBe("rush");
+    expect(trafficLevel(19 * 60)).toBe("rush");
+    expect(trafficLevel(14 * 60)).toBe("quiet");
+    expect(trafficLevel(8 * 60)).toBe("normal");
+    expect(trafficLevel(3 * 60)).toBe("closed");
+  });
+
+  it("báo giờ cao điểm kế tiếp", async () => {
+    const { nextRush } = await import("@/lib/game/clock");
+    expect(nextRush(9 * 60)).toEqual({ start: 660, end: 780, inSeconds: 120 });
+    expect(nextRush(14 * 60)?.start).toBe(1080);
+    expect(nextRush(23 * 60)?.start).toBe(660);
+    expect(nextRush(12 * 60)).toBeNull();
+  });
+});

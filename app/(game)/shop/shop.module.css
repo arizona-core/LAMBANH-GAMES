@@ -103,3 +103,52 @@
 .isoWrap > .revenue {
   z-index: 3;
 }
+
+/* ---------- Lượng khách theo giờ ---------- */
+
+.traffic {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+.trafficDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.traffic_rush {
+  background: #fde2e0;
+  color: #9b2a1f;
+  border: 2px solid #f3b3ab;
+}
+
+.traffic_rush .trafficDot {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.traffic_normal {
+  background: #fff3d6;
+  color: #7a5514;
+  border: 2px solid #f1d38a;
+}
+
+.traffic_quiet {
+  background: #eef1f5;
+  color: #4c5563;
+  border: 2px solid #d5dbe3;
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+}

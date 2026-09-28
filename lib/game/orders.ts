@@ -39,6 +39,7 @@ export type Visit = {
 export type TickResult = {
   server_now: string;
   clock: { minute_of_day: number; hour: number; minute: number; open: boolean };
+  traffic: "closed" | "rush" | "normal" | "quiet";
   left: number;
   reputation_lost: number;
   generated: number;
