@@ -307,6 +307,7 @@ export type Database = {
       };
       ingredients: {
         Row: {
+          category: string | null;
           code: string;
           created_at: string;
           image: string | null;
@@ -316,6 +317,7 @@ export type Database = {
           sort: number;
         };
         Insert: {
+          category?: string | null;
           code: string;
           created_at?: string;
           image?: string | null;
@@ -325,6 +327,7 @@ export type Database = {
           sort?: number;
         };
         Update: {
+          category?: string | null;
           code?: string;
           created_at?: string;
           image?: string | null;
@@ -491,6 +494,7 @@ export type Database = {
           revenue_today: number;
           revenue_total: number;
           shop_name: string;
+          shop_open: boolean;
           slug: string;
           updated_at: string;
           visits_until: string | null;
@@ -517,6 +521,7 @@ export type Database = {
           revenue_today?: number;
           revenue_total?: number;
           shop_name: string;
+          shop_open?: boolean;
           slug: string;
           updated_at?: string;
           visits_until?: string | null;
@@ -542,6 +547,7 @@ export type Database = {
           revenue_today?: number;
           revenue_total?: number;
           shop_name?: string;
+          shop_open?: boolean;
           slug?: string;
           updated_at?: string;
           visits_until?: string | null;
@@ -1011,6 +1017,7 @@ export type Database = {
           revenue_today: number;
           revenue_total: number;
           shop_name: string;
+          shop_open: boolean;
           slug: string;
           updated_at: string;
           visits_until: string | null;
@@ -1111,6 +1118,7 @@ export type Database = {
       rename_shop: { Args: { p_shop_name: string; p_user: string }; Returns: Json };
       reply_review: { Args: { p_reply: string; p_review: string; p_user: string }; Returns: Json };
       set_avatar_photo: { Args: { p_url: string; p_user: string }; Returns: Json };
+      set_shop_open: { Args: { p_open: boolean; p_user: string }; Returns: Json };
       set_theme: { Args: { p_theme: string; p_user: string }; Returns: Json };
       throttle: {
         Args: { p_action: string; p_max: number; p_user: string; p_window_seconds: number };

@@ -1,4 +1,4 @@
-// Mini-game canh giờ cho 1 đơn: bước "Trộn" rồi "Nấu" (nướng / chiên / hấp).
+// Mini-game canh giờ cho 1 đơn: bước "Trộn" rồi "Nấu" (nướng / chiên / hấp / làm lạnh).
 // Mỗi bước: kim chạy qua lại trên thanh, người chơi CHẠM khi kim nằm trong vùng vàng.
 // Scene chỉ đo điểm canh giờ (0..100) để phản hồi tức thì; số sao do SERVER quyết định.
 import * as Phaser from "phaser";
@@ -10,7 +10,7 @@ export type BakeStep = "mix" | "cook";
 export type BakeSceneConfig = {
   recipeImage: string | null;
   method: CookMethod;
-  difficulty: number; // 1..9 (theo thứ tự công thức) → kim chạy nhanh hơn
+  difficulty: number; // 1..9 (theo cấp mở khoá món) → kim chạy nhanh hơn
   steps: BakeStep[];
   onStep: (step: number, lastScore: number | null) => void;
   onComplete: (scores: number[]) => void;
@@ -32,6 +32,10 @@ const COLORS = {
   oil: 0xf2c14e,
   bamboo: 0xd9b36b,
   steam: 0xffffff,
+  fridge: 0xdfeef5,
+  fridgeShadow: 0x9dbccc,
+  fridgeInner: 0xf5fbfd,
+  frost: 0xffffff,
 };
 
 const BAR_H = 26;
@@ -204,6 +208,22 @@ export class BakeScene extends Phaser.Scene {
         const b = this.add.circle(Phaser.Math.Between(-size * 0.35, size * 0.35), Phaser.Math.Between(-12, 8), 3, 0xfff1b8);
         this.art.add(b);
         this.tweens.add({ targets: b, alpha: 0, scale: 1.8, repeat: -1, duration: 400 + i * 70, delay: i * 60 });
+      }
+      return;
+    }
+
+    if (this.cfg.method === "chill") {
+      const fridge = this.add.graphics();
+      fridge.fillStyle(COLORS.fridgeShadow, 1).fillRoundedRect(-size * 0.4, -size / 2 + 8, size * 0.8, size, 22);
+      fridge.fillStyle(COLORS.fridge, 1).fillRoundedRect(-size * 0.4, -size / 2, size * 0.8, size, 22);
+      fridge.fillStyle(COLORS.fridgeInner, 1).fillRoundedRect(-size * 0.3, -size * 0.36, size * 0.6, size * 0.72, 12);
+      fridge.lineStyle(3, COLORS.fridgeShadow, 1).lineBetween(-size * 0.3, size * 0.14, size * 0.3, size * 0.14);
+      this.art.add(fridge);
+      this.addCake(size * 0.42, -size * 0.08);
+      for (let i = 0; i < 5; i++) {
+        const flake = this.add.circle(-size * 0.24 + i * size * 0.12, -size * 0.3, 4, COLORS.frost).setAlpha(0.9);
+        this.art.add(flake);
+        this.tweens.add({ targets: flake, y: flake.y + size * 0.4, alpha: 0, repeat: -1, duration: 1100, delay: i * 180 });
       }
       return;
     }

@@ -22,6 +22,7 @@ type Actions = {
   "claim-daily": { input: Record<string, never>; output: { streak: number; coins: number; gems: number } };
   "buy-ingredient": { input: { code: string; qty: number }; output: { coins: number; spent: number } };
   "customer-tick": { input: Record<string, never>; output: TickResult };
+  "set-shop-open": { input: { open: boolean }; output: { shop_open: boolean; sent_home: number } };
   "accept-order": { input: { visitId: string }; output: AcceptResult };
   "complete-order": {
     input: {

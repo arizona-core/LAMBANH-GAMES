@@ -30,6 +30,7 @@ export function ShopScene({
   chefImage,
   reviewSummary,
   onlineCount,
+  shopOpen: initialShopOpen,
 }: {
   revenueToday: number;
   canClaimDaily: boolean;
@@ -39,6 +40,7 @@ export function ShopScene({
   chefImage: string | null;
   reviewSummary: { avg: number; total: number };
   onlineCount: number;
+  shopOpen: boolean;
 }) {
   const router = useRouter();
   const push = useToast((s) => s.push);
@@ -48,6 +50,8 @@ export function ShopScene({
   const [now, setNow] = useState(() => Date.now());
   const [showTip, setShowTip] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [shopOpen, setShopOpen] = useState(initialShopOpen);
+  const [toggling, setToggling] = useState(false);
   const errorShown = useRef(false);
 
   const tick = useCallback(async () => {
@@ -62,7 +66,11 @@ export function ShopScene({
     setOffset(new Date(res.data.server_now).getTime() - Date.now());
     setVisits(res.data.visits);
     setSeated(res.data.seated ?? []);
+    setShopOpen(res.data.shop_open);
     setLoaded(true);
+    if (res.data.closed_offline > 0) {
+      push(`Bạn vừa offline nên tiệm tạm đóng — ${res.data.closed_offline} khách đã về, không bị trừ uy tín`);
+    }
     if (res.data.left > 0) {
       push(
         res.data.reputation_lost > 0
@@ -73,6 +81,23 @@ export function ShopScene({
       router.refresh();
     }
   }, [push, router]);
+
+  const toggleShop = useCallback(async () => {
+    setToggling(true);
+    const res = await callAction("set-shop-open", { open: !shopOpen });
+    setToggling(false);
+    if (!res.ok) return push(errorMessage(res.error), "error");
+    setShopOpen(res.data.shop_open);
+    push(
+      res.data.shop_open
+        ? "Đã mở cửa — khách sẽ bắt đầu ghé"
+        : res.data.sent_home > 0
+          ? `Đã đóng cửa — ${res.data.sent_home} khách đang chờ đã về (không trừ uy tín)`
+          : "Đã đóng cửa — không có khách mới cho tới khi mở lại",
+      "success",
+    );
+    tick();
+  }, [shopOpen, push, tick]);
 
   // Nhịp sinh khách: chỉ chạy khi đang mở app (tab đang hiển thị).
   useEffect(() => {
@@ -110,7 +135,9 @@ export function ShopScene({
   }
 
   const serverNow = now + offset;
-  const clock = gameClock(serverNow);
+  const gameTime = gameClock(serverNow);
+  // Chủ tiệm tự đóng cửa → coi như ngoài giờ mở cửa.
+  const clock = { ...gameTime, open: gameTime.open && shopOpen };
   const traffic = trafficLevel(clock.minuteOfDay);
   const rushNext = nextRush(clock.minuteOfDay);
   const present = visits.filter(
@@ -160,10 +187,22 @@ export function ShopScene({
           {formatGameTime(clock)}
         </strong>
         <span className="small" style={{ fontWeight: 800 }}>
-          {clock.open
-            ? `Đang mở cửa · đóng lúc 24:00 (còn ${Math.ceil(clock.secondsToClose / 60)} phút)`
-            : `Đóng cửa · mở lúc 07:00 (còn ${clock.secondsToOpen} giây)`}
+          {!shopOpen
+            ? "Bạn đã đóng cửa tiệm"
+            : clock.open
+              ? `Đang mở cửa · đóng lúc 24:00 (còn ${Math.ceil(clock.secondsToClose / 60)} phút)`
+              : `Đóng cửa · mở lúc 07:00 (còn ${clock.secondsToOpen} giây)`}
         </span>
+        <span className="spacer" />
+        <button
+          type="button"
+          className={`btn btn--sm ${shopOpen ? "btn--white" : "btn--primary"}`}
+          onClick={toggleShop}
+          disabled={toggling}
+          aria-pressed={!shopOpen}
+        >
+          {shopOpen ? "Đóng cửa" : "Mở cửa"}
+        </button>
       </div>
 
       {clock.open && (
@@ -217,7 +256,11 @@ export function ShopScene({
             </Link>
           ) : (
             <span className={styles.counterText}>
-              {clock.open ? `${sitting.length} khách đang ngồi ăn · nhận đơn bên dưới` : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
+              {clock.open
+                ? `${sitting.length} khách đang ngồi ăn · nhận đơn bên dưới`
+                : !shopOpen
+                  ? "Bấm “Mở cửa” khi sẵn sàng đón khách"
+                  : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
             </span>
           )}
         </div>
@@ -251,7 +294,8 @@ export function ShopScene({
             <p className="small" style={{ margin: "2px 0 8px" }}>
               Tiệm mở từ 7:00 đến 24:00 (1 giờ game = 1 phút). Khách tới sẽ gọi món — nhận đơn, bỏ
               đúng nguyên liệu, nấu, thêm sốt &amp; topping khách thích, đóng gói rồi giao trước khi
-              khách hết kiên nhẫn!
+              khách hết kiên nhẫn (tối đa 1 phút, khách hay hối 40 giây)! Bận thì bấm “Đóng cửa”;
+              tắt app thì tiệm tự đóng, không bị trừ uy tín.
             </p>
             <button type="button" className="btn btn--soft btn--sm" onClick={dismissTip}>
               Đã hiểu

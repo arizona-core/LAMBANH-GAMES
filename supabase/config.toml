@@ -479,3 +479,6 @@ verify_jwt = false
 [functions.set-avatar-photo]
 verify_jwt = false
 
+
+[functions.set-shop-open]
+verify_jwt = false

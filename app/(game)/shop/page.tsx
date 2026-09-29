@@ -35,6 +35,7 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
           chefImage={profile.avatar === "custom" ? avatarPhotoUrl(profile.avatar_url) : (AVATAR_PHOTOS[profile.avatar as Avatar] ?? null)}
           onlineCount={Math.max(1, online)}
           reviewSummary={{ avg, total }}
+          shopOpen={profile.shop_open}
         />
       </div>
       <BottomNav />

@@ -5,16 +5,28 @@ import { CoinIcon, IconLock } from "@/components/icons";
 import { ItemImage } from "@/components/ItemImage";
 import { useAction } from "@/components/useAction";
 import { formatNumber } from "@/lib/game/format";
-import { COOK_METHODS, PACKAGING, type CookMethod, type Packaging } from "@/lib/game/orders";
+import {
+  COOK_METHODS,
+  INGREDIENT_CATEGORIES,
+  PACKAGING,
+  type CookMethod,
+  type IngredientCategory,
+  type Packaging,
+} from "@/lib/game/orders";
 import type { Ingredient, RecipeWithIngredients } from "@/lib/types";
 
 type Tab = "recipes" | "pantry";
 
-const KIND_TITLE: Record<string, string> = {
-  base: "Nguyên liệu làm bánh",
-  sauce: "Nước chấm & sốt",
-  topping: "Topping",
-};
+// Nguyên liệu gốc chia theo nhóm (ingredients.category), rồi tới sốt và topping.
+const PANTRY_GROUPS: { key: string; title: string; match: (i: Ingredient) => boolean }[] = [
+  ...(Object.keys(INGREDIENT_CATEGORIES) as IngredientCategory[]).map((cat) => ({
+    key: cat,
+    title: INGREDIENT_CATEGORIES[cat],
+    match: (i: Ingredient) => i.kind === "base" && i.category === cat,
+  })),
+  { key: "sauce", title: "Nước chấm & sốt", match: (i) => i.kind === "sauce" },
+  { key: "topping", title: "Topping", match: (i) => i.kind === "topping" },
+];
 
 export function KitchenView({
   level,
@@ -33,6 +45,9 @@ export function KitchenView({
 }) {
   const [tab, setTab] = useState<Tab>(initialTab);
   const names = Object.fromEntries(ingredients.map((i) => [i.code, i.name]));
+  // Chỉ hé lộ các món sắp mở (tới 2 cấp sau), còn lại gộp thành 1 dòng cho gọn.
+  const visibleRecipes = recipes.filter((r) => r.unlock_level <= level + 2);
+  const hiddenCount = recipes.length - visibleRecipes.length;
 
   return (
     <>
@@ -50,24 +65,27 @@ export function KitchenView({
           <p className="small muted" style={{ margin: 0, fontWeight: 700 }}>
             Bánh được làm theo đơn khi khách tới quầy. Nhớ công thức để làm nhanh và đúng!
           </p>
-          {recipes.map((r) => (
+          {visibleRecipes.map((r) => (
             <RecipeCard key={r.code} recipe={r} level={level} inventory={inventory} names={names} />
           ))}
+          {hiddenCount > 0 && (
+            <p className="small muted" style={{ margin: 0, fontWeight: 700, textAlign: "center" }}>
+              Còn {hiddenCount} món nữa mở khoá ở cấp cao hơn.
+            </p>
+          )}
         </div>
       ) : (
         <div role="tabpanel" className="stack">
           <p className="small muted" style={{ margin: 0, fontWeight: 700 }}>
             Mua từ nhà cung cấp. Giá rẻ hơn? Ghé Chợ xem người chơi khác rao bán.
           </p>
-          {(["base", "sauce", "topping"] as const).map((kind) => (
-            <section key={kind} className="stack">
-              <h2 style={{ fontSize: 17 }}>{KIND_TITLE[kind]}</h2>
+          {PANTRY_GROUPS.map((g) => (
+            <section key={g.key} className="stack">
+              <h2 style={{ fontSize: 17 }}>{g.title}</h2>
               <div className="grid-2">
-                {ingredients
-                  .filter((i) => i.kind === kind)
-                  .map((i) => (
-                    <PantryCard key={i.code} ingredient={i} qty={inventory[i.code] ?? 0} coins={coins} />
-                  ))}
+                {ingredients.filter(g.match).map((i) => (
+                  <PantryCard key={i.code} ingredient={i} qty={inventory[i.code] ?? 0} coins={coins} />
+                ))}
               </div>
             </section>
           ))}

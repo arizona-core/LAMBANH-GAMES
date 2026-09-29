@@ -5,7 +5,7 @@ import { Code, serveAction, z } from "../_shared/action.ts";
 const Input = z.object({
   visitId: z.uuid(),
   ingredients: z.array(Code).max(12),
-  method: z.enum(["bake", "fry", "steam"]),
+  method: z.enum(["bake", "fry", "steam", "chill"]),
   scores: z.array(z.number().int().min(0).max(100)).length(2),
   sauce: Code.nullable(),
   topping: Code.nullable(),

@@ -135,3 +135,14 @@ describe("lượng khách theo giờ (trùng public._traffic_mult)", () => {
     expect(nextRush(12 * 60)).toBeNull();
   });
 });
+
+describe("độ khó mini-game theo cấp mở khoá món", () => {
+  it("cấp 1 dễ nhất, tăng mỗi 3 cấp, tối đa 9", async () => {
+    const { recipeDifficulty } = await import("@/lib/game/orders");
+    expect(recipeDifficulty(1)).toBe(1);
+    expect(recipeDifficulty(3)).toBe(1);
+    expect(recipeDifficulty(4)).toBe(2);
+    expect(recipeDifficulty(25)).toBe(9);
+    expect(recipeDifficulty(99)).toBe(9);
+  });
+});

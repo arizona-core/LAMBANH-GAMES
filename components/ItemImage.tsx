@@ -23,6 +23,53 @@ const FALLBACK_ART: Record<string, React.ReactNode> = {
   ),
 };
 
+// Nguyên liệu gốc chưa có ảnh: bao bột (đồ khô), hũ (sữa/kem/hương liệu), quả tròn (trái cây).
+const SACK_COLORS: Record<string, string> = {
+  yeast: "#E9D8A6", salt: "#F4F4F4", tapioca: "#FDFCF8", rice_flour: "#FBF6EC", glutinous_flour: "#F6F1E4",
+  almond_flour: "#E8C9A0", cocoa: "#7A4524", matcha: "#8DB356", oats: "#D9BC87",
+  brown_sugar: "#B9793D", mung_bean: "#E6C74C", sesame: "#EFE3C4", biscuit: "#D39B5A",
+  pork_floss: "#C98A4B", macadamia: "#EAD7B0", almond: "#C9955C",
+};
+const JAR_COLORS: Record<string, string> = {
+  water: "#CFE6F5", cream: "#FFFDF6", cheese: "#F4C542", cream_cheese: "#FFF5DC",
+  mascarpone: "#FFF8E6", sour_cream: "#F7F4EA", coconut_milk: "#FBFAF5", salted_egg: "#F29A38",
+  white_chocolate: "#F6ECD6", vanilla: "#F3E3B5", cinnamon: "#A0592A", coffee: "#5A3A22",
+  gelatin: "#F5EFD9", olive_oil: "#B8B63E",
+};
+const FRUIT_COLORS: Record<string, string> = {
+  apple: "#D8434E", banana: "#F2CF4A", lemon: "#F2DC4A", blueberry: "#4F5FA8", cherry: "#A51F35",
+  fruit: "#F08A3C", carrot: "#EE8434", garlic: "#F4EEE2", herbs: "#5E9E55", pandan: "#3F8F4A",
+};
+
+function sackArt(color: string) {
+  return (
+    <>
+      <path d="M20 16h24l-3 6 7 26a6 6 0 0 1-6 7H22a6 6 0 0 1-6-7l7-26z" fill={color} stroke="#8A6337" strokeWidth="2" />
+      <path d="M23 22h18" stroke="#8A6337" strokeWidth="2" />
+    </>
+  );
+}
+
+function jarArt(color: string) {
+  return (
+    <>
+      <rect x="22" y="10" width="20" height="7" rx="2" fill="#B98F55" />
+      <rect x="16" y="17" width="32" height="38" rx="7" fill={color} stroke="#8A6337" strokeWidth="2" />
+      <rect x="21" y="29" width="22" height="12" rx="2" fill="#FFF6E9" opacity="0.8" />
+    </>
+  );
+}
+
+function fruitArt(color: string) {
+  return (
+    <>
+      <circle cx="32" cy="36" r="17" fill={color} stroke="#8A6337" strokeWidth="2" />
+      <path d="M32 19c0-5 3-8 8-9" stroke="#6A4A2A" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <ellipse cx="25" cy="30" rx="4" ry="6" fill="#fff" opacity="0.35" />
+    </>
+  );
+}
+
 // Sốt: chai màu theo loại. Topping: chén nhỏ với hạt màu.
 const SAUCE_COLORS: Record<string, string> = {
   sauce_garlic: "#E9D27A",
@@ -83,7 +130,12 @@ export function ItemImage({
   }
   const art =
     FALLBACK_ART[code] ??
-    (SAUCE_COLORS[code] ? sauceArt(SAUCE_COLORS[code]) : TOPPING_COLORS[code] ? toppingArt(TOPPING_COLORS[code]) : null);
+    (SACK_COLORS[code] ? sackArt(SACK_COLORS[code])
+      : JAR_COLORS[code] ? jarArt(JAR_COLORS[code])
+      : FRUIT_COLORS[code] ? fruitArt(FRUIT_COLORS[code])
+      : SAUCE_COLORS[code] ? sauceArt(SAUCE_COLORS[code])
+      : TOPPING_COLORS[code] ? toppingArt(TOPPING_COLORS[code])
+      : null);
   if (art) {
     return (
       <div className="thumb" style={{ width: size, height: size }}>

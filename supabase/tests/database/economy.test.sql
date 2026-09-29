@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(76);
+select plan(91);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -17,6 +17,21 @@ select is((select coins from public.profiles where id = '00000000-0000-0000-0000
   500::bigint, 'xu khởi đầu 500');
 select is((select qty from public.inventory where user_id = '00000000-0000-0000-0000-00000000000a' and ingredient_code = 'sauce_garlic'),
   3, 'khởi đầu có sẵn sốt');
+select is((select qty from public.inventory where user_id = '00000000-0000-0000-0000-00000000000a' and ingredient_code = 'yeast'),
+  4, 'khởi đầu có men nở để làm bánh mì');
+
+-- ---------------------------------------------------------------- sổ công thức (docs/Bakery_Recipe_Database.docx)
+select is((select count(*) from public.recipes)::int, 72, 'đủ 72 món theo tài liệu');
+select is((select count(*) from public.recipes r
+           where not exists (select 1 from public.recipe_ingredients ri where ri.recipe_code = r.code))::int,
+  0, 'món nào cũng có nguyên liệu');
+select is((select count(*) from public.recipe_ingredients ri join public.ingredients i on i.code = ri.ingredient_code
+           where i.kind <> 'base')::int, 0, 'công thức chỉ dùng nguyên liệu gốc (sốt/topping là bước riêng)');
+select is((select array_agg(ingredient_code order by ingredient_code) from public.recipe_ingredients where recipe_code = 'bread'),
+  array['flour', 'salt', 'sugar', 'water', 'yeast'], 'bánh mì trắng = bột + nước + men + muối + đường');
+select is((select array_agg(code order by code) from public.recipes where cook_method = 'chill'),
+  array['chocolate_mousse', 'chocolate_tart', 'panna_cotta', 'tiramisu'], 'món làm lạnh');
+
 select throws_ok(
   $$ select public.create_profile('00000000-0000-0000-0000-00000000000b', 'Lan', 'tiem banh nang', 'a2', 'mint') $$,
   'P0001', 'SHOP_NAME_TAKEN', 'tên quán trùng (khác dấu/hoa thường) bị chặn');
@@ -92,7 +107,7 @@ select ok((public.accept_order('00000000-0000-0000-0000-00000000000a', '11111111
 
 -- ---------------------------------------------------------------- giao bánh
 select throws_ok($$ select public.complete_order('00000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-111111111111',
-  array['flour', 'oil'], 'bake', array[95, 95], 'sauce_garlic', 'top_cheese', 'bag') $$,
+  array['flour', 'water', 'yeast', 'salt', 'sugar'], 'bake', array[95, 95], 'sauce_garlic', 'top_cheese', 'bag') $$,
   'P0001', 'TOO_FAST', 'giao quá nhanh bị chặn');
 update public.bake_sessions set started_at = now() - interval '1 minute'
   where visit_id = '11111111-1111-1111-1111-111111111111';
@@ -100,21 +115,21 @@ select throws_ok($$ select public.complete_order('00000000-0000-0000-0000-000000
   array['flour', 'flour'], 'bake', array[95, 95], null, null, 'bag') $$,
   'P0001', 'INVALID_INPUT', 'không cho bỏ trùng nguyên liệu');
 select throws_ok($$ select public.complete_order('00000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-111111111111',
-  array['flour', 'oil'], 'bake', array[95, 150], null, null, 'bag') $$,
+  array['flour', 'water', 'yeast', 'salt', 'sugar'], 'bake', array[95, 150], null, null, 'bag') $$,
   'P0001', 'INVALID_INPUT', 'điểm ngoài 0..100 bị chặn');
 
 create temp table t_result as
   select public.complete_order('00000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-111111111111',
-    array['flour', 'oil'], 'bake', array[95, 95], 'sauce_garlic', 'top_cheese', 'bag') as r;
+    array['flour', 'water', 'yeast', 'salt', 'sugar'], 'bake', array[95, 95], 'sauce_garlic', 'top_cheese', 'bag') as r;
 select is(((select r from t_result) ->> 'quality')::int, 5, 'làm đúng hết + canh giờ tốt → 5 sao');
--- 30 × 150% = 45, + 2×5 (sốt) + 2×7 (topping) = 69, tip = 3 × 5 × 5 / 3 = 25 → 94
-select is(((select r from t_result) ->> 'paid')::int, 94, 'giá bánh + sốt/topping + tip');
+-- bánh mì trắng: giá vốn 16 → 3★ = 2×16 + 2 = 34; 5★ = 51, + 2×5 (sốt) + 2×7 (topping) = 75, tip 25 → 100
+select is(((select r from t_result) ->> 'paid')::int, 100, 'giá bánh + sốt/topping + tip');
 select is((select status from public.customer_visits where id = '11111111-1111-1111-1111-111111111111'), 'served', 'đơn đã giao');
 select is((select qty from public.inventory where user_id = '00000000-0000-0000-0000-00000000000a' and ingredient_code = 'flour'),
   15, 'trừ nguyên liệu theo định lượng công thức (2 bột)');
-select is((select revenue_total from public.profiles where id = '00000000-0000-0000-0000-00000000000a'), 94::bigint, 'cộng doanh thu');
+select is((select revenue_total from public.profiles where id = '00000000-0000-0000-0000-00000000000a'), 100::bigint, 'cộng doanh thu');
 select throws_ok($$ select public.complete_order('00000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-111111111111',
-  array['flour', 'oil'], 'bake', array[95, 95], null, null, 'bag') $$,
+  array['flour', 'water', 'yeast', 'salt', 'sugar'], 'bake', array[95, 95], null, null, 'bag') $$,
   'P0001', 'CUSTOMER_GONE', 'không giao 1 đơn 2 lần');
 
 -- Đánh giá tự sinh sau khi giao
@@ -129,7 +144,7 @@ select throws_ok(format($q$ select public.reply_review('00000000-0000-0000-0000-
   (select id from public.reviews where visit_id = '11111111-1111-1111-1111-111111111111')),
   'P0001', 'ALREADY_REPLIED', 'mỗi đánh giá trả lời 1 lần');
 
--- Làm sai quy trình: thiếu dầu, sai cách nấu, sai sốt → mất sao, không tip
+-- Làm sai quy trình: thiếu men/muối/nước/đường, sai cách nấu, sai sốt → mất sao, không tip
 insert into public.customer_visits (id, user_id, customer_id, recipe_code, sauce_code, topping_code, arrive_at, leave_at)
 values ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-00000000000a', 1, 'bread',
         'sauce_garlic', null, now() - interval '5 seconds', now() + interval '60 seconds');
@@ -151,10 +166,11 @@ select public.accept_order('00000000-0000-0000-0000-00000000000a', '33333333-333
 update public.bake_sessions set started_at = now() - interval '1 minute'
   where visit_id = '33333333-3333-3333-3333-333333333333';
 select is((public.complete_order('00000000-0000-0000-0000-00000000000a', '33333333-3333-3333-3333-333333333333',
-    array['flour', 'oil'], 'bake', array[90, 90], null, null, 'bag') ->> 'dashed')::boolean, true, 'khách quịt không trả tiền');
+    array['flour', 'water', 'yeast', 'salt', 'sugar'], 'bake', array[90, 90], null, null, 'bag') ->> 'dashed')::boolean, true, 'khách quịt không trả tiền');
 
--- Khách hết kiên nhẫn bỏ đi (hay hối → −1 uy tín)
-update public.profiles set reputation = 5 where id = '00000000-0000-0000-0000-00000000000a';
+-- Khách hết kiên nhẫn bỏ đi lúc chủ tiệm đang online (hay hối → −1 uy tín)
+update public.profiles set reputation = 5, last_seen_at = now() - interval '10 seconds'
+  where id = '00000000-0000-0000-0000-00000000000a';
 update public.customers set impatient = true where id = 3;
 insert into public.customer_visits (user_id, customer_id, recipe_code, arrive_at, leave_at)
 values ('00000000-0000-0000-0000-00000000000a', 3, 'bread', now() - interval '2 minutes', now() - interval '1 minute');
@@ -162,6 +178,34 @@ select is((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', now(
   'khách hay hối bỏ đi → chê quán');
 select is((select min(stars) from public.reviews r join public.customer_visits v on v.id = r.visit_id
   where v.customer_id = 3 and v.status = 'left')::int, 1, 'khách bỏ đi để lại đánh giá 1 sao');
+
+-- ---------------------------------------------------------------- đóng cửa khi offline / tự đóng cửa
+select is((select max(patience_seconds) from public.customers)::int, 60, 'khách chờ tối đa 1 phút');
+select is((select count(*) from public.customers where patience_seconds not in (40, 60))::int, 0,
+  'kiên nhẫn chỉ 40 giây (hay hối) hoặc 60 giây');
+
+-- Chủ tiệm offline 10 phút: khách hết hạn ra về lặng lẽ, không trừ uy tín, không đánh giá.
+update public.profiles set last_seen_at = now() - interval '10 minutes' where id = '00000000-0000-0000-0000-00000000000a';
+insert into public.customer_visits (id, user_id, customer_id, recipe_code, arrive_at, leave_at)
+values ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-00000000000a', 3, 'bread',
+        now() - interval '5 minutes', now() - interval '4 minutes');
+create temp table t_offline as
+  select public._customer_tick_at('00000000-0000-0000-0000-00000000000a', now()) as r;
+select is(((select r from t_offline) ->> 'closed_offline')::int, 1, 'offline → khách hết hạn được cho về');
+select is(((select r from t_offline) ->> 'reputation_lost')::int, 0, 'offline → không trừ uy tín');
+select is((select count(*) from public.reviews where visit_id = '44444444-4444-4444-4444-444444444444')::int, 0,
+  'offline → không có đánh giá 1 sao');
+
+-- Tự đóng cửa: khách đang chờ về hết, không sinh khách mới.
+insert into public.customer_visits (user_id, customer_id, recipe_code, arrive_at, leave_at)
+values ('00000000-0000-0000-0000-00000000000a', 4, 'bread', now(), now() + interval '60 seconds');
+select ok((public.set_shop_open('00000000-0000-0000-0000-00000000000a', false) ->> 'sent_home')::int >= 1,
+  'đóng cửa → khách đang chờ ra về');
+select is((select count(*) from public.customer_visits where user_id = '00000000-0000-0000-0000-00000000000a' and status = 'waiting')::int,
+  0, 'không còn khách chờ');
+select is((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20001 + 720)) ->> 'generated')::int,
+  0, 'tiệm đóng cửa không sinh khách dù giờ cao điểm');
+select lives_ok($$ select public.set_shop_open('00000000-0000-0000-0000-00000000000a', true) $$, 'mở cửa lại');
 select throws_ok($q$ select public.set_theme('00000000-0000-0000-0000-00000000000a', 'theme_xmas') $q$,
   'P0001', 'NOT_OWNED', 'chưa mua theme thì không dùng được');
 

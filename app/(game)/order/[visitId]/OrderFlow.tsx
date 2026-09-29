@@ -13,23 +13,33 @@ import type { BakeStep } from "@/game/scenes/BakeScene";
 import { formatNumber } from "@/lib/game/format";
 import {
   COOK_METHODS,
+  INGREDIENT_CATEGORIES,
   orderText,
   PACKAGING,
   type AcceptResult,
   type CookMethod,
+  type IngredientCategory,
   type OrderResult,
   type Packaging,
 } from "@/lib/game/orders";
 import { previewStars } from "@/lib/game/scoring";
 import styles from "./order.module.css";
 
-type Item = { code: string; name: string; image: string | null; kind: "base" | "sauce" | "topping"; have: number };
+type Item = {
+  code: string;
+  name: string;
+  image: string | null;
+  kind: "base" | "sauce" | "topping";
+  category: IngredientCategory | null;
+  have: number;
+};
 type RecipeInfo = {
   code: string;
   name: string;
   image: string | null;
   cookMethod: CookMethod;
   packaging: Packaging;
+  unlockLevel: number;
   difficulty: number;
   ingredients: { ingredient_code: string; qty: number }[];
 };
@@ -37,7 +47,17 @@ type RecipeInfo = {
 const STEPS = ["Nguyên liệu", "Cách nấu", "Trộn & nấu", "Nước chấm", "Topping", "Đóng gói", "Giao"] as const;
 const GAME_STEPS: BakeStep[] = ["mix", "cook"];
 
-export function OrderFlow({ visitId, ingredients, recipes }: { visitId: string; ingredients: Item[]; recipes: RecipeInfo[] }) {
+export function OrderFlow({
+  visitId,
+  level,
+  ingredients,
+  recipes,
+}: {
+  visitId: string;
+  level: number;
+  ingredients: Item[];
+  recipes: RecipeInfo[];
+}) {
   const router = useRouter();
   const accept = useAction("accept-order");
   const { run: completeRun, busy: delivering } = useAction("complete-order");
@@ -211,26 +231,37 @@ export function OrderFlow({ visitId, ingredients, recipes }: { visitId: string; 
       ) : step === 0 ? (
         <section className="stack">
           <p className={styles.hint}>Bỏ nguyên liệu của món <strong>{recipe.name}</strong> vào tô (chạm để thêm/bớt).</p>
-          <div className="grid-4">
-            {base.map((i) => {
-              const picked = bowl.includes(i.code);
-              const lacking = i.have < needQty(i.code);
-              return (
-                <button
-                  key={i.code}
-                  type="button"
-                  className={`${styles.pick} ${picked ? styles.pickOn : ""}`}
-                  aria-pressed={picked}
-                  disabled={!picked && lacking}
-                  onClick={() => setBowl((b) => (picked ? b.filter((x) => x !== i.code) : [...b, i.code]))}
-                >
-                  <ItemImage code={i.code} image={i.image} name={i.name} size={44} />
-                  <span>{i.name}</span>
-                  <span className={styles.have}>{lacking && !picked ? "Hết" : `có ${i.have}`}</span>
-                </button>
-              );
-            })}
-          </div>
+          {(Object.keys(INGREDIENT_CATEGORIES) as IngredientCategory[]).map((cat) => {
+            const items = base.filter((i) => i.category === cat);
+            if (items.length === 0) return null;
+            return (
+              <div key={cat} className="stack" style={{ gap: 6 }}>
+                <h2 className="small" style={{ fontSize: 14, margin: 0 }}>
+                  {INGREDIENT_CATEGORIES[cat]}
+                </h2>
+                <div className="grid-4">
+                  {items.map((i) => {
+                    const picked = bowl.includes(i.code);
+                    const lacking = i.have < needQty(i.code);
+                    return (
+                      <button
+                        key={i.code}
+                        type="button"
+                        className={`${styles.pick} ${picked ? styles.pickOn : ""}`}
+                        aria-pressed={picked}
+                        disabled={!picked && lacking}
+                        onClick={() => setBowl((b) => (picked ? b.filter((x) => x !== i.code) : [...b, i.code]))}
+                      >
+                        <ItemImage code={i.code} image={i.image} name={i.name} size={44} />
+                        <span>{i.name}</span>
+                        <span className={styles.have}>{lacking && !picked ? "Hết" : `có ${i.have}`}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
           <p className="small muted" style={{ margin: 0, fontWeight: 700 }}>
             Trong tô: {bowl.length ? bowl.map((code) => ingredients.find((i) => i.code === code)?.name).join(", ") : "trống"}
           </p>
@@ -308,7 +339,8 @@ export function OrderFlow({ visitId, ingredients, recipes }: { visitId: string; 
       {showBook && (
         <Modal title="Sổ công thức" onClose={() => setShowBook(false)}>
           <div className="stack">
-            {recipes.map((r) => (
+            {/* Món đang làm lên đầu, sau đó các món đã mở khoá. */}
+            {[recipe, ...recipes.filter((r) => r.code !== recipe.code && r.unlockLevel <= level)].map((r) => (
               <div key={r.code} className="card small" style={{ fontWeight: 700 }}>
                 <strong style={{ fontSize: 15 }}>{r.name}</strong>
                 <div>

@@ -97,6 +97,16 @@ if (!r.data?.clock?.open) {
   }
 }
 
+// Đóng / mở cửa tiệm.
+r = await call(a, "set-shop-open", { open: false });
+expect("set-shop-open đóng cửa", r.ok && r.data.shop_open === false, r);
+r = await call(a, "customer-tick", {});
+expect("tiệm đóng không sinh khách", r.ok && r.data.shop_open === false && r.data.generated === 0, r);
+r = await call(a, "set-shop-open", { open: "yes" });
+expect("set-shop-open input sai bị chặn", !r.ok && r.error === "INVALID_INPUT", r);
+r = await call(a, "set-shop-open", { open: true });
+expect("set-shop-open mở cửa", r.ok && r.data.shop_open === true, r);
+
 r = await call(a, "claim-daily", {});
 expect("claim-daily", r.ok, r);
 r = await call(a, "claim-daily", {});

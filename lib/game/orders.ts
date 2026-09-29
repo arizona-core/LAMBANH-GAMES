@@ -1,10 +1,25 @@
 // Kiểu dữ liệu đơn khách (khớp public._visit_json) + nhãn hiển thị.
 
-export type CookMethod = "bake" | "fry" | "steam";
+export type CookMethod = "bake" | "fry" | "steam" | "chill";
 export type Packaging = "box" | "bag";
 
-export const COOK_METHODS: Record<CookMethod, string> = { bake: "Nướng", fry: "Chiên", steam: "Hấp" };
+export const COOK_METHODS: Record<CookMethod, string> = { bake: "Nướng", fry: "Chiên", steam: "Hấp", chill: "Làm lạnh" };
 export const PACKAGING: Record<Packaging, string> = { box: "Hộp giấy", bag: "Túi giấy" };
+
+/** Nhóm nguyên liệu gốc (khớp cột ingredients.category) — thứ tự hiển thị trong kho/tô trộn. */
+export type IngredientCategory = "flour" | "dairy" | "sweet" | "fruit" | "nut";
+export const INGREDIENT_CATEGORIES: Record<IngredientCategory, string> = {
+  flour: "Bột & men",
+  dairy: "Sữa, trứng & bơ",
+  sweet: "Đường, hương liệu & dầu",
+  fruit: "Trái cây & lá thơm",
+  nut: "Hạt & đồ khô",
+};
+
+/** Độ khó mini-game 1..9 theo cấp mở khoá món (cấp 1 → 1, cấp 25 → 9). */
+export function recipeDifficulty(unlockLevel: number): number {
+  return Math.min(9, Math.max(1, 1 + Math.floor((unlockLevel - 1) / 3)));
+}
 
 export type VisitCustomer = {
   id: number;
@@ -40,7 +55,11 @@ export type TickResult = {
   server_now: string;
   clock: { minute_of_day: number; hour: number; minute: number; open: boolean };
   traffic: "closed" | "rush" | "normal" | "quiet";
+  /** Chủ tiệm đang mở cửa (false = tự đóng, không sinh khách). */
+  shop_open: boolean;
   left: number;
+  /** Khách hết hạn chờ lúc chủ tiệm offline → ra về, không phạt. */
+  closed_offline: number;
   reputation_lost: number;
   generated: number;
   visits: Visit[];
