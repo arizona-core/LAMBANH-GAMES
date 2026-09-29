@@ -305,6 +305,59 @@ export type Database = {
           },
         ];
       };
+      daily_quests: {
+        Row: {
+          claimed_at: string | null;
+          created_at: string;
+          day: string;
+          quest_code: string;
+          user_id: string;
+        };
+        Insert: {
+          claimed_at?: string | null;
+          created_at?: string;
+          day: string;
+          quest_code: string;
+          user_id: string;
+        };
+        Update: {
+          claimed_at?: string | null;
+          created_at?: string;
+          day?: string;
+          quest_code?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "daily_quests_quest_code_fkey";
+            columns: ["quest_code"];
+            isOneToOne: false;
+            referencedRelation: "quest_catalog";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "daily_quests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "leaderboard";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "daily_quests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "daily_quests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "public_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ingredients: {
         Row: {
           category: string | null;
@@ -552,6 +605,57 @@ export type Database = {
           updated_at?: string;
           visits_until?: string | null;
           xp?: number;
+        };
+        Relationships: [];
+      };
+      quest_catalog: {
+        Row: {
+          code: string;
+          description: string;
+          grp: string;
+          metric: string;
+          min_level: number;
+          n1: number | null;
+          n2: number | null;
+          param: string | null;
+          reward_coins: number;
+          reward_gems: number;
+          reward_xp: number;
+          sort: number;
+          target: number;
+          title: string;
+        };
+        Insert: {
+          code: string;
+          description: string;
+          grp: string;
+          metric: string;
+          min_level?: number;
+          n1?: number | null;
+          n2?: number | null;
+          param?: string | null;
+          reward_coins?: number;
+          reward_gems?: number;
+          reward_xp?: number;
+          sort?: number;
+          target: number;
+          title: string;
+        };
+        Update: {
+          code?: string;
+          description?: string;
+          grp?: string;
+          metric?: string;
+          min_level?: number;
+          n1?: number | null;
+          n2?: number | null;
+          param?: string | null;
+          reward_coins?: number;
+          reward_gems?: number;
+          reward_xp?: number;
+          sort?: number;
+          target?: number;
+          title?: string;
         };
         Relationships: [];
       };
@@ -989,6 +1093,10 @@ export type Database = {
         Returns: undefined;
       };
       _customer_tick_at: { Args: { p_now: string; p_user: string }; Returns: Json };
+      _ensure_daily_quests: {
+        Args: { p_day: string; p_level: number; p_user: string };
+        Returns: undefined;
+      };
       _fail: { Args: { p_code: string }; Returns: undefined };
       _game_clock: { Args: { p_at: string }; Returns: Json };
       _game_minute: { Args: { p_at: string }; Returns: number };
@@ -1047,6 +1155,15 @@ export type Database = {
       };
       _pick: { Args: { p_options: string[] }; Returns: string };
       _quality_pct: { Args: { p_quality: number }; Returns: number };
+      _quest_progress: {
+        Args: {
+          p_day: string;
+          p_user: string;
+          q: Database["public"]["Tables"]["quest_catalog"]["Row"];
+        };
+        Returns: number;
+      };
+      _quests_json: { Args: { p_day: string; p_user: string }; Returns: Json };
       _rate_limit: {
         Args: { p_kind: string; p_max: number; p_user: string; p_window: string };
         Returns: undefined;
@@ -1078,6 +1195,7 @@ export type Database = {
       buy_upgrade: { Args: { p_code: string; p_user: string }; Returns: Json };
       cancel_listing: { Args: { p_listing: string; p_user: string }; Returns: Json };
       claim_daily: { Args: { p_user: string }; Returns: Json };
+      claim_quest: { Args: { p_code: string; p_user: string }; Returns: Json };
       complete_order: {
         Args: {
           p_ingredients: string[];
@@ -1113,6 +1231,7 @@ export type Database = {
         Returns: Json;
       };
       customer_tick: { Args: { p_user: string }; Returns: Json };
+      get_daily_quests: { Args: { p_user: string }; Returns: Json };
       heartbeat: { Args: { p_user: string }; Returns: Json };
       market_fee: { Args: { p_price: number }; Returns: number };
       rename_shop: { Args: { p_shop_name: string; p_user: string }; Returns: Json };

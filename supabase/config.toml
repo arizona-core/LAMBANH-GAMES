@@ -482,3 +482,9 @@ verify_jwt = false
 
 [functions.set-shop-open]
 verify_jwt = false
+
+[functions.daily-quests]
+verify_jwt = false
+
+[functions.claim-quest]
+verify_jwt = false

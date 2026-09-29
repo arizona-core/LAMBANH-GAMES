@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(91);
+select plan(105);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -81,6 +81,7 @@ select ok((select count(*) from public.customers where impatient) > 0
 select is((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20000 + 60)) ->> 'generated')::int,
   0, 'giờ đóng cửa (0:01) không có khách');
 update public.profiles set visits_until = null where id = '00000000-0000-0000-0000-00000000000a';
+select setseed(0.42);  -- sinh khách ngẫu nhiên → cố định seed để test không chập chờn
 select ok((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20000 + 600)) ->> 'generated')::int > 0,
   'giờ mở cửa (10:00) có khách ghé');
 select ok((select count(*) from public.customer_visits where user_id = '00000000-0000-0000-0000-00000000000a' and status = 'waiting') <= 4,
@@ -231,6 +232,41 @@ select is((select qty from public.inventory where user_id = '00000000-0000-0000-
 select lives_ok($$ select public.claim_daily('00000000-0000-0000-0000-00000000000a') $$, 'điểm danh');
 select throws_ok($$ select public.claim_daily('00000000-0000-0000-0000-00000000000a') $$,
   'P0001', 'ALREADY_CLAIMED', 'không điểm danh 2 lần/ngày');
+-- ---------------------------------------------------------------- nhiệm vụ hằng ngày
+select is((select count(*) from public.quest_catalog)::int, 51, 'danh mục 51 nhiệm vụ');
+select is(jsonb_array_length(public.get_daily_quests('00000000-0000-0000-0000-00000000000b') -> 'quests'), 15,
+  'mỗi ngày 15 nhiệm vụ');
+select is((select count(distinct q.grp) from public.daily_quests d join public.quest_catalog q on q.code = d.quest_code
+           where d.user_id = '00000000-0000-0000-0000-00000000000b')::int, 15, '15 nhiệm vụ khác nhóm nhau');
+select is((select count(*) from public.daily_quests d join public.quest_catalog q on q.code = d.quest_code
+           join public.profiles p on p.id = d.user_id
+           where d.user_id = '00000000-0000-0000-0000-00000000000b' and q.min_level > p.level)::int, 0,
+  'không bốc nhiệm vụ vượt cấp');
+select is(public.get_daily_quests('00000000-0000-0000-0000-00000000000b') -> 'quests',
+          public.get_daily_quests('00000000-0000-0000-0000-00000000000b') -> 'quests', 'gọi lại không bốc lại');
+
+-- A đã giao 3 đơn hôm nay (1 đơn 5★, 1 đơn 1★, 1 đơn bị quịt) và đã điểm danh.
+delete from public.daily_quests where user_id = '00000000-0000-0000-0000-00000000000a';
+insert into public.daily_quests (user_id, day, quest_code) values
+  ('00000000-0000-0000-0000-00000000000a', public._today(), 'serve_3'),
+  ('00000000-0000-0000-0000-00000000000a', public._today(), 'checkin_1'),
+  ('00000000-0000-0000-0000-00000000000a', public._today(), 'serve_25');
+create temp table t_quests as
+  select q ->> 'code' as code, (q ->> 'progress')::int as progress
+  from jsonb_array_elements(public.get_daily_quests('00000000-0000-0000-0000-00000000000a') -> 'quests') q;
+select is((select progress from t_quests where code = 'serve_3'), 3, 'tiến độ tính từ đơn đã giao');
+select is((select progress from t_quests where code = 'checkin_1'), 1, 'tiến độ điểm danh');
+create temp table t_coins as select coins from public.profiles where id = '00000000-0000-0000-0000-00000000000a';
+select is((public.claim_quest('00000000-0000-0000-0000-00000000000a', 'serve_3') ->> 'coins')::int, 60, 'nhận thưởng nhiệm vụ');
+select is((select coins from public.profiles where id = '00000000-0000-0000-0000-00000000000a'),
+  (select coins + 60 from t_coins), 'cộng xu thưởng');
+select throws_ok($$ select public.claim_quest('00000000-0000-0000-0000-00000000000a', 'serve_3') $$,
+  'P0001', 'QUEST_CLAIMED', 'không nhận 2 lần');
+select throws_ok($$ select public.claim_quest('00000000-0000-0000-0000-00000000000a', 'serve_25') $$,
+  'P0001', 'QUEST_NOT_DONE', 'chưa xong thì không nhận được');
+select throws_ok($$ select public.claim_quest('00000000-0000-0000-0000-00000000000a', 'upgrade_1') $$,
+  'P0001', 'NOT_FOUND', 'không nhận nhiệm vụ không được giao');
+
 select ok(public.throttle('00000000-0000-0000-0000-00000000000a', 't', 1, 60), 'throttle lần 1 qua');
 select ok(not public.throttle('00000000-0000-0000-0000-00000000000a', 't', 1, 60), 'throttle lần 2 bị chặn');
 
@@ -261,6 +297,10 @@ select is((select count(*) from public.public_profiles
   where id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b'))::int, 2,
   'view công khai thấy quán người khác');
 select throws_ok($$ update public.profiles set coins = 999999 $$, '42501', null, 'client không sửa được xu');
+select is((select count(*) from public.daily_quests where user_id <> '00000000-0000-0000-0000-00000000000a')::int, 0,
+  'client chỉ thấy nhiệm vụ của mình');
+select throws_ok($$ select public.claim_quest('00000000-0000-0000-0000-00000000000a', 'checkin_1') $$,
+  '42501', null, 'client không tự nhận thưởng nhiệm vụ');
 select throws_ok($$ select public.complete_order('00000000-0000-0000-0000-00000000000a', '11111111-1111-1111-1111-111111111111',
   array['flour'], 'bake', array[100, 100], null, null, 'bag') $$, '42501', null, 'client không gọi trực tiếp hàm kinh tế');
 

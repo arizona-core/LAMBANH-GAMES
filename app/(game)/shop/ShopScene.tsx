@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomerAvatar, TraitChips } from "@/components/CustomerAvatar";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { Stars } from "@/components/Stars";
-import { IconCalendar, IconClock } from "@/components/icons";
+import { IconCalendar, IconCheck, IconClock } from "@/components/icons";
 import { callAction } from "@/lib/api/actions";
 import { formatGameTime, formatMinute, gameClock, nextRush, trafficLevel } from "@/lib/game/clock";
 import { errorMessage } from "@/lib/game/errors";
@@ -271,6 +271,16 @@ export function ShopScene({
         <strong>Người chơi</strong>
         <span className="small muted" style={{ fontWeight: 700 }}>
           {onlineCount} đang online
+        </span>
+        <span className="spacer" />
+        <span className="btn btn--soft btn--sm">Xem</span>
+      </Link>
+
+      <Link href="/quests" className="card row" style={{ gap: 10 }}>
+        <IconCheck size={20} color="var(--primary)" />
+        <strong>Nhiệm vụ hôm nay</strong>
+        <span className="small muted" style={{ fontWeight: 700 }}>
+          15 nhiệm vụ · nhận xu, gem, XP
         </span>
         <span className="spacer" />
         <span className="btn btn--soft btn--sm">Xem</span>

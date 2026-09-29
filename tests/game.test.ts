@@ -146,3 +146,15 @@ describe("độ khó mini-game theo cấp mở khoá món", () => {
     expect(recipeDifficulty(99)).toBe(9);
   });
 });
+
+describe("nhiệm vụ hằng ngày", () => {
+  const q = (code: string, progress: number, target: number, claimed = false) => ({
+    code, title: code, description: "", target, progress, reward_coins: 0, reward_gems: 0, reward_xp: 0, claimed,
+  });
+
+  it("xếp: nhận được ngay → đang làm (gần xong trước) → đã nhận", async () => {
+    const { sortQuests } = await import("@/lib/game/quests");
+    const sorted = sortQuests([q("claimed", 3, 3, true), q("half", 1, 2), q("ready", 5, 5), q("little", 1, 10)]);
+    expect(sorted.map((x) => x.code)).toEqual(["ready", "half", "little", "claimed"]);
+  });
+});

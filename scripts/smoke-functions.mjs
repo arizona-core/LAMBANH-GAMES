@@ -97,6 +97,19 @@ if (!r.data?.clock?.open) {
   }
 }
 
+// Nhiệm vụ hằng ngày.
+r = await call(a, "daily-quests", {});
+expect("daily-quests trả 15 nhiệm vụ", r.ok && r.data.quests.length === 15, r);
+{
+  const pending = r.ok ? r.data.quests.find((x) => x.progress < x.target) : null;
+  if (pending) {
+    r = await call(a, "claim-quest", { code: pending.code });
+    expect("claim-quest chưa xong bị chặn", !r.ok && r.error === "QUEST_NOT_DONE", r);
+  }
+}
+r = await call(a, "claim-quest", { code: "Không hợp lệ" });
+expect("claim-quest mã sai bị chặn", !r.ok && r.error === "INVALID_INPUT", r);
+
 // Đóng / mở cửa tiệm.
 r = await call(a, "set-shop-open", { open: false });
 expect("set-shop-open đóng cửa", r.ok && r.data.shop_open === false, r);

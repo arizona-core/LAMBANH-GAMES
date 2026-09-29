@@ -30,6 +30,8 @@ const MESSAGES: Record<string, string> = {
   NOT_OWNED: "Bạn chưa sở hữu món này.",
   ALREADY_REPLIED: "Bạn đã trả lời đánh giá này rồi.",
   ORDER_IN_PROGRESS: "Bạn đang làm dở một đơn khác, giao xong đã nhé.",
+  QUEST_CLAIMED: "Bạn đã nhận thưởng nhiệm vụ này rồi.",
+  QUEST_NOT_DONE: "Nhiệm vụ chưa hoàn thành.",
 };
 
 export function errorMessage(code: string): string {

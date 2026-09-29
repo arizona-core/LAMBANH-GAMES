@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import type { Avatar, AvatarKind, ShopColor } from "@/lib/game/constants";
 import type { AcceptResult, CookMethod, OrderResult, Packaging, TickResult } from "@/lib/game/orders";
+import type { DailyQuests } from "@/lib/game/quests";
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -23,6 +24,11 @@ type Actions = {
   "buy-ingredient": { input: { code: string; qty: number }; output: { coins: number; spent: number } };
   "customer-tick": { input: Record<string, never>; output: TickResult };
   "set-shop-open": { input: { open: boolean }; output: { shop_open: boolean; sent_home: number } };
+  "daily-quests": { input: Record<string, never>; output: DailyQuests };
+  "claim-quest": {
+    input: { code: string };
+    output: { coins: number; gems: number; xp: number; level: number; leveled_up: boolean };
+  };
   "accept-order": { input: { visitId: string }; output: AcceptResult };
   "complete-order": {
     input: {
