@@ -181,9 +181,9 @@ select is((select min(stars) from public.reviews r join public.customer_visits v
   where v.customer_id = 3 and v.status = 'left')::int, 1, 'khách bỏ đi để lại đánh giá 1 sao');
 
 -- ---------------------------------------------------------------- đóng cửa khi offline / tự đóng cửa
-select is((select max(patience_seconds) from public.customers)::int, 60, 'khách chờ tối đa 1 phút');
-select is((select count(*) from public.customers where patience_seconds not in (40, 60))::int, 0,
-  'kiên nhẫn chỉ 40 giây (hay hối) hoặc 60 giây');
+select is((select max(patience_seconds) from public.customers)::int, 240, 'khách chờ tối đa 4 phút');
+select is((select count(*) from public.customers where patience_seconds <> 240)::int, 0,
+  'mọi khách đều chờ 4 phút');
 
 -- Chủ tiệm offline 10 phút: khách hết hạn ra về lặng lẽ, không trừ uy tín, không đánh giá.
 update public.profiles set last_seen_at = now() - interval '10 minutes' where id = '00000000-0000-0000-0000-00000000000a';

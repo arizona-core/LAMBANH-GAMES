@@ -104,6 +104,7 @@ export function OrderFlow({
   const secondsLeft = order ? Math.max(0, Math.ceil((new Date(order.leave_at).getTime() - now) / 1000)) : 0;
 
   // ---------- Phaser (bước 3)
+  const ovenTier = Math.round((order?.oven_bonus ?? 0) / 5); // +5/+10/+15 điểm = lò bậc 1/2/3
   const parentRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<{ tap: () => void; destroy: () => void } | null>(null);
 
@@ -117,6 +118,7 @@ export function OrderFlow({
         recipeImage: recipe.image,
         method,
         difficulty: recipe.difficulty,
+        ovenTier,
         steps: GAME_STEPS,
         onStep: (s, last) => {
           setGameStep(s);
@@ -133,7 +135,7 @@ export function OrderFlow({
       gameRef.current?.destroy();
       gameRef.current = null;
     };
-  }, [step, recipe, method]);
+  }, [step, recipe, method, ovenTier]);
 
   useEffect(() => {
     if (step !== 2) return;

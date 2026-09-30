@@ -11,6 +11,8 @@ export type BakeSceneConfig = {
   recipeImage: string | null;
   method: CookMethod;
   difficulty: number; // 1..9 (theo cấp mở khoá món) → kim chạy nhanh hơn
+  /** Bậc lò đã mua (0 = lò cơ bản … 3 = lò thông minh) — chỉ đổi hình lò. */
+  ovenTier?: number;
   steps: BakeStep[];
   onStep: (step: number, lastScore: number | null) => void;
   onComplete: (scores: number[]) => void;
@@ -37,6 +39,13 @@ const COLORS = {
   fridgeInner: 0xf5fbfd,
   frost: 0xffffff,
 };
+
+const OVEN_LOOKS: { body: number; shadow: number; inner: number; screen?: number }[] = [
+  { body: COLORS.oven, shadow: COLORS.ovenShadow, inner: COLORS.ovenInner },
+  { body: 0xcfd8dc, shadow: 0x90a4ae, inner: 0x37474f },
+  { body: 0xb5532e, shadow: 0x7a2f19, inner: 0x2b1a12 },
+  { body: 0x2f3b45, shadow: 0x1b252c, inner: 0x111a20, screen: 0x4dd0e1 },
+];
 
 const BAR_H = 26;
 
@@ -186,10 +195,13 @@ export class BakeScene extends Phaser.Scene {
     }
 
     if (this.cfg.method === "bake") {
+      // Màu lò theo bậc: cơ bản (cam) · đối lưu (inox) · gạch (đỏ gạch) · thông minh (đen + màn hình).
+      const look = OVEN_LOOKS[Math.min(3, Math.max(0, this.cfg.ovenTier ?? 0))];
       const oven = this.add.graphics();
-      oven.fillStyle(COLORS.ovenShadow, 1).fillRoundedRect(-size / 2, -size / 2 + 8, size, size, 28);
-      oven.fillStyle(COLORS.oven, 1).fillRoundedRect(-size / 2, -size / 2, size, size, 28);
-      oven.fillStyle(COLORS.ovenInner, 1).fillRoundedRect(-size * 0.36, -size * 0.3, size * 0.72, size * 0.62, 16);
+      oven.fillStyle(look.shadow, 1).fillRoundedRect(-size / 2, -size / 2 + 8, size, size, 28);
+      oven.fillStyle(look.body, 1).fillRoundedRect(-size / 2, -size / 2, size, size, 28);
+      oven.fillStyle(look.inner, 1).fillRoundedRect(-size * 0.36, -size * 0.3, size * 0.72, size * 0.62, 16);
+      if (look.screen) oven.fillStyle(look.screen, 1).fillRoundedRect(-size * 0.2, -size * 0.44, size * 0.4, size * 0.08, 4);
       const glow = this.add.rectangle(0, size * 0.22, size * 0.6, 8, COLORS.glow).setAlpha(0.8);
       this.art.add([oven, glow]);
       this.addCake(size * 0.46, size * 0.02);

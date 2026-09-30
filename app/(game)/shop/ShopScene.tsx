@@ -9,6 +9,7 @@ import { InstallAppButton } from "@/components/InstallAppButton";
 import { Stars } from "@/components/Stars";
 import { IconCalendar, IconCheck, IconClock } from "@/components/icons";
 import { callAction } from "@/lib/api/actions";
+import { LATEST_UPDATE, UPDATES_SEEN_KEY, formatUpdateDate } from "@/lib/game/changelog";
 import { formatGameTime, formatMinute, gameClock, nextRush, trafficLevel } from "@/lib/game/clock";
 import { errorMessage } from "@/lib/game/errors";
 import { formatNumber } from "@/lib/game/format";
@@ -51,6 +52,7 @@ export function ShopScene({
   const [showTip, setShowTip] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [shopOpen, setShopOpen] = useState(initialShopOpen);
+  const [hasNewUpdate, setHasNewUpdate] = useState(false);
   const [toggling, setToggling] = useState(false);
   const errorShown = useRef(false);
 
@@ -122,6 +124,7 @@ export function ShopScene({
       // Đọc localStorage chỉ có ở browser → phải set sau khi mount.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowTip(welcome || !localStorage.getItem(TUTORIAL_KEY));
+      setHasNewUpdate(localStorage.getItem(UPDATES_SEEN_KEY) !== LATEST_UPDATE);
     } catch {
       setShowTip(welcome);
     }
@@ -286,6 +289,21 @@ export function ShopScene({
         <span className="btn btn--soft btn--sm">Xem</span>
       </Link>
 
+      <Link href="/updates" className="card row" style={{ gap: 10 }}>
+        <IconCalendar />
+        <strong>Bản cập nhật</strong>
+        <span className="small muted" style={{ fontWeight: 700 }}>
+          {formatUpdateDate(LATEST_UPDATE)}
+        </span>
+        {hasNewUpdate && (
+          <span className="badge" style={{ background: "var(--strawberry-strong)", color: "#fff" }}>
+            Mới
+          </span>
+        )}
+        <span className="spacer" />
+        <span className="btn btn--soft btn--sm">Xem</span>
+      </Link>
+
       <Link href="/reviews" className="card row" style={{ gap: 10 }}>
         <Stars value={Math.round(reviewSummary.avg)} size={16} />
         <strong>{reviewSummary.total ? reviewSummary.avg.toFixed(1).replace(".", ",") : "–"}</strong>
@@ -304,7 +322,7 @@ export function ShopScene({
             <p className="small" style={{ margin: "2px 0 8px" }}>
               Tiệm mở từ 7:00 đến 24:00 (1 giờ game = 1 phút). Khách tới sẽ gọi món — nhận đơn, bỏ
               đúng nguyên liệu, nấu, thêm sốt &amp; topping khách thích, đóng gói rồi giao trước khi
-              khách hết kiên nhẫn (tối đa 1 phút, khách hay hối 40 giây)! Bận thì bấm “Đóng cửa”;
+              khách hết kiên nhẫn (mỗi khách chờ tối đa 4 phút)! Bận thì bấm “Đóng cửa”;
               tắt app thì tiệm tự đóng, không bị trừ uy tín.
             </p>
             <button type="button" className="btn btn--soft btn--sm" onClick={dismissTip}>

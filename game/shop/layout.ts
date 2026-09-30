@@ -12,12 +12,14 @@ export type Theme = {
   counter: number;
   counterTop: number;
   accent: number;
+  /** Kiểu sàn: caro (mặc định) hoặc ván gỗ. */
+  floor?: "checker" | "planks";
 };
 
 export const THEMES: Record<string, Theme> = {
   default: { wall: 0xf6e7cc, wallStripe: 0xf0dcbb, wallSide: 0xe9d3ad, floorA: 0xecd6ae, floorB: 0xe3c799, counter: 0xc9722e, counterTop: 0xe8a15d, accent: 0xe28b9b },
   theme_pastel: { wall: 0xfce4ec, wallStripe: 0xf8d3df, wallSide: 0xf3c4d3, floorA: 0xe3f2fd, floorB: 0xd6e4f5, counter: 0xf48fb1, counterTop: 0xf8bbd0, accent: 0x9b7bd6 },
-  theme_wood: { wall: 0xd7b48a, wallStripe: 0xcca77b, wallSide: 0xc49c6e, floorA: 0xa1775a, floorB: 0x8d6448, counter: 0x6d4c41, counterTop: 0x8d6e63, accent: 0x6fa678 },
+  theme_wood: { wall: 0xd7b48a, wallStripe: 0xcca77b, wallSide: 0xc49c6e, floorA: 0xa1775a, floorB: 0x8d6448, counter: 0x6d4c41, counterTop: 0x8d6e63, accent: 0x6fa678, floor: "planks" },
   theme_midautumn: { wall: 0xffe0b2, wallStripe: 0xffd59a, wallSide: 0xffcc80, floorA: 0xffcc80, floorB: 0xffb74d, counter: 0xd84315, counterTop: 0xff7043, accent: 0xc62828 },
   theme_xmas: { wall: 0xe8f5e9, wallStripe: 0xd7eed9, wallSide: 0xc8e6c9, floorA: 0xffffff, floorB: 0xe0e0e0, counter: 0xc62828, counterTop: 0xef5350, accent: 0x2e7d32 },
 };
@@ -25,6 +27,19 @@ export const THEMES: Record<string, Theme> = {
 /** Quầy dọc tường trái (ty ≈ 0.6), chủ tiệm đứng sau quầy. */
 export const COUNTER = { tx: 4.2, ty: 0.55, len: 3.2 };
 export const CHEF = { tx: 5.8, ty: 0.1 };
+/** Lò nướng đặt sát tường trái, sau lưng chủ tiệm (đổi hình theo bậc lò đã mua). */
+export const OVEN_SPOT = { tx: 6.9, ty: 0.42 };
+/** Tủ bánh trên quầy (đổi hình theo bậc tủ trưng bày đã mua). */
+export const DISPLAY_SPOT = { tx: COUNTER.tx - 0.8, ty: COUNTER.ty };
+/** Bậc cao nhất đã mua của nâng cấp theo tiền tố mã (oven_1..3, display_1..3); 0 = chưa có. */
+export function tierOf(owned: Iterable<string>, prefix: "oven" | "display"): number {
+  let tier = 0;
+  for (const code of owned) {
+    const n = code.startsWith(`${prefix}_`) ? Number(code.slice(prefix.length + 1)) : 0;
+    if (Number.isInteger(n)) tier = Math.max(tier, n);
+  }
+  return tier;
+}
 /** Cửa ra vào ở tường phải. */
 export const DOOR = { tx: 0, ty: 5.2 };
 export const DOOR_INSIDE = { tx: 0.8, ty: 5.2 };

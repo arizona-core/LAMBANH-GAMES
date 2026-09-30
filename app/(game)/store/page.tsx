@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { BottomNav } from "@/components/BottomNav";
 import { ScreenHeader } from "@/components/ScreenHeader";
+import { avatarPhotoUrl } from "@/lib/game/avatar";
+import { AVATAR_PHOTOS, type Avatar } from "@/lib/game/constants";
 import { getUpgradeBonuses, requirePlayer } from "@/lib/game/queries";
 import { StoreView } from "./StoreView";
 
@@ -24,6 +26,7 @@ export default async function StorePage() {
           coins={profile.coins}
           gems={profile.gems}
           activeTheme={profile.active_theme}
+          chefImage={profile.avatar === "custom" ? avatarPhotoUrl(profile.avatar_url) : (AVATAR_PHOTOS[profile.avatar as Avatar] ?? null)}
         />
       </div>
       <BottomNav />

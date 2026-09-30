@@ -6,16 +6,19 @@ import {
   CHEF,
   COOKING_SPOT,
   COUNTER,
+  DISPLAY_SPOT,
   DOOR,
   DOOR_INSIDE,
   FLOOR_SPOTS,
   GRID_H,
   GRID_W,
+  OVEN_SPOT,
   QUEUE,
   TABLE_SPOTS,
   THEMES,
   WALL_SPOTS,
   seatOffsets,
+  tierOf,
   type Theme,
 } from "@/game/shop/layout";
 
@@ -136,14 +139,30 @@ export class IsoShopScene extends Phaser.Scene {
     const t = this.theme;
     const g = this.add.graphics().setDepth(-1000);
 
-    // Sàn caro
-    for (let x = 0; x < GRID_W; x++) {
-      for (let y = 0; y < GRID_H; y++) {
-        this.quad(
-          g,
-          [this.iso(x, y), this.iso(x + 1, y), this.iso(x + 1, y + 1), this.iso(x, y + 1)],
-          (x + y) % 2 ? t.floorA : t.floorB,
-        );
+    // Sàn: caro, hoặc ván gỗ chạy dọc trục x (theme gỗ)
+    if (t.floor === "planks") {
+      for (let y = 0; y < GRID_H * 2; y++) {
+        const y0 = y / 2;
+        const y1 = y0 + 0.5;
+        this.quad(g, [this.iso(0, y0), this.iso(GRID_W, y0), this.iso(GRID_W, y1), this.iso(0, y1)], y % 2 ? t.floorA : t.floorB);
+      }
+      g.lineStyle(1, shade(t.floorB, 0.75), 0.6);
+      for (let y = 0; y < GRID_H * 2; y++) {
+        for (let x = (y % 3) + 0.5; x < GRID_W; x += 3) {
+          const a = this.iso(x, y / 2);
+          const b = this.iso(x, y / 2 + 0.5);
+          g.lineBetween(a.x, a.y, b.x, b.y);
+        }
+      }
+    } else {
+      for (let x = 0; x < GRID_W; x++) {
+        for (let y = 0; y < GRID_H; y++) {
+          this.quad(
+            g,
+            [this.iso(x, y), this.iso(x + 1, y), this.iso(x + 1, y + 1), this.iso(x, y + 1)],
+            (x + y) % 2 ? t.floorA : t.floorB,
+          );
+        }
       }
     }
 
@@ -158,6 +177,8 @@ export class IsoShopScene extends Phaser.Scene {
       const b = this.iso(0, y + 1);
       this.quad(g, [a, b, { x: b.x, y: b.y - WALL_H }, { x: a.x, y: a.y - WALL_H }], t.wallSide);
     }
+    this.drawWallpaper(g);
+
     // Chân tường
     g.lineStyle(4, shade(t.wallSide, 0.8), 1);
     g.lineBetween(this.iso(0, 0).x, this.iso(0, 0).y, this.iso(GRID_W, 0).x, this.iso(GRID_W, 0).y);
@@ -192,17 +213,32 @@ export class IsoShopScene extends Phaser.Scene {
     this.sky.fillStyle(skyColor(hour), 1).fillPoints(this.skyPoly, true);
     const c = this.skyPoly[0];
     const night = hour < 5 || hour >= 19;
-    this.sky.fillStyle(night ? 0xf4f1de : 0xffd76a, 1).fillCircle(c.x - 10, c.y + 14, 5);
+    if (this.cfg.theme === "theme_midautumn") {
+      // Trăng rằm to tròn trong khung cửa sổ.
+      this.sky.fillStyle(0xfff3c4, 1).fillCircle(c.x - 16, c.y + 20, 11);
+      this.sky.fillStyle(0xffe08a, 0.8).fillCircle(c.x - 19, c.y + 17, 3).fillCircle(c.x - 12, c.y + 24, 2);
+    } else {
+      this.sky.fillStyle(night ? 0xf4f1de : 0xffd76a, 1).fillCircle(c.x - 10, c.y + 14, 5);
+    }
+    if (this.cfg.theme === "theme_xmas") {
+      // Tuyết đọng dưới khung cửa sổ.
+      const [, , p2, p3] = this.skyPoly;
+      this.sky.fillStyle(0xffffff, 1);
+      for (let i = 0; i <= 8; i++) {
+        const f = i / 8;
+        this.sky.fillCircle(p3.x + (p2.x - p3.x) * f, p3.y + (p2.y - p3.y) * f - 2, 4);
+      }
+    }
   }
 
   /** Hộp isometric có đáy w×d ô, tâm tại (tx, ty), cao h px. */
-  private box(tx: number, ty: number, w: number, d: number, h: number, color: number, depthBias = 0) {
+  private box(tx: number, ty: number, w: number, d: number, h: number, color: number, depthBias = 0, z0 = 0) {
     const g = this.add.graphics();
     const x0 = tx - w / 2;
     const y0 = ty - d / 2;
     const p = (x: number, y: number, z: number) => {
       const q = this.iso(x, y);
-      return { x: q.x, y: q.y - z };
+      return { x: q.x, y: q.y - z - z0 };
     };
     // mặt trái (hướng về trục y+), mặt phải (trục x+), mặt trên
     this.quad(g, [p(x0, y0 + d, 0), p(x0 + w, y0 + d, 0), p(x0 + w, y0 + d, h), p(x0, y0 + d, h)], shade(color, 0.78));
@@ -219,9 +255,11 @@ export class IsoShopScene extends Phaser.Scene {
     const depth = this.iso(COUNTER.tx - COUNTER.len / 2, COUNTER.ty + 0.4).y;
     this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 26, t.counter).setDepth(depth);
     this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 27, t.counterTop).setAlpha(0.35).setDepth(depth + 0.1);
-    // Máy tính tiền + khay bánh trên quầy
+    // Máy tính tiền trên quầy
     this.box(COUNTER.tx + 1.1, COUNTER.ty, 0.35, 0.35, 40, 0x4a4a4a).setDepth(depth + 0.2);
-    this.box(COUNTER.tx - 0.8, COUNTER.ty, 0.6, 0.45, 32, 0xfff6e9).setDepth(depth + 0.2);
+    const owned = this.cfg.decor;
+    this.drawDisplay(tierOf(owned, "display"), depth + 0.2);
+    this.drawOven(tierOf(owned, "oven"));
 
     // Chủ tiệm sau quầy
     const c = this.iso(CHEF.tx, CHEF.ty);
@@ -356,13 +394,7 @@ export class IsoShopScene extends Phaser.Scene {
       [this.iso(2.2, 1.2), this.iso(5.4, 3.4), this.iso(1.4, 4.2)].forEach((p) => this.lantern(p));
     }
     if (owned.has("ceil_garland") || this.cfg.theme === "theme_xmas") this.garland();
-    if (this.cfg.theme === "theme_xmas") {
-      const c = this.iso(7.2, 5.9);
-      const tree = this.add.graphics().setDepth(c.y + 10);
-      tree.fillStyle(0x2e7d32, 1).fillTriangle(c.x, c.y - 52, c.x - 16, c.y - 10, c.x + 16, c.y - 10);
-      tree.fillStyle(0x6d4c41, 1).fillRect(c.x - 3, c.y - 10, 6, 8);
-      tree.fillStyle(0xffd54f, 1).fillCircle(c.x, c.y - 54, 3);
-    }
+    this.drawThemeExtras();
   }
 
   private lamp(p: { x: number; y: number }, color: number) {
@@ -393,6 +425,372 @@ export class IsoShopScene extends Phaser.Scene {
       g.fillStyle(colors[i % 4], 1).fillTriangle(x - 5, y, x + 5, y, x, y + 10);
     }
     g.lineStyle(1, 0x7a3e12, 1).lineBetween(a.x, a.y - WALL_H + 6, b.x, b.y - WALL_H + 6);
+  }
+
+  // ---------------------------------------------------------------- lò nướng & tủ bánh (theo bậc nâng cấp)
+  /** Điểm trên mặt trước (hướng y+) của hộp: u = 0..1 theo chiều dài, z = độ cao px. */
+  private frontPt(tx: number, ty: number, w: number, d: number, u: number, z: number) {
+    const q = this.iso(tx - w / 2 + u * w, ty + d / 2);
+    return { x: q.x, y: q.y - z };
+  }
+
+  private frontPanel(
+    tx: number,
+    ty: number,
+    w: number,
+    d: number,
+    u0: number,
+    u1: number,
+    zA: number,
+    zB: number,
+    color: number,
+    depth: number,
+    alpha = 1,
+  ) {
+    const g = this.add.graphics().setDepth(depth);
+    g.fillStyle(color, alpha);
+    g.fillPoints(
+      [
+        this.frontPt(tx, ty, w, d, u0, zA),
+        this.frontPt(tx, ty, w, d, u1, zA),
+        this.frontPt(tx, ty, w, d, u1, zB),
+        this.frontPt(tx, ty, w, d, u0, zB),
+      ].map((p) => new Phaser.Geom.Point(p.x, p.y)),
+      true,
+    );
+    return g;
+  }
+
+  private flicker(target: Phaser.GameObjects.GameObject, min: number, ms: number) {
+    this.tweens.add({ targets: target, alpha: { from: 1, to: min }, yoyo: true, repeat: -1, duration: ms });
+  }
+
+  private drawOven(tier: number) {
+    const s = OVEN_SPOT;
+
+    if (tier === 0) {
+      // Lò cơ bản: nhỏ, xám.
+      const [w, d] = [0.7, 0.6];
+      const depth = this.box(s.tx, s.ty, w, d, 30, 0xa7a7a7, -2).depth;
+      this.frontPanel(s.tx, s.ty, w, d, 0.15, 0.85, 5, 22, 0x4a4a4a, depth + 0.1);
+      this.frontPanel(s.tx, s.ty, w, d, 0.3, 0.7, 25, 27, 0xe7b23c, depth + 0.1);
+      return;
+    }
+    if (tier === 1) {
+      // Lò đối lưu: inox, cửa kính, đèn trong lò.
+      const [w, d] = [0.8, 0.65];
+      const depth = this.box(s.tx, s.ty, w, d, 40, 0xcfd8dc, -2).depth;
+      this.frontPanel(s.tx, s.ty, w, d, 0.1, 0.9, 6, 30, 0x37474f, depth + 0.1);
+      this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.2, 0.8, 10, 26, 0xffa94d, depth + 0.2, 0.55), 0.35, 900);
+      for (const u of [0.25, 0.5, 0.75]) {
+        const k = this.frontPt(s.tx, s.ty, w, d, u, 35);
+        this.add.circle(k.x, k.y, 2.2, 0x546e7a).setDepth(depth + 0.2);
+      }
+      return;
+    }
+    if (tier === 2) {
+      // Lò gạch: vòm gạch đỏ, miệng lò có lửa bập bùng.
+      const [w, d] = [1.0, 0.75];
+      const depth = this.box(s.tx, s.ty, w, d, 26, 0xb5532e, -2).depth;
+      const top = this.iso(s.tx, s.ty);
+      const dome = this.add.graphics().setDepth(depth + 0.05);
+      dome.fillStyle(0xa3472a, 1).fillEllipse(top.x, top.y - 30, this.tw * 0.95, 34);
+      dome.fillStyle(0xc0603a, 1).fillEllipse(top.x - 3, top.y - 34, this.tw * 0.7, 20);
+      const bricks = this.add.graphics().setDepth(depth + 0.1);
+      bricks.lineStyle(1, 0x7a2f19, 0.8);
+      for (const z of [8, 16]) {
+        const a = this.frontPt(s.tx, s.ty, w, d, 0, z);
+        const b = this.frontPt(s.tx, s.ty, w, d, 1, z);
+        bricks.lineBetween(a.x, a.y, b.x, b.y);
+      }
+      this.frontPanel(s.tx, s.ty, w, d, 0.3, 0.7, 3, 20, 0x2b1a12, depth + 0.15);
+      this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.36, 0.64, 3, 13, 0xff7a1a, depth + 0.2), 0.45, 260);
+      this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.43, 0.57, 3, 17, 0xffd54f, depth + 0.25), 0.3, 340);
+      return;
+    }
+    // Lò thông minh: cao, đen nhám, màn hình cảm ứng phát sáng.
+    const [w, d] = [0.85, 0.7];
+    const depth = this.box(s.tx, s.ty, w, d, 52, 0x2f3b45, -2).depth;
+    this.frontPanel(s.tx, s.ty, w, d, 0.1, 0.9, 6, 34, 0x1b252c, depth + 0.1);
+    this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.18, 0.82, 10, 30, 0xffb74d, depth + 0.2, 0.4), 0.5, 1200);
+    this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.2, 0.8, 39, 46, 0x4dd0e1, depth + 0.2), 0.4, 700);
+  }
+
+  private cake(tx: number, ty: number, z0: number, color: number, depth: number) {
+    this.box(tx, ty, 0.2, 0.2, 7, color, 0, z0).setDepth(depth);
+    this.box(tx, ty, 0.2, 0.2, 2, 0xfffaf0, 0, z0 + 7).setDepth(depth + 0.01);
+    const c = this.iso(tx, ty);
+    this.add.circle(c.x, c.y - z0 - 11, 1.8, 0xd32f2f).setDepth(depth + 0.02);
+  }
+
+  private drawDisplay(tier: number, depth: number) {
+    const s = DISPLAY_SPOT;
+    const z0 = 27; // mặt quầy
+    const cakes = [0xf8bbd0, 0x8d6e63, 0xfff3c4, 0xc5e1a5, 0xffccbc, 0xd1c4e9];
+    const row = (n: number, z: number) => {
+      for (let i = 0; i < n; i++) {
+        this.cake(s.tx - 0.35 + (0.7 * i) / Math.max(1, n - 1), s.ty, z, cakes[(i + z) % cakes.length], depth + 0.02);
+      }
+    };
+
+    if (tier === 0) {
+      // Khay bánh đơn giản.
+      this.box(s.tx, s.ty, 0.6, 0.45, 4, 0xfff6e9, 0, z0).setDepth(depth);
+      row(2, z0 + 4);
+      return;
+    }
+    if (tier === 3) {
+      // Quầy cao cấp: mặt đá cẩm thạch viền vàng.
+      this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 2, 0xf5f0e6, 0, 26).setDepth(depth - 0.05);
+      const a = this.frontPt(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 0, 24);
+      const b = this.frontPt(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 1, 24);
+      this.add.graphics().setDepth(depth - 0.04).lineStyle(3, 0xe7b23c, 1).lineBetween(a.x, a.y, b.x, b.y);
+    }
+    const [w, d, h, tint] =
+      tier === 1 ? [1.0, 0.5, 20, 0xd6eefb] : tier === 2 ? [1.1, 0.55, 32, 0xbfe3f5] : [1.2, 0.6, 32, 0xfff8e1];
+    this.box(s.tx, s.ty, w, d, 3, tier === 3 ? 0xe7b23c : 0xeceff1, 0, z0).setDepth(depth);
+    row(3, z0 + 3);
+    if (tier >= 2) {
+      this.box(s.tx, s.ty, w, d, 2, 0xffffff, 0, z0 + 16).setDepth(depth + 0.03).setAlpha(0.9);
+      row(3, z0 + 18);
+    }
+    this.box(s.tx, s.ty, w, d, h, tint, 0, z0).setDepth(depth + 0.1).setAlpha(0.42);
+    // Dải đèn LED (bậc 1–2), viền vàng lấp lánh (bậc 3)
+    const light = this.box(s.tx, s.ty, w, 0.06, 2, tier === 3 ? 0xffd54f : 0xfff59d, 0, z0 + h).setDepth(depth + 0.12);
+    this.flicker(light, 0.5, tier === 3 ? 500 : 1400);
+    if (tier === 3) {
+      const c = this.iso(s.tx + 0.4, s.ty);
+      const star = this.add.star(c.x, c.y - z0 - h - 6, 4, 2, 6, 0xffffff).setDepth(depth + 0.2);
+      this.tweens.add({ targets: star, scale: { from: 0.4, to: 1.2 }, alpha: { from: 1, to: 0 }, repeat: -1, duration: 900 });
+    }
+  }
+
+  // ---------------------------------------------------------------- theme: giấy dán tường + đồ trang trí riêng
+  /** Điểm trên tường trái (ty = 0) tại x, cao z px. */
+  private wallL(x: number, z: number) {
+    const p = this.iso(x, 0);
+    return { x: p.x, y: p.y - z };
+  }
+
+  /** Điểm trên tường phải (tx = 0) tại y, cao z px. */
+  private wallR(y: number, z: number) {
+    const p = this.iso(0, y);
+    return { x: p.x, y: p.y - z };
+  }
+
+  /** Chỗ cửa sổ / cửa ra vào trên tường phải → không vẽ hoạ tiết đè lên. */
+  private onOpening(y: number, z: number) {
+    return (y > 1.3 && y < 3.5 && z > 18 && z < 66) || (y > 4.6 && y < 5.8 && z < 62);
+  }
+
+  private drawWallpaper(g: Phaser.GameObjects.Graphics) {
+    const theme = this.cfg.theme;
+    if (theme === "theme_pastel") {
+      // Chấm bi trắng trên tường hồng.
+      g.fillStyle(0xffffff, 0.55);
+      for (let x = 0.5; x < GRID_W; x += 0.8) {
+        for (let z = 16, row = 0; z < WALL_H - 6; z += 16, row++) {
+          const p = this.wallL(x + (row % 2) * 0.4, z);
+          g.fillCircle(p.x, p.y, 2.6);
+        }
+      }
+      for (let y = 0.4; y < GRID_H; y += 0.8) {
+        for (let z = 16, row = 0; z < WALL_H - 6; z += 16, row++) {
+          const yy = y + (row % 2) * 0.4;
+          if (this.onOpening(yy, z)) continue;
+          const p = this.wallR(yy, z);
+          g.fillCircle(p.x, p.y, 2.6);
+        }
+      }
+    } else if (theme === "theme_wood") {
+      // Ván gỗ dọc + xà gỗ trên đỉnh tường.
+      g.lineStyle(1.5, 0x9c7650, 0.7);
+      for (let x = 0.5; x < GRID_W; x += 0.5) {
+        const a = this.wallL(x, 0);
+        const b = this.wallL(x, WALL_H);
+        g.lineBetween(a.x, a.y, b.x, b.y);
+      }
+      for (let y = 0.5; y < GRID_H; y += 0.5) {
+        const a = this.wallR(y, 0);
+        const b = this.wallR(y, WALL_H);
+        g.lineBetween(a.x, a.y, b.x, b.y);
+      }
+      const beam = 0x5d4037;
+      this.quad(g, [this.wallL(0, WALL_H - 9), this.wallL(GRID_W, WALL_H - 9), this.wallL(GRID_W, WALL_H), this.wallL(0, WALL_H)], beam);
+      this.quad(g, [this.wallR(0, WALL_H - 9), this.wallR(GRID_H, WALL_H - 9), this.wallR(GRID_H, WALL_H), this.wallR(0, WALL_H)], shade(beam, 0.85));
+    } else if (theme === "theme_midautumn" || theme === "theme_xmas") {
+      // Ốp chân tường: đỏ viền vàng (Trung Thu) / sọc kẹo gậy đỏ trắng (Giáng sinh).
+      const xmas = theme === "theme_xmas";
+      const stripe = (i: number) => (xmas ? (i % 2 ? 0xffffff : 0xc62828) : 0xb71c1c);
+      for (let i = 0; i < GRID_W * 4; i++) {
+        const x = i / 4;
+        this.quad(g, [this.wallL(x, 0), this.wallL(x + 0.25, 0), this.wallL(x + 0.25, 16), this.wallL(x, 16)], stripe(i));
+      }
+      for (let i = 0; i < GRID_H * 4; i++) {
+        const y = i / 4;
+        if (y > 4.6 && y < 5.8) continue;
+        this.quad(g, [this.wallR(y, 0), this.wallR(y + 0.25, 0), this.wallR(y + 0.25, 16), this.wallR(y, 16)], shade(stripe(i), 0.92));
+      }
+      g.lineStyle(2, xmas ? 0x2e7d32 : 0xffc107, 1);
+      g.lineBetween(this.wallL(0, 16).x, this.wallL(0, 16).y, this.wallL(GRID_W, 16).x, this.wallL(GRID_W, 16).y);
+      g.lineBetween(this.wallR(0, 16).x, this.wallR(0, 16).y, this.wallR(4.6, 16).x, this.wallR(4.6, 16).y);
+    }
+  }
+
+  /** Dây cờ (tam giác hoặc trái tim) dọc đỉnh tường phải. */
+  private bunting(colors: number[], hearts = false) {
+    const g = this.add.graphics().setDepth(5001);
+    const z = WALL_H - 5;
+    const n = 12;
+    const a = this.wallR(0.2, z);
+    const b = this.wallR(GRID_H - 0.2, z);
+    g.lineStyle(1, 0x7a3e12, 1).lineBetween(a.x, a.y, b.x, b.y);
+    for (let i = 0; i < n; i++) {
+      const p = this.wallR(0.2 + ((GRID_H - 0.4) * (i + 0.5)) / n, z);
+      g.fillStyle(colors[i % colors.length], 1);
+      if (hearts) {
+        g.fillCircle(p.x - 2.5, p.y + 3, 3).fillCircle(p.x + 2.5, p.y + 3, 3);
+        g.fillTriangle(p.x - 5.5, p.y + 4, p.x + 5.5, p.y + 4, p.x, p.y + 11);
+      } else {
+        g.fillTriangle(p.x - 5, p.y, p.x + 5, p.y, p.x, p.y + 11);
+      }
+    }
+  }
+
+  /** Vật treo trần (dây + hình vẽ ở đầu dây), đung đưa nhẹ. */
+  private hanging(p: { x: number; y: number }, draw: (g: Phaser.GameObjects.Graphics, x: number, y: number) => void) {
+    const y = Math.max(34, p.y - 150); // không để vật treo bị cắt ở mép trên
+    const g = this.add.graphics({ x: p.x, y: 0 }).setDepth(5000);
+    g.lineStyle(1.5, 0x7a3e12, 1).lineBetween(0, 0, 0, y);
+    draw(g, 0, y);
+    this.tweens.add({ targets: g, angle: { from: -1.5, to: 1.5 }, yoyo: true, repeat: -1, duration: 1800, ease: "Sine.InOut" });
+  }
+
+  private drawThemeExtras() {
+    const theme = this.cfg.theme;
+
+    if (theme === "theme_pastel") {
+      this.bunting([0xf48fb1, 0xb39ddb, 0x80cbc4, 0xfff59d], true);
+      // Chùm bóng bay ở góc tiệm, nhún nhẹ.
+      const c = this.iso(7.6, 6.5);
+      [0xf48fb1, 0xb39ddb, 0x80deea].forEach((color, i) => {
+        const g = this.add.graphics().setDepth(c.y + 20);
+        const bx = c.x + (i - 1) * 11;
+        const by = c.y - 58 - (i % 2) * 10;
+        g.lineStyle(1, 0x9e9e9e, 1).lineBetween(c.x, c.y - 4, bx, by + 9);
+        g.fillStyle(color, 1).fillEllipse(bx, by, 16, 19);
+        g.fillStyle(0xffffff, 0.6).fillEllipse(bx - 3, by - 4, 4, 6);
+        this.tweens.add({ targets: g, y: -3, yoyo: true, repeat: -1, duration: 1300 + i * 200, ease: "Sine.InOut" });
+      });
+      // Biển hiệu nhỏ trên tường trái
+      const p = this.wallL(4.4, 66);
+      const sign = this.add.graphics().setDepth(-897);
+      sign.fillStyle(0xffffff, 1).fillRoundedRect(p.x - 18, p.y - 8, 36, 16, 8);
+      sign.lineStyle(2, 0xf48fb1, 1).strokeRoundedRect(p.x - 18, p.y - 8, 36, 16, 8);
+      this.add
+        .text(p.x, p.y, "Pastel", { fontFamily: "Baloo 2, sans-serif", fontSize: "10px", color: "#D81B60", fontStyle: "700" })
+        .setOrigin(0.5)
+        .setDepth(-896);
+      return;
+    }
+
+    if (theme === "theme_wood") {
+      // Chậu cây treo trần
+      for (const spot of [this.iso(4.6, 3.9), this.iso(1.6, 2.2)]) {
+        this.hanging(spot, (g, x, y) => {
+          g.fillStyle(0xa0561a, 1).fillRect(x - 7, y + 6, 14, 9);
+          g.fillStyle(0x4f8a5c, 1).fillCircle(x - 6, y + 17, 5).fillCircle(x + 6, y + 18, 5).fillCircle(x, y + 21, 5);
+          g.fillStyle(0x6fa678, 1).fillCircle(x, y + 5, 6);
+        });
+      }
+      // Bảng phấn thực đơn giữa cửa sổ và cửa ra vào
+      const a = this.wallR(3.6, 52);
+      const b = this.wallR(4.5, 52);
+      const pts = [a, b, { x: b.x, y: b.y + 30 }, { x: a.x, y: a.y + 30 }].map((q) => new Phaser.Geom.Point(q.x, q.y));
+      const board = this.add.graphics().setDepth(-897);
+      board.fillStyle(0x2e4a3a, 1).fillPoints(pts, true);
+      board.lineStyle(3, 0x8d6448, 1).strokePoints(pts, true);
+      board.lineStyle(1.5, 0xffffff, 0.8);
+      // Nét phấn song song cạnh bảng (nội suy dọc cạnh trên, chừa lề 20%).
+      const lerp = (t: number, dz: number) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t + dz });
+      for (let i = 0; i < 3; i++) {
+        const [p0, p1] = [lerp(0.2, 9 + i * 7), lerp(0.8, 9 + i * 7)];
+        board.lineBetween(p0.x, p0.y, p1.x, p1.y);
+      }
+      // Thùng gỗ ở góc
+      this.box(0.55, 6.4, 0.5, 0.5, 24, 0x8d5a2b);
+      this.box(0.55, 6.4, 0.52, 0.52, 2, 0x4e342e, 1, 6);
+      this.box(0.55, 6.4, 0.52, 0.52, 2, 0x4e342e, 1, 17);
+      return;
+    }
+
+    if (theme === "theme_midautumn") {
+      this.bunting([0xc62828, 0xffc107]);
+      // Đèn ông sao
+      this.hanging(this.iso(4.4, 5.2), (g, x, y) => {
+        const pts = Array.from({ length: 10 }, (_, i) => {
+          const r = i % 2 ? 5 : 12;
+          const ang = (Math.PI / 5) * i - Math.PI / 2;
+          return new Phaser.Geom.Point(x + r * Math.cos(ang), y + 14 + r * Math.sin(ang));
+        });
+        g.fillStyle(0xffc107, 1).fillPoints(pts, true);
+        g.fillStyle(0xd84315, 1).fillCircle(x, y + 14, 3);
+      });
+      // Hộp bánh Trung Thu
+      this.box(7.4, 6.4, 0.6, 0.6, 12, 0xc62828);
+      this.box(7.4, 6.4, 0.6, 0.6, 2, 0xffd54f, 1, 12);
+      this.box(7.28, 6.3, 0.2, 0.2, 5, 0xd4a15a, 2, 14);
+      this.box(7.52, 6.5, 0.2, 0.2, 5, 0xd4a15a, 2, 14);
+      return;
+    }
+
+    if (theme === "theme_xmas") {
+      // Cây thông 3 tầng, quả châu, ngôi sao, hộp quà
+      const c = this.iso(7.2, 5.9);
+      const tree = this.add.graphics().setDepth(c.y + 10);
+      tree.fillStyle(0x6d4c41, 1).fillRect(c.x - 3, c.y - 12, 6, 10);
+      for (const [dy, half, hgt] of [[0, 22, 20], [-16, 18, 16], [-30, 13, 12]]) {
+        tree.fillStyle(0x2e7d32, 1).fillTriangle(c.x, c.y - 26 + dy - hgt, c.x - half, c.y - 12 + dy, c.x + half, c.y - 12 + dy);
+      }
+      for (const [dx, dy, col] of [[-10, -18, 0xe53935], [8, -26, 0xffd54f], [-5, -38, 0x42a5f5], [6, -45, 0xe53935], [0, -30, 0xffffff]]) {
+        tree.fillStyle(col, 1).fillCircle(c.x + dx, c.y + dy, 2.5);
+      }
+      const star = this.add.star(c.x, c.y - 72, 5, 3, 7, 0xffd54f).setDepth(c.y + 11);
+      this.tweens.add({ targets: star, scale: { from: 0.85, to: 1.15 }, yoyo: true, repeat: -1, duration: 700 });
+      for (const [tx, ty, col] of [[6.6, 6.5, 0xe53935], [7.8, 6.4, 0x42a5f5]]) {
+        this.box(tx, ty, 0.35, 0.35, 10, col, 12);
+        this.box(tx, ty, 0.08, 0.36, 11, 0xffd54f, 13);
+      }
+      // Vòng nguyệt quế trên cửa ra vào
+      const d = this.wallR(5.2, 44);
+      const wreath = this.add.graphics().setDepth(-896);
+      wreath.lineStyle(5, 0x2e7d32, 1).strokeCircle(d.x, d.y, 8);
+      wreath.fillStyle(0xe53935, 1);
+      wreath.fillTriangle(d.x - 5, d.y + 8, d.x, d.y + 5, d.x - 2, d.y + 13);
+      wreath.fillTriangle(d.x + 5, d.y + 8, d.x, d.y + 5, d.x + 2, d.y + 13);
+      // Tất Noel treo tường trái
+      for (const x of [1.2, 3.2, 5.2]) {
+        const p = this.wallL(x, WALL_H - 14);
+        const sock = this.add.graphics().setDepth(-896);
+        sock.fillStyle(0xffffff, 1).fillRect(p.x - 4, p.y, 8, 4);
+        sock.fillStyle(0xc62828, 1).fillRect(p.x - 4, p.y + 4, 8, 10).fillEllipse(p.x + 1, p.y + 15, 12, 6);
+      }
+      // Tuyết rơi nhẹ khắp tiệm
+      const { width, height } = this.scale;
+      for (let i = 0; i < 16; i++) {
+        const flake = this.add
+          .circle(Phaser.Math.Between(0, width), -10, Phaser.Math.FloatBetween(1.5, 3), 0xffffff, 0.9)
+          .setDepth(5002);
+        this.tweens.add({
+          targets: flake,
+          y: height + 10,
+          x: flake.x + Phaser.Math.Between(-20, 20),
+          duration: Phaser.Math.Between(4500, 8000),
+          delay: i * 400,
+          repeat: -1,
+        });
+      }
+    }
   }
 
   // ---------------------------------------------------------------- khách

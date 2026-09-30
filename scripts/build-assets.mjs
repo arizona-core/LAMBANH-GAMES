@@ -39,6 +39,7 @@ const ICONS = [
 const FOLDERS = [
   ["customers", 160, "cover"], // ảnh chân dung khách: cắt vuông
   ["decor", 256, "inside"], // đồ trang trí: giữ nguyên tỉ lệ, nền trong suốt
+  ["store", 192, "inside"], // ảnh món trong Cửa hàng: tên file = mã món (oven_1.png, theme_xmas.png…)
 ];
 
 function slug(name) {
