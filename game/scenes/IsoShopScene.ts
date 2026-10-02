@@ -56,7 +56,13 @@ const BG = [0xffe0c4, 0xf6d2da, 0xd9ead3, 0xd6e4f5];
 /** Viền avatar theo trạng thái: chờ = vàng, đang làm = cam, đang ăn = xanh. */
 const RING: Record<SceneCustomer["status"], number> = { waiting: 0xe7b23c, cooking: 0xd98a3d, seated: 0x6fa678 };
 const WALL_H = 78;
+const WALL_T = 0.16; // độ dày tường (ô), lộ ra ở mặt cắt đầu tường + mặt trên
+const SLAB = 10; // độ dày khối nền dưới sàn (px)
+const SHADOW = 0x3a2412; // bóng đổ tông nâu ấm (không dùng đen)
 const SPEED = 70; // px/giây
+
+/** Nguồn sáng: quầng tròn bán kính r px, flat = tỉ lệ cao/rộng (0.5 = nằm trên sàn), power = độ sáng lúc tối. */
+type Light = { x: number; y: number; r: number; color: number; flat: number; power: number; nightOnly?: boolean };
 
 function skyColor(hour: number): number {
   if (hour < 5) return 0x27305a;
@@ -64,6 +70,22 @@ function skyColor(hour: number): number {
   if (hour < 16) return 0x9ed3f3;
   if (hour < 19) return 0xf2956b;
   return 0x27305a;
+}
+
+/** Bao lồi của tập điểm (thuật toán monotone chain), dùng vẽ luồng sáng từ cửa sổ xuống sàn. */
+function hull(points: { x: number; y: number }[]) {
+  const pts = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
+  const cross = (o: { x: number; y: number }, a: { x: number; y: number }, b: { x: number; y: number }) =>
+    (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const half = (list: typeof pts) => {
+    const out: typeof pts = [];
+    for (const p of list) {
+      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
+      out.push(p);
+    }
+    return out.slice(0, -1);
+  };
+  return [...half(pts), ...half([...pts].reverse())];
 }
 
 function shade(color: number, f: number): number {
@@ -80,6 +102,12 @@ export class IsoShopScene extends Phaser.Scene {
   private oy = 0;
   private sky!: Phaser.GameObjects.Graphics;
   private skyPoly: Phaser.Geom.Point[] = [];
+  private shadows!: Phaser.GameObjects.Graphics;
+  private sun!: Phaser.GameObjects.Graphics;
+  private night!: Phaser.GameObjects.Graphics;
+  private glowSpots: Light[] = [];
+  private glows: Phaser.GameObjects.Image[] = [];
+  private roomPoly: Phaser.Geom.Point[] = [];
   private actors = new Map<string, Actor>();
   private seats: Pt[] = [];
   private firstSync = true;
@@ -95,6 +123,8 @@ export class IsoShopScene extends Phaser.Scene {
     this.cfg = cfg;
     this.theme = THEMES[cfg.theme] ?? THEMES.default;
     this.actors.clear();
+    this.glowSpots = [];
+    this.glows = [];
     this.firstSync = true;
     this.ready = false;
   }
@@ -116,9 +146,21 @@ export class IsoShopScene extends Phaser.Scene {
     this.ox = width / 2 + ((GRID_H - GRID_W) * this.tw) / 4;
     this.oy = WALL_H + 14;
 
+    // Lớp ánh sáng: vệt nắng + bóng đổ nằm trên sàn (dưới đồ vật); màn đêm + quầng đèn phủ lên trên cùng.
+    // Nắng/quầng đèn dùng chế độ cộng sáng (ADD) để sáng lên được cả trên sàn màu nhạt.
+    this.sun = this.add.graphics().setDepth(-945).setBlendMode(Phaser.BlendModes.ADD);
+    this.shadows = this.add.graphics().setDepth(-940);
+    this.night = this.add.graphics().setDepth(5003);
+
     this.drawRoom();
     this.drawCounter();
     this.drawDecor();
+    const mid = this.iso(GRID_W / 2, GRID_H / 2);
+    this.glowSpots.push({ x: mid.x, y: mid.y, r: this.tw * 3.6, color: 0xffd9a0, flat: 0.5, power: 0.3, nightOnly: true }); // đèn trần
+    this.glows = this.glowSpots.map((l) => {
+      const img = this.add.image(l.x, l.y, this.glowKey(l.color));
+      return img.setDisplaySize(l.r * 2, l.r * 2 * l.flat).setBlendMode(Phaser.BlendModes.ADD).setDepth(5004);
+    });
     this.setHour(this.cfg.hour);
     this.ready = true;
     const initial = this.pending ?? this.cfg.feed?.list ?? null;
@@ -130,14 +172,78 @@ export class IsoShopScene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------- vẽ phòng
-  private quad(g: Phaser.GameObjects.Graphics, pts: { x: number; y: number }[], color: number) {
-    g.fillStyle(color, 1);
+  private quad(g: Phaser.GameObjects.Graphics, pts: { x: number; y: number }[], color: number, alpha = 1) {
+    g.fillStyle(color, alpha);
     g.fillPoints(pts.map((p) => new Phaser.Geom.Point(p.x, p.y)), true);
+  }
+
+  /** Điểm 3D (ô x, ô y, cao z px) → toạ độ màn hình. */
+  private p3(x: number, y: number, z: number) {
+    const q = this.iso(x, y);
+    return { x: q.x, y: q.y - z };
+  }
+
+  /** Vỏ phòng kiểu mô hình cắt lớp: khối nền dày SLAB px dưới sàn, tường dày WALL_T ô (mặt cắt + mặt trên). */
+  private drawShell(g: Phaser.GameObjects.Graphics) {
+    const t = this.theme;
+    const [W, H, T] = [GRID_W, GRID_H, WALL_T];
+    // Khối nền: mặt trước-trái (hướng y+) tối hơn mặt trước-phải (hướng x+), giống hộp đồ vật.
+    this.quad(g, [this.p3(-T, H, 0), this.p3(W, H, 0), this.p3(W, H, -SLAB), this.p3(-T, H, -SLAB)], shade(t.floorB, 0.62));
+    this.quad(g, [this.p3(W, -T, 0), this.p3(W, H, 0), this.p3(W, H, -SLAB), this.p3(W, -T, -SLAB)], shade(t.floorB, 0.76));
+    // Mặt cắt ở đầu 2 bức tường
+    this.quad(g, [this.p3(W, -T, 0), this.p3(W, 0, 0), this.p3(W, 0, WALL_H), this.p3(W, -T, WALL_H)], shade(t.wall, 0.82));
+    this.quad(g, [this.p3(-T, H, 0), this.p3(0, H, 0), this.p3(0, H, WALL_H), this.p3(-T, H, WALL_H)], shade(t.wallSide, 0.72));
+    // Mặt trên tường (hình chữ L ôm góc phòng)
+    const cap = [this.p3(W, 0, WALL_H), this.p3(W, -T, WALL_H), this.p3(-T, -T, WALL_H), this.p3(-T, H, WALL_H), this.p3(0, H, WALL_H), this.p3(0, 0, WALL_H)];
+    this.quad(g, cap, shade(t.wall, 1.08));
+    g.lineStyle(1, shade(t.wallSide, 0.7), 0.5).strokePoints(cap.map((p) => new Phaser.Geom.Point(p.x, p.y)), true);
+    // Viền sáng mép sàn, tách sàn khỏi khối nền
+    g.lineStyle(1.5, 0xffffff, 0.35);
+    g.lineBetween(this.p3(0, H, 0).x, this.p3(0, H, 0).y, this.p3(W, H, 0).x, this.p3(W, H, 0).y);
+    g.lineBetween(this.p3(W, 0, 0).x, this.p3(W, 0, 0).y, this.p3(W, H, 0).x, this.p3(W, H, 0).y);
+
+    // Bóng phòng (để phủ màn đêm đúng hình căn phòng)
+    this.roomPoly = [
+      this.p3(-T, -T, WALL_H), this.p3(W, -T, WALL_H), this.p3(W, -T, -SLAB),
+      this.p3(W, H, -SLAB), this.p3(-T, H, -SLAB), this.p3(-T, H, WALL_H),
+    ].map((p) => new Phaser.Geom.Point(p.x, p.y));
+  }
+
+  /** Bóng góc: sàn tối dần về chân tường, chân tường và góc phòng tối nhẹ. */
+  private drawOcclusion(g: Phaser.GameObjects.Graphics) {
+    const [W, H] = [GRID_W, GRID_H];
+    for (let i = 1; i <= 4; i++) {
+      const b = i * 0.14;
+      const z = i * 4;
+      this.quad(g, [this.p3(0, 0, 0), this.p3(W, 0, 0), this.p3(W, b, 0), this.p3(0, b, 0)], SHADOW, 0.035);
+      this.quad(g, [this.p3(0, 0, 0), this.p3(b, 0, 0), this.p3(b, H, 0), this.p3(0, H, 0)], SHADOW, 0.035);
+      this.quad(g, [this.p3(0, 0, 0), this.p3(W, 0, 0), this.p3(W, 0, z), this.p3(0, 0, z)], SHADOW, 0.03);
+      this.quad(g, [this.p3(0, 0, 0), this.p3(0, H, 0), this.p3(0, H, z), this.p3(0, 0, z)], SHADOW, 0.03);
+    }
+    for (let i = 1; i <= 3; i++) {
+      const b = i * 0.12;
+      this.quad(g, [this.p3(0, 0, 0), this.p3(b, 0, 0), this.p3(b, 0, WALL_H), this.p3(0, 0, WALL_H)], SHADOW, 0.03);
+      this.quad(g, [this.p3(0, 0, 0), this.p3(0, b, 0), this.p3(0, b, WALL_H), this.p3(0, 0, WALL_H)], SHADOW, 0.03);
+    }
+  }
+
+  /** Bóng đổ mềm dưới đồ vật đặt sàn (lệch nhẹ về phía xa cửa sổ). */
+  private dropShadow(x0: number, y0: number, w: number, d: number) {
+    const [ox, oy] = [0.06, 0.1];
+    for (const [e, a] of [[0.12, 0.07], [0.04, 0.09]]) {
+      this.quad(
+        this.shadows,
+        [this.p3(x0 - e + ox, y0 - e + oy, 0), this.p3(x0 + w + e + ox, y0 - e + oy, 0), this.p3(x0 + w + e + ox, y0 + d + e + oy, 0), this.p3(x0 - e + ox, y0 + d + e + oy, 0)],
+        SHADOW,
+        a,
+      );
+    }
   }
 
   private drawRoom() {
     const t = this.theme;
     const g = this.add.graphics().setDepth(-1000);
+    this.drawShell(g);
 
     // Sàn: caro, hoặc ván gỗ chạy dọc trục x (theme gỗ)
     if (t.floor === "planks") {
@@ -178,6 +284,7 @@ export class IsoShopScene extends Phaser.Scene {
       this.quad(g, [a, b, { x: b.x, y: b.y - WALL_H }, { x: a.x, y: a.y - WALL_H }], t.wallSide);
     }
     this.drawWallpaper(g);
+    this.drawOcclusion(g);
 
     // Chân tường
     g.lineStyle(4, shade(t.wallSide, 0.8), 1);
@@ -229,13 +336,77 @@ export class IsoShopScene extends Phaser.Scene {
         this.sky.fillCircle(p3.x + (p2.x - p3.x) * f, p3.y + (p2.y - p3.y) * f - 2, 4);
       }
     }
+    this.drawLight(hour);
   }
 
-  /** Hộp isometric có đáy w×d ô, tâm tại (tx, ty), cao h px. */
-  private box(tx: number, ty: number, w: number, d: number, h: number, color: number, depthBias = 0, z0 = 0) {
+  /** Texture quầng sáng tròn mờ dần ra mép (tạo 1 lần cho mỗi màu; vẽ sẵn màu vì canvas renderer không tint được). */
+  private glowKey(color: number) {
+    const key = `glow:${color}`;
+    if (this.textures.exists(key)) return key;
+    const size = 128;
+    const tex = this.textures.createCanvas(key, size, size);
+    if (!tex) return key;
+    const ctx = tex.getContext();
+    const c = Phaser.Display.Color.IntegerToColor(color);
+    const rgba = (a: number) => `rgba(${c.red}, ${c.green}, ${c.blue}, ${a})`;
+    const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    grad.addColorStop(0, rgba(1));
+    grad.addColorStop(0.45, rgba(0.45));
+    grad.addColorStop(1, rgba(0));
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+    tex.refresh();
+    return key;
+  }
+
+  /** Ánh sáng theo giờ game: ban ngày nắng rọi qua cửa sổ xuống sàn; tối thì tiệm tối lại, đèn toả quầng. */
+  private drawLight(hour: number) {
+    this.sun.clear();
+    this.night.clear();
+    const night = hour < 6 || hour >= 19;
+    const dusk = hour >= 17 && hour < 19;
+
+    if (!night) {
+      // Cửa sổ ở tường tx = 0 (ty 1.4 → 3.4, cao 22 → 62 px). Mỗi điểm trên khung cửa chiếu xuống sàn:
+      // càng cao thì rọi càng xa vào trong; nắng sớm/chiều chiếu xa và xiên hơn nắng trưa.
+      const low = Math.min(1, Math.abs(hour + 0.5 - 12.5) / 6.5); // 0 = trưa, 1 = sáng sớm / chiều tối
+      const reach = 0.045 + low * 0.03; // số ô rọi vào trên mỗi px chiều cao
+      const skew = Phaser.Math.Clamp((hour - 12.5) / 18, -0.3, 0.3);
+      const onFloor = (ty: number, z: number) => ({ x: z * reach, y: ty + z * reach * skew });
+      const color = low > 0.6 ? 0xffb070 : 0xffe2a8;
+      const alpha = 0.17 - low * 0.04;
+      // 2 ô kính, chừa vệt bóng của thanh giữa khung cửa (ty 2.4)
+      for (const [y0, y1] of [[1.45, 2.35], [2.45, 3.35]]) {
+        const patch = [onFloor(y0, 22), onFloor(y1, 22), onFloor(y1, 62), onFloor(y0, 62)];
+        const cx = patch.reduce((s, p) => s + p.x, 0) / 4;
+        const cy = patch.reduce((s, p) => s + p.y, 0) / 4;
+        // Mép mềm: 3 lớp phóng to dần quanh tâm, lớp ngoài mờ nhất (chế độ cộng sáng nên cộng dồn ở giữa).
+        for (const [grow, a] of [[1.14, 0.3], [1.06, 0.35], [1, 0.5]]) {
+          const pts = patch.map((p) => this.p3(cx + (p.x - cx) * grow, cy + (p.y - cy) * grow, 0));
+          this.quad(this.sun, pts, color, alpha * a * 2);
+        }
+        // Luồng sáng mờ trong không khí: từ ô kính trên tường tới vệt nắng trên sàn.
+        const pane = [this.p3(0, y0, 22), this.p3(0, y1, 22), this.p3(0, y1, 62), this.p3(0, y0, 62)];
+        const floor = patch.map((p) => this.p3(p.x, p.y, 0));
+        this.quad(this.sun, hull([...pane, ...floor]), color, alpha * 0.35);
+      }
+    }
+
+    if (night || dusk) {
+      this.night.fillStyle(night ? 0x1b2550 : 0x7a3e12, night ? 0.22 : 0.07).fillPoints(this.roomPoly, true);
+    }
+    const k = night ? 1 : dusk ? 0.6 : 0.25;
+    this.glowSpots.forEach((l, i) => {
+      this.glows[i]?.setVisible(night || !l.nightOnly).setAlpha(l.power * k);
+    });
+  }
+
+  /** Hộp isometric có đáy w×d ô, tâm tại (tx, ty), cao h px. Đặt sàn (z0 = 0) thì đổ bóng xuống sàn. */
+  private box(tx: number, ty: number, w: number, d: number, h: number, color: number, depthBias = 0, z0 = 0, shadow = z0 === 0) {
     const g = this.add.graphics();
     const x0 = tx - w / 2;
     const y0 = ty - d / 2;
+    if (shadow) this.dropShadow(x0, y0, w, d);
     const p = (x: number, y: number, z: number) => {
       const q = this.iso(x, y);
       return { x: q.x, y: q.y - z - z0 };
@@ -254,9 +425,9 @@ export class IsoShopScene extends Phaser.Scene {
     // luôn được vẽ đè lên quầy, còn chủ tiệm đứng sau quầy bị quầy che phần thân.
     const depth = this.iso(COUNTER.tx - COUNTER.len / 2, COUNTER.ty + 0.4).y;
     this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 26, t.counter).setDepth(depth);
-    this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 27, t.counterTop).setAlpha(0.35).setDepth(depth + 0.1);
+    this.box(COUNTER.tx, COUNTER.ty, COUNTER.len, 0.8, 27, t.counterTop, 0, 0, false).setAlpha(0.35).setDepth(depth + 0.1);
     // Máy tính tiền trên quầy
-    this.box(COUNTER.tx + 1.1, COUNTER.ty, 0.35, 0.35, 40, 0x4a4a4a).setDepth(depth + 0.2);
+    this.box(COUNTER.tx + 1.1, COUNTER.ty, 0.35, 0.35, 40, 0x4a4a4a, 0, 0, false).setDepth(depth + 0.2);
     const owned = this.cfg.decor;
     this.drawDisplay(tierOf(owned, "display"), depth + 0.2);
     this.drawOven(tierOf(owned, "oven"));
@@ -298,13 +469,13 @@ export class IsoShopScene extends Phaser.Scene {
 
     if (kind === "seat_sofa") {
       this.box(spot.tx - 0.6, spot.ty, 0.5, 1.8, 14, wood);
-      this.box(spot.tx - 0.85, spot.ty, 0.2, 1.8, 26, shade(wood, 0.9), -2);
+      this.box(spot.tx - 0.85, spot.ty, 0.2, 1.8, 26, shade(wood, 0.9), -2, 0, false);
       this.box(spot.tx + 0.35, spot.ty, 0.6, 0.6, 12, 0xa0561a);
     } else if (kind === "seat_bar") {
       this.box(spot.tx, spot.ty, 2.2, 0.5, 24, 0x6d4c41);
     } else {
       this.box(spot.tx, spot.ty, 0.8, 0.8, 16, wood);
-      this.box(spot.tx, spot.ty, 0.18, 0.18, 24, 0xfff6e9, 3); // bình hoa nhỏ
+      this.box(spot.tx, spot.ty, 0.18, 0.18, 24, 0xfff6e9, 3, 0, false); // bình hoa nhỏ
     }
 
     const offsets =
@@ -385,7 +556,7 @@ export class IsoShopScene extends Phaser.Scene {
     if (owned.has("floor_cakecase")) {
       const s = FLOOR_SPOTS.floor_cakecase;
       this.box(s.tx, s.ty, 1.1, 0.7, 20, 0xc9722e);
-      this.box(s.tx, s.ty, 1.0, 0.6, 38, 0xd6eefb, 1).setAlpha(0.75);
+      this.box(s.tx, s.ty, 1.0, 0.6, 38, 0xd6eefb, 1, 0, false).setAlpha(0.75);
     }
 
     // Đồ treo trần
@@ -397,17 +568,20 @@ export class IsoShopScene extends Phaser.Scene {
     this.drawThemeExtras();
   }
 
+  // Vật treo trần: không để lọt khỏi mép trên khung hình (giống hanging()).
   private lamp(p: { x: number; y: number }, color: number) {
     const g = this.add.graphics().setDepth(5000);
-    const y = p.y - 150;
+    const y = Math.max(34, p.y - 150);
     g.lineStyle(1.5, 0x7a3e12, 1).lineBetween(p.x, 0, p.x, y);
     g.fillStyle(color, 1).fillEllipse(p.x, y + 6, 22, 12);
-    g.fillStyle(0xffe9a8, 0.25).fillEllipse(p.x, y + 26, 40, 22);
+    this.glowSpots.push({ x: p.x, y: y + 9, r: 18, color: 0xffe9a8, flat: 1, power: 0.8 });
+    this.glowSpots.push({ x: p.x, y: p.y, r: this.tw * 1.6, color: 0xffd98a, flat: 0.5, power: 0.45 }); // quầng sáng trên sàn
   }
 
   private lantern(p: { x: number; y: number }) {
     const g = this.add.graphics().setDepth(5000);
-    const y = p.y - 150;
+    const y = Math.max(34, p.y - 150);
+    this.glowSpots.push({ x: p.x, y: p.y, r: this.tw * 0.9, color: 0xff8a65, flat: 0.5, power: 0.4 });
     g.lineStyle(1.5, 0x7a3e12, 1).lineBetween(p.x, 0, p.x, y);
     g.fillStyle(0xc62828, 1).fillEllipse(p.x, y + 9, 16, 18);
     g.fillStyle(0xffd54f, 1).fillRect(p.x - 5, y, 10, 2).fillRect(p.x - 5, y + 17, 10, 2);
@@ -461,6 +635,12 @@ export class IsoShopScene extends Phaser.Scene {
     return g;
   }
 
+  /** Quầng sáng hắt ra từ cửa lò (giữa mặt trước, cao z px). */
+  private ovenLight(w: number, d: number, z: number, color: number, size: number) {
+    const p = this.frontPt(OVEN_SPOT.tx, OVEN_SPOT.ty, w, d, 0.5, z);
+    this.glowSpots.push({ x: p.x, y: p.y, r: this.tw * size, color, flat: 0.8, power: 0.55 });
+  }
+
   private flicker(target: Phaser.GameObjects.GameObject, min: number, ms: number) {
     this.tweens.add({ targets: target, alpha: { from: 1, to: min }, yoyo: true, repeat: -1, duration: ms });
   }
@@ -480,6 +660,7 @@ export class IsoShopScene extends Phaser.Scene {
       // Lò đối lưu: inox, cửa kính, đèn trong lò.
       const [w, d] = [0.8, 0.65];
       const depth = this.box(s.tx, s.ty, w, d, 40, 0xcfd8dc, -2).depth;
+      this.ovenLight(w, d, 18, 0xffa94d, 0.6);
       this.frontPanel(s.tx, s.ty, w, d, 0.1, 0.9, 6, 30, 0x37474f, depth + 0.1);
       this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.2, 0.8, 10, 26, 0xffa94d, depth + 0.2, 0.55), 0.35, 900);
       for (const u of [0.25, 0.5, 0.75]) {
@@ -492,6 +673,7 @@ export class IsoShopScene extends Phaser.Scene {
       // Lò gạch: vòm gạch đỏ, miệng lò có lửa bập bùng.
       const [w, d] = [1.0, 0.75];
       const depth = this.box(s.tx, s.ty, w, d, 26, 0xb5532e, -2).depth;
+      this.ovenLight(w, d, 10, 0xff7a1a, 0.75);
       const top = this.iso(s.tx, s.ty);
       const dome = this.add.graphics().setDepth(depth + 0.05);
       dome.fillStyle(0xa3472a, 1).fillEllipse(top.x, top.y - 30, this.tw * 0.95, 34);
@@ -511,6 +693,7 @@ export class IsoShopScene extends Phaser.Scene {
     // Lò thông minh: cao, đen nhám, màn hình cảm ứng phát sáng.
     const [w, d] = [0.85, 0.7];
     const depth = this.box(s.tx, s.ty, w, d, 52, 0x2f3b45, -2).depth;
+    this.ovenLight(w, d, 22, 0xffb74d, 0.55);
     this.frontPanel(s.tx, s.ty, w, d, 0.1, 0.9, 6, 34, 0x1b252c, depth + 0.1);
     this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.18, 0.82, 10, 30, 0xffb74d, depth + 0.2, 0.4), 0.5, 1200);
     this.flicker(this.frontPanel(s.tx, s.ty, w, d, 0.2, 0.8, 39, 46, 0x4dd0e1, depth + 0.2), 0.4, 700);
@@ -555,6 +738,8 @@ export class IsoShopScene extends Phaser.Scene {
       row(3, z0 + 18);
     }
     this.box(s.tx, s.ty, w, d, h, tint, 0, z0).setDepth(depth + 0.1).setAlpha(0.42);
+    const glass = this.iso(s.tx, s.ty);
+    this.glowSpots.push({ x: glass.x, y: glass.y - z0 - h / 2, r: this.tw * 0.9, color: 0xfff3c4, flat: 0.8, power: 0.4 });
     // Dải đèn LED (bậc 1–2), viền vàng lấp lánh (bậc 3)
     const light = this.box(s.tx, s.ty, w, 0.06, 2, tier === 3 ? 0xffd54f : 0xfff59d, 0, z0 + h).setDepth(depth + 0.12);
     this.flicker(light, 0.5, tier === 3 ? 500 : 1400);
@@ -747,6 +932,7 @@ export class IsoShopScene extends Phaser.Scene {
     if (theme === "theme_xmas") {
       // Cây thông 3 tầng, quả châu, ngôi sao, hộp quà
       const c = this.iso(7.2, 5.9);
+      this.dropShadow(6.85, 5.55, 0.7, 0.7);
       const tree = this.add.graphics().setDepth(c.y + 10);
       tree.fillStyle(0x6d4c41, 1).fillRect(c.x - 3, c.y - 12, 6, 10);
       for (const [dy, half, hgt] of [[0, 22, 20], [-16, 18, 16], [-30, 13, 12]]) {
@@ -759,7 +945,7 @@ export class IsoShopScene extends Phaser.Scene {
       this.tweens.add({ targets: star, scale: { from: 0.85, to: 1.15 }, yoyo: true, repeat: -1, duration: 700 });
       for (const [tx, ty, col] of [[6.6, 6.5, 0xe53935], [7.8, 6.4, 0x42a5f5]]) {
         this.box(tx, ty, 0.35, 0.35, 10, col, 12);
-        this.box(tx, ty, 0.08, 0.36, 11, 0xffd54f, 13);
+        this.box(tx, ty, 0.08, 0.36, 11, 0xffd54f, 13, 0, false);
       }
       // Vòng nguyệt quế trên cửa ra vào
       const d = this.wallR(5.2, 44);
