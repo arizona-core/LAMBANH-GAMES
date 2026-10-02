@@ -9,6 +9,19 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-02",
+    title: "Nấu bánh kéo thả & tiệm có chiều sâu",
+    items: [
+      "Bỏ nguyên liệu kiểu mới: chọn nhóm, vuốt ngang kệ rồi kéo món thả xuống tô (hoặc chạm để món bay vào). Bột trong tô đổi màu theo nguyên liệu: cacao nâu, matcha xanh, trứng vàng…",
+      "Khuấy bột: kéo thìa vòng tròn trong tô (hoặc giữ nút), nhả tay khi thước độ sệt chỉ “Mịn”. Khuấy chậm quá thì bột không mịn thêm.",
+      "Nấu: kéo khay bột vào lò, chảo, xửng hấp hoặc tủ lạnh. Nhìn bánh nở và vàng dần rồi kéo bánh ra đúng lúc — lấy sớm thì bánh nhạt, trễ thì cháy (hấp thì nhão, làm lạnh thì đông đá).",
+      "Màn kết quả hiện chiếc bánh vừa làm trên đĩa, kèm sốt và topping.",
+      "Cảnh tiệm có chiều sâu: nền và tường dày, bóng đổ dưới đồ vật, nắng rọi qua cửa sổ đổi theo giờ game. Buổi tối tiệm tối lại, lò, tủ bánh và đèn toả sáng.",
+      "Sửa lỗi đèn treo, đèn lồng bị khuất ở mép trên cảnh tiệm.",
+      "Màn Đánh giá: tổng số và điểm trung bình không còn dừng ở 1.000 đánh giá. Mỗi tiệm giữ 200 đánh giá gần nhất để xem và trả lời.",
+    ],
+  },
+  {
     date: "2026-09-30",
     title: "Cửa hàng hoàn chỉnh & khách kiên nhẫn hơn",
     items: [

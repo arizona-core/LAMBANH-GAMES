@@ -8,7 +8,7 @@ export function createBakeGame(parent: HTMLElement, cfg: BakeSceneConfig) {
     type: Phaser.AUTO,
     parent,
     width,
-    height: Math.round(width * 0.95),
+    height: Math.round(width * 0.8), // khớp khung .canvas (aspect-ratio 1 / 0.8)
     backgroundColor: "#F4D9AB",
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
     render: { antialias: true },
@@ -17,9 +17,12 @@ export function createBakeGame(parent: HTMLElement, cfg: BakeSceneConfig) {
     scene: [],
   });
   game.scene.add("bake", BakeScene, true, cfg);
+  const scene = () => game.scene.getScene("bake") as BakeScene | null;
 
   return {
-    tap: () => (game.scene.getScene("bake") as BakeScene | null)?.tap(),
+    /** Nút chính: giữ để khuấy · cho vào lò · lấy bánh ra. */
+    press: () => scene()?.press(),
+    release: () => scene()?.release(),
     destroy: () => game.destroy(true),
   };
 }

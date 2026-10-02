@@ -174,3 +174,48 @@ describe("tổng quan đánh giá (trùng view public_profiles)", () => {
     expect(reviewSummary([0, 0, 0, 500, 1500])).toEqual({ total: 2000, avg: 4.75 });
   });
 });
+
+describe("hiển thị nấu bánh", () => {
+  it("bột chỉ có bột mì/đường giữ màu kem", async () => {
+    const { batterColor } = await import("@/lib/game/cooking");
+    expect(batterColor([])).toBe(0xf6e7c1);
+    expect(batterColor(["flour", "sugar", "salt"])).toBe(0xf6e7c1);
+  });
+
+  it("cacao làm bột nâu, matcha làm bột xanh", async () => {
+    const { batterColor } = await import("@/lib/game/cooking");
+    const choco = batterColor(["flour", "cocoa"]);
+    const green = batterColor(["flour", "matcha"]);
+    expect(choco >> 16).toBeLessThan(0xc0); // kênh đỏ giảm rõ
+    expect((green >> 8) & 0xff).toBeGreaterThan(green >> 16); // xanh lá trội hơn đỏ
+  });
+
+  it("độ chín theo vùng vàng", async () => {
+    const { cookStage } = await import("@/lib/game/cooking");
+    const zone = { start: 0.5, width: 0.2 };
+    expect(cookStage(0.3, zone)).toBe("raw");
+    expect(cookStage(0.6, zone)).toBe("good");
+    expect(cookStage(0.75, zone)).toBe("over");
+  });
+
+  it("ảnh bánh: vừa chín giữ nguyên, cháy thì tối màu", async () => {
+    const { dishFilter } = await import("@/lib/game/cooking");
+    expect(dishFilter("bake", "good")).toBe("none");
+    expect(dishFilter("bake", "over")).toContain("brightness(0.62)");
+  });
+});
+
+describe("màu bánh chung (món chưa có ảnh)", () => {
+  it("trộn màu đúng 2 đầu và ở giữa", async () => {
+    const { mixColor } = await import("@/lib/game/cooking");
+    expect(mixColor(0x000000, 0xffffff, 0)).toBe(0x000000);
+    expect(mixColor(0x000000, 0xffffff, 1)).toBe(0xffffff);
+    expect(mixColor(0x000000, 0xffffff, 0.5)).toBe(0x808080);
+  });
+
+  it("ruột bánh chín sẫm hơn bột sống", async () => {
+    const { bakedColor, batterColor } = await import("@/lib/game/cooking");
+    const raw = batterColor(["flour"]);
+    expect(bakedColor(raw) & 0xff).toBeLessThan(raw & 0xff); // kênh xanh dương giảm → ngả vàng nâu
+  });
+});

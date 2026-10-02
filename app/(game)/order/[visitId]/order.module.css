@@ -125,7 +125,7 @@
   aspect-ratio: 1 / 0.8;
   border-radius: 20px;
   overflow: hidden;
-  touch-action: manipulation;
+  touch-action: none; /* kéo thìa, kéo khay trong canvas không làm cuộn trang */
 }
 
 .canvas canvas {
@@ -137,4 +137,226 @@
   padding-left: 18px;
   font-weight: 700;
   line-height: 1.8;
+}
+
+/* ---------- Bước 1: kệ nguyên liệu + tô trộn */
+.bench {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.catTabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.catCount {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+}
+
+/* Kệ gỗ cuộn ngang: vuốt ngang để cuộn, kéo dọc để nhấc món xuống tô. */
+.shelf {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 10px 10px 18px;
+  border-radius: 16px;
+  background: #fbefdd;
+  box-shadow: inset 0 -12px 0 #c98a4e, inset 0 -15px 0 #e8b77d;
+  scrollbar-width: thin;
+}
+
+.shelfItem {
+  flex: 0 0 84px;
+  min-height: 104px;
+  scroll-snap-align: start;
+  touch-action: pan-x;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.bowlWrap {
+  display: flex;
+  justify-content: center;
+  padding-top: 26px;
+}
+
+/* Tô sứ: thân là nửa elip, miệng tô là elip phía trên (::before). */
+.bowl {
+  position: relative;
+  width: min(100%, 290px);
+  height: 104px;
+  background: linear-gradient(90deg, #fff 55%, #f3ebdd);
+  border-radius: 0 0 145px 145px / 0 0 104px 104px;
+  box-shadow: 0 6px 0 var(--shadow-card);
+  transition: transform 0.15s ease;
+}
+
+.bowl::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -26px;
+  height: 52px;
+  border-radius: 50%;
+  background: #eadfcb;
+  border: 4px solid #fff;
+  box-sizing: border-box;
+}
+
+.bowl::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 46px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--strawberry);
+  opacity: 0.7;
+}
+
+.bowlHot {
+  transform: scale(1.05);
+  box-shadow: 0 6px 0 var(--shadow-card), 0 0 0 4px var(--coin);
+}
+
+.batter {
+  position: absolute;
+  z-index: 1;
+  left: 8%;
+  right: 8%;
+  top: -18px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: background 0.3s ease;
+}
+
+/* Ảnh nguyên liệu nổi trên mặt bột: bỏ nền ô ảnh. */
+.floating :global(.thumb) {
+  background: transparent;
+  border: 0;
+}
+
+.plop {
+  animation: plop 0.42s ease-out;
+}
+
+@keyframes plop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.1, 0.86); }
+  70% { transform: scale(0.97, 1.04); }
+  100% { transform: scale(1); }
+}
+
+.bowlEmpty {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: -10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-muted);
+}
+
+.bowlList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+}
+
+.bowlChip {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #fff3e2;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 12px;
+  box-shadow: 0 2px 0 var(--shadow-card);
+}
+
+/* ---------- Bước 3: nút giữ để khuấy (không chọn chữ / không mở menu khi giữ lâu) */
+.holdBtn {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* ---------- Kết quả: chiếc bánh vừa làm trên đĩa */
+.dish {
+  position: relative;
+  width: 180px;
+  height: 150px;
+  display: grid;
+  place-items: center;
+}
+
+.dishPlate {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 6px;
+  height: 46px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 5px 0 var(--shadow-card), inset 0 0 0 10px #f6efe3;
+}
+
+.dishImg {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  margin-bottom: 22px;
+}
+
+.dishSauce,
+.dishTopping {
+  position: absolute;
+  bottom: 0;
+}
+
+.dishSauce {
+  left: -6px;
+}
+
+.dishTopping {
+  right: -6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plop {
+    animation: none;
+  }
+  .bowl {
+    transition: none;
+  }
 }

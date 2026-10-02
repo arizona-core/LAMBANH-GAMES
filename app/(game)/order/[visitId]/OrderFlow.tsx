@@ -2,18 +2,28 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomerAvatar, TraitChips } from "@/components/CustomerAvatar";
 import { CoinIcon, IconBack, IconCheck } from "@/components/icons";
 import { ItemImage } from "@/components/ItemImage";
 import { Modal } from "@/components/Modal";
 import { Stars } from "@/components/Stars";
 import { useAction } from "@/components/useAction";
-import type { BakeStep } from "@/game/scenes/BakeScene";
+import type { BakePhase } from "@/game/scenes/BakeScene";
+import {
+  bakedColor,
+  batterColor,
+  COOK_GAUGE,
+  COOK_PLACE,
+  cookStage,
+  dishFilter,
+  DONE_TEXT,
+  hexColor,
+  mixColor,
+} from "@/lib/game/cooking";
 import { formatNumber } from "@/lib/game/format";
 import {
   COOK_METHODS,
-  INGREDIENT_CATEGORIES,
   orderText,
   PACKAGING,
   type AcceptResult,
@@ -22,7 +32,8 @@ import {
   type OrderResult,
   type Packaging,
 } from "@/lib/game/orders";
-import { previewStars } from "@/lib/game/scoring";
+import { previewStars, type Zone } from "@/lib/game/scoring";
+import { IngredientBench } from "./IngredientBench";
 import styles from "./order.module.css";
 
 type Item = {
@@ -45,7 +56,25 @@ type RecipeInfo = {
 };
 
 const STEPS = ["Nguyên liệu", "Cách nấu", "Trộn & nấu", "Nước chấm", "Topping", "Đóng gói", "Giao"] as const;
-const GAME_STEPS: BakeStep[] = ["mix", "cook"];
+
+/** Chữ hướng dẫn + nhãn nút chính theo từng pha của mini-game. */
+function phaseUi(phase: BakePhase, method: CookMethod) {
+  const place = COOK_PLACE[method];
+  if (phase === "mix") {
+    return { title: "Khuấy bột!", sub: "Kéo thìa vòng tròn trong tô (hoặc giữ nút) · nhả tay khi bột Mịn", button: "GIỮ ĐỂ KHUẤY" };
+  }
+  if (phase === "load") {
+    return { title: `Cho vào ${place}!`, sub: `Kéo khay bột vào ${place} (hoặc bấm nút)`, button: `CHO VÀO ${place.toUpperCase()}` };
+  }
+  if (phase === "cook") {
+    return {
+      title: `${method === "chill" ? "Canh giờ" : "Canh lửa"} — ${COOK_METHODS[method]}!`,
+      sub: `Kéo bánh ra (hoặc bấm nút) khi thước chỉ “${COOK_GAUGE[method][1]}”`,
+      button: "LẤY BÁNH RA!",
+    };
+  }
+  return { title: DONE_TEXT[method], sub: "Tiếp theo: thêm sốt và topping", button: "XONG" };
+}
 
 export function OrderFlow({
   visitId,
@@ -67,7 +96,8 @@ export function OrderFlow({
   const [bowl, setBowl] = useState<string[]>([]);
   const [method, setMethod] = useState<CookMethod | null>(null);
   const [scores, setScores] = useState<number[]>([]);
-  const [gameStep, setGameStep] = useState(0);
+  const [bakePhase, setBakePhase] = useState<BakePhase>("mix");
+  const [cookInfo, setCookInfo] = useState<{ progress: number; zone: Zone } | null>(null);
   const [sauce, setSauce] = useState<string | null | undefined>(undefined);
   const [topping, setTopping] = useState<string | null | undefined>(undefined);
   const [packaging, setPackaging] = useState<Packaging | null>(null);
@@ -103,10 +133,11 @@ export function OrderFlow({
 
   const secondsLeft = order ? Math.max(0, Math.ceil((new Date(order.leave_at).getTime() - now) / 1000)) : 0;
 
-  // ---------- Phaser (bước 3)
+  // ---------- Phaser (bước 3): khuấy → cho vào lò → lấy bánh ra
   const ovenTier = Math.round((order?.oven_bonus ?? 0) / 5); // +5/+10/+15 điểm = lò bậc 1/2/3
+  const batter = useMemo(() => batterColor(bowl), [bowl]);
   const parentRef = useRef<HTMLDivElement>(null);
-  const gameRef = useRef<{ tap: () => void; destroy: () => void } | null>(null);
+  const gameRef = useRef<{ press: () => void; release: () => void; destroy: () => void } | null>(null);
 
   useEffect(() => {
     if (step !== 2 || !parentRef.current || !recipe || !method) return;
@@ -119,13 +150,17 @@ export function OrderFlow({
         method,
         difficulty: recipe.difficulty,
         ovenTier,
-        steps: GAME_STEPS,
-        onStep: (s, last) => {
-          setGameStep(s);
-          if (last !== null) setScores((prev) => [...prev, last]);
-        },
-        onComplete: (final) => {
+        batterColor: batter,
+        onPhase: setBakePhase,
+        onScore: (i, score) =>
+          setScores((prev) => {
+            const next = [...prev];
+            next[i] = score;
+            return next;
+          }),
+        onComplete: (final, cook) => {
           setScores(final);
+          setCookInfo(cook);
           setStep(3);
         },
       });
@@ -135,18 +170,28 @@ export function OrderFlow({
       gameRef.current?.destroy();
       gameRef.current = null;
     };
-  }, [step, recipe, method, ovenTier]);
+  }, [step, recipe, method, ovenTier, batter]);
 
+  // Bàn phím: giữ Space/Enter để khuấy, nhấn để cho vào lò / lấy bánh ra.
   useEffect(() => {
     if (step !== 2) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code === "Space" || e.code === "Enter") {
-        e.preventDefault();
-        gameRef.current?.tap();
-      }
+    const isKey = (e: KeyboardEvent) => e.code === "Space" || e.code === "Enter";
+    const onDown = (e: KeyboardEvent) => {
+      if (!isKey(e)) return;
+      e.preventDefault();
+      if (!e.repeat) gameRef.current?.press();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const onUp = (e: KeyboardEvent) => {
+      if (!isKey(e)) return;
+      e.preventDefault();
+      gameRef.current?.release();
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
   }, [step]);
 
   // ---------- Giao (bước 7)
@@ -186,6 +231,16 @@ export function OrderFlow({
   }
 
   const c = order.customer;
+  const findItem = (code: string | null | undefined) => (code ? (ingredients.find((i) => i.code === code) ?? null) : null);
+  const dish: Dish = {
+    name: recipe.name,
+    image: recipe.image,
+    color: bakedColor(batter),
+    filter: cookInfo && method ? dishFilter(method, cookStage(cookInfo.progress, cookInfo.zone)) : "none",
+    sauce: findItem(sauce),
+    topping: findItem(topping),
+    packaging: packaging ? PACKAGING[packaging] : null,
+  };
 
   return (
     <div className="screen" style={{ gap: 10 }}>
@@ -229,44 +284,17 @@ export function OrderFlow({
       )}
 
       {result ? (
-        <ResultCard result={result} />
+        <ResultCard result={result} dish={dish} />
       ) : step === 0 ? (
         <section className="stack">
-          <p className={styles.hint}>Bỏ nguyên liệu của món <strong>{recipe.name}</strong> vào tô (chạm để thêm/bớt).</p>
-          {(Object.keys(INGREDIENT_CATEGORIES) as IngredientCategory[]).map((cat) => {
-            const items = base.filter((i) => i.category === cat);
-            if (items.length === 0) return null;
-            return (
-              <div key={cat} className="stack" style={{ gap: 6 }}>
-                <h2 className="small" style={{ fontSize: 14, margin: 0 }}>
-                  {INGREDIENT_CATEGORIES[cat]}
-                </h2>
-                <div className="grid-4">
-                  {items.map((i) => {
-                    const picked = bowl.includes(i.code);
-                    const lacking = i.have < needQty(i.code);
-                    return (
-                      <button
-                        key={i.code}
-                        type="button"
-                        className={`${styles.pick} ${picked ? styles.pickOn : ""}`}
-                        aria-pressed={picked}
-                        disabled={!picked && lacking}
-                        onClick={() => setBowl((b) => (picked ? b.filter((x) => x !== i.code) : [...b, i.code]))}
-                      >
-                        <ItemImage code={i.code} image={i.image} name={i.name} size={44} />
-                        <span>{i.name}</span>
-                        <span className={styles.have}>{lacking && !picked ? "Hết" : `có ${i.have}`}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-          <p className="small muted" style={{ margin: 0, fontWeight: 700 }}>
-            Trong tô: {bowl.length ? bowl.map((code) => ingredients.find((i) => i.code === code)?.name).join(", ") : "trống"}
-          </p>
+          <p className={styles.hint}>Bỏ nguyên liệu của món <strong>{recipe.name}</strong> vào tô.</p>
+          <IngredientBench
+            items={base}
+            bowl={bowl}
+            needQty={needQty}
+            onAdd={(code) => setBowl((b) => (b.includes(code) ? b : [...b, code]))}
+            onRemove={(code) => setBowl((b) => b.filter((x) => x !== code))}
+          />
           <button type="button" className="btn btn--primary btn--block btn--lg" disabled={bowl.length === 0} onClick={() => setStep(1)}>
             Xong, chọn cách nấu
           </button>
@@ -285,18 +313,30 @@ export function OrderFlow({
             Bắt đầu trộn &amp; {method ? COOK_METHODS[method].toLowerCase() : "nấu"}
           </button>
         </section>
-      ) : step === 2 ? (
+      ) : step === 2 && method ? (
         <section className="stack">
-          <p className={styles.instruction}>
-            <strong>{gameStep === 0 ? "Trộn đều!" : `Canh lửa — ${method ? COOK_METHODS[method] : ""}!`}</strong>
-            <span>Chạm khi kim chạy vào vùng vàng</span>
+          <p className={styles.instruction} aria-live="polite">
+            <strong>{phaseUi(bakePhase, method).title}</strong>
+            <span>{phaseUi(bakePhase, method).sub}</span>
           </p>
           <div ref={parentRef} className={styles.canvas} />
           <div className="row" style={{ justifyContent: "center", gap: 8, fontWeight: 800 }}>
-            Tay nghề <Stars value={previewStars(scores, order.oven_bonus)} size={18} />
+            Tay nghề <Stars value={previewStars(scores.filter((s) => s !== undefined), order.oven_bonus)} size={18} />
           </div>
-          <button type="button" className="btn btn--primary btn--block btn--xl" onPointerDown={() => gameRef.current?.tap()}>
-            CHẠM!
+          <button
+            type="button"
+            className={`btn btn--primary btn--block btn--xl ${styles.holdBtn}`}
+            disabled={bakePhase === "done"}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              gameRef.current?.press();
+            }}
+            onPointerUp={() => gameRef.current?.release()}
+            onPointerLeave={() => gameRef.current?.release()}
+            onPointerCancel={() => gameRef.current?.release()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {phaseUi(bakePhase, method).button}
           </button>
         </section>
       ) : step === 3 || step === 4 ? (
@@ -406,9 +446,52 @@ function ExtraPicker({
   );
 }
 
-function ResultCard({ result }: { result: OrderResult }) {
+type Dish = {
+  name: string;
+  image: string | null;
+  /** Màu ruột bánh (món chưa có ảnh). */
+  color: number;
+  /** CSS filter theo lúc lấy bánh ra (sống → nhạt, quá tay → sẫm). */
+  filter: string;
+  sauce: Item | null;
+  topping: Item | null;
+  packaging: string | null;
+};
+
+function ResultCard({ result, dish }: { result: OrderResult; dish: Dish }) {
   return (
     <section className="card stack" aria-live="polite" style={{ alignItems: "center", textAlign: "center" }}>
+      <div className={styles.dish}>
+        <span className={styles.dishPlate} aria-hidden="true" />
+        {dish.image ? (
+          // eslint-disable-next-line @next/next/no-img-element -- ảnh webp nhỏ đã tối ưu sẵn
+          <img src={dish.image} alt={dish.name} className={styles.dishImg} style={{ filter: dish.filter }} />
+        ) : (
+          // Món chưa có ảnh: bánh chung giống trong mini-game (ruột theo màu bột).
+          <svg viewBox="0 0 128 128" className={styles.dishImg} style={{ filter: dish.filter }} role="img" aria-label={dish.name}>
+            <rect x="14" y="54" width="100" height="56" rx="14" fill={hexColor(mixColor(dish.color, 0x000000, 0.22))} />
+            <rect x="14" y="46" width="100" height="56" rx="14" fill={hexColor(dish.color)} />
+            <rect x="10" y="34" width="108" height="24" rx="12" fill="#FFF6E9" />
+            {[30, 52, 76, 98].map((cx) => (
+              <circle key={cx} cx={cx} cy="58" r="7" fill="#FFF6E9" />
+            ))}
+            <circle cx="64" cy="30" r="8" fill="#D32F2F" />
+          </svg>
+        )}
+        {dish.sauce && (
+          <span className={styles.dishSauce} title={dish.sauce.name}>
+            <ItemImage code={dish.sauce.code} image={dish.sauce.image} name={dish.sauce.name} size={38} />
+          </span>
+        )}
+        {dish.topping && (
+          <span className={styles.dishTopping} title={dish.topping.name}>
+            <ItemImage code={dish.topping.code} image={dish.topping.image} name={dish.topping.name} size={38} />
+          </span>
+        )}
+      </div>
+      <p className="small muted" style={{ margin: 0, fontWeight: 800 }}>
+        {[dish.name, dish.sauce?.name, dish.topping?.name, dish.packaging].filter(Boolean).join(" · ")}
+      </p>
       <Stars value={result.quality} size={30} />
       {result.dashed ? (
         <>
