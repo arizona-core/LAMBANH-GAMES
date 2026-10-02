@@ -546,6 +546,7 @@ export type Database = {
           revenue_day: string | null;
           revenue_today: number;
           revenue_total: number;
+          review_counts: number[];
           shop_name: string;
           shop_open: boolean;
           slug: string;
@@ -573,6 +574,7 @@ export type Database = {
           revenue_day?: string | null;
           revenue_today?: number;
           revenue_total?: number;
+          review_counts?: number[];
           shop_name: string;
           shop_open?: boolean;
           slug: string;
@@ -599,6 +601,7 @@ export type Database = {
           revenue_day?: string | null;
           revenue_today?: number;
           revenue_total?: number;
+          review_counts?: number[];
           shop_name?: string;
           shop_open?: boolean;
           slug?: string;

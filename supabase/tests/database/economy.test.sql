@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(105);
+select plan(111);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -287,6 +287,37 @@ select is((select avatar from public.profiles where id = '00000000-0000-0000-000
 select is((public.update_avatar('00000000-0000-0000-0000-00000000000a', 'a2', null) ->> 'old_url'),
   '00000000-0000-0000-0000-00000000000a/1790000000000.webp', 'đổi sang avatar có sẵn trả về ảnh cũ để xoá');
 select ok((select avatar_url is null from public.profiles where id = '00000000-0000-0000-0000-00000000000a'), 'avatar_url đã được xoá');
+
+-- ---------------------------------------------------------------- thống kê đánh giá + dọn đánh giá cũ
+select is((select review_counts[1] + review_counts[2] + review_counts[3] + review_counts[4] + review_counts[5]
+           from public.profiles where id = '00000000-0000-0000-0000-00000000000a'),
+  (select count(*)::int from public.reviews where user_id = '00000000-0000-0000-0000-00000000000a'),
+  'bộ đếm đánh giá khớp số đánh giá');
+
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000c', 'c@test.local');
+select lives_ok(
+  $$ select public.create_profile('00000000-0000-0000-0000-00000000000c', 'Chi', 'Tiệm Chấm Điểm', 'a3', 'honey') $$,
+  'tạo hồ sơ C');
+do $$
+declare
+  v_visit uuid;
+begin
+  for i in 1..260 loop
+    insert into public.customer_visits (user_id, customer_id, recipe_code, arrive_at, leave_at, status)
+    values ('00000000-0000-0000-0000-00000000000c', 1, 'bread', now() - interval '1 hour', now(), 'closed')
+    returning id into v_visit;
+    insert into public.reviews (user_id, visit_id, customer_id, stars, comment, created_at)
+    values ('00000000-0000-0000-0000-00000000000c', v_visit, 1, 1 + i % 5, 'r' || i, now() - make_interval(secs => 1000 - i));
+  end loop;
+end $$;
+select is((select count(*)::int from public.reviews where user_id = '00000000-0000-0000-0000-00000000000c'), 210,
+  'mỗi 50 đánh giá dọn 1 lần, chỉ giữ 200 mới nhất (+ phần mới từ lần dọn trước)');
+select ok(not exists (select 1 from public.reviews where user_id = '00000000-0000-0000-0000-00000000000c' and comment in ('r1', 'r50')),
+  'đánh giá cũ nhất đã bị dọn');
+select is((select review_counts from public.profiles where id = '00000000-0000-0000-0000-00000000000c'),
+  array[52, 52, 52, 52, 52], 'bộ đếm vẫn đủ 260 đánh giá sau khi dọn');
+select is((select review_count || '/' || review_avg from public.public_profiles where id = '00000000-0000-0000-0000-00000000000c'),
+  '260/3.00', 'hồ sơ công khai đọc từ bộ đếm');
 
 -- ---------------------------------------------------------------- RLS / quyền client
 set local role authenticated;

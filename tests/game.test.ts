@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { formatCompact, formatNumber, todayVN } from "@/lib/game/format";
 import { levelProgress, xpForLevel } from "@/lib/game/level";
-import { marketFee, npcUnitPrice, previewStars, scoreTap, starsForScore } from "@/lib/game/scoring";
+import { marketFee, npcUnitPrice, previewStars, reviewSummary, scoreTap, starsForScore } from "@/lib/game/scoring";
 
 describe("scoreTap", () => {
   const zone = { start: 0.4, width: 0.2 };
@@ -156,5 +156,21 @@ describe("nhiệm vụ hằng ngày", () => {
     const { sortQuests } = await import("@/lib/game/quests");
     const sorted = sortQuests([q("claimed", 3, 3, true), q("half", 1, 2), q("ready", 5, 5), q("little", 1, 10)]);
     expect(sorted.map((x) => x.code)).toEqual(["ready", "half", "little", "claimed"]);
+  });
+});
+
+describe("tổng quan đánh giá (trùng view public_profiles)", () => {
+  it("chưa có đánh giá → 0", () => {
+    expect(reviewSummary([0, 0, 0, 0, 0])).toEqual({ total: 0, avg: 0 });
+  });
+
+  it("tính tổng và điểm trung bình từ số đánh giá 1★..5★", () => {
+    // 1×1★ + 3×5★ = 16 sao / 4 đánh giá
+    expect(reviewSummary([1, 0, 0, 0, 3])).toEqual({ total: 4, avg: 4 });
+    expect(reviewSummary([52, 52, 52, 52, 52]).avg).toBe(3);
+  });
+
+  it("không bị cắt ở 1000 như khi đếm từng dòng", () => {
+    expect(reviewSummary([0, 0, 0, 500, 1500])).toEqual({ total: 2000, avg: 4.75 });
   });
 });

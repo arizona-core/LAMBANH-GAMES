@@ -42,3 +42,10 @@ export function npcUnitPrice(basePrice: number, quality: number, displayBonus: n
 export function marketFee(price: number): number {
   return Math.floor((price * 5 + 99) / 100);
 }
+
+/** Tổng quan từ profiles.review_counts (số đánh giá 1★..5★ trọn đời) — trùng view public_profiles. */
+export function reviewSummary(counts: readonly number[]): { total: number; avg: number } {
+  const total = counts.reduce((a, b) => a + b, 0);
+  const avg = total ? counts.reduce((s, n, i) => s + n * (i + 1), 0) / total : 0;
+  return { total, avg };
+}

@@ -100,6 +100,11 @@ export function ReviewsView({
           shown.map((r) => <ReviewCard key={r.id} review={r} />)
         )}
       </div>
+      {total > items.length && (
+        <p className="small muted" style={{ margin: 0, fontWeight: 700, textAlign: "center" }}>
+          Đang hiện {formatNumber(items.length)} đánh giá gần nhất.
+        </p>
+      )}
     </>
   );
 }
