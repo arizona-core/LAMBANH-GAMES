@@ -216,7 +216,7 @@ export function ShopScene({
           </strong>
           <span className="small" style={{ fontWeight: 700 }}>
             {traffic === "rush"
-              ? "Quầy chứa tới 6 khách, có khách đi theo nhóm"
+              ? "Tối đa 3 khách cùng lúc, có khách đi theo nhóm"
               : rushNext
                 ? `Cao điểm tiếp: ${formatMinute(rushNext.start)} (còn ${Math.ceil(rushNext.inSeconds / 60)} phút)`
                 : ""}

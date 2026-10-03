@@ -98,7 +98,8 @@ nhiệm vụ. Không bán sức mạnh trực tiếp ảnh hưởng cạnh tranh
   −1 uy tín), **hay quịt** (10–30% không trả tiền), **khó khăn** (đòi bánh ≥4–5★, thiếu sao chỉ trả
   nửa giá), món/sốt/topping ưa thích, độ hào phóng (tip).
 - Khách **chỉ tới khi người chơi đang mở app** (client gọi `customer-tick` ~15 giây/lần),
-  ~45 lượt/ngày game (+1 mỗi 20 uy tín, tối đa 75), tối đa 4 khách chờ ở quầy.
+  ~45 lượt/ngày game (+1 mỗi 20 uy tín, tối đa 75). Mỗi lúc tối đa 2 khách trong tiệm
+  (giờ cao điểm 3), tính cả khách đang chờ bánh.
 - **Làm theo đơn** (không có bánh làm sẵn): nhận đơn → chọn nguyên liệu → trộn → chọn cách nấu
   (nướng/chiên/hấp) + canh lửa → nước chấm/sốt → topping → đóng gói (hộp/túi) → giao.
   Chấm điểm: canh giờ ± lò; thiếu nguyên liệu −25, thừa −15, sai cách nấu −40, sai gói −10.

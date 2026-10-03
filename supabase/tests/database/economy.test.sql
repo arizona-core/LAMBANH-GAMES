@@ -1,7 +1,7 @@
 -- Test luồng kinh tế + khách/đơn hàng + RLS. Chạy: npx supabase test db
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(111);
+select plan(113);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.local'),
@@ -84,10 +84,22 @@ update public.profiles set visits_until = null where id = '00000000-0000-0000-00
 select setseed(0.42);  -- sinh khách ngẫu nhiên → cố định seed để test không chập chờn
 select ok((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20000 + 600)) ->> 'generated')::int > 0,
   'giờ mở cửa (10:00) có khách ghé');
-select ok((select count(*) from public.customer_visits where user_id = '00000000-0000-0000-0000-00000000000a' and status = 'waiting') <= 4,
-  'quầy tối đa 4 khách chờ');
+select ok((select count(*) from public.customer_visits where user_id = '00000000-0000-0000-0000-00000000000a'
+           and status in ('waiting', 'cooking')) <= 2,
+  'giờ thường: tối đa 2 khách cùng lúc');
 select is((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20000 + 600)) ->> 'generated')::int,
   0, 'gọi tick lại ngay không sinh trùng');
+-- Cao điểm trưa 12:00: tiệm đang có 1 khách chờ bánh → chỉ thêm tối đa 2 khách (tổng 3).
+delete from public.customer_visits where user_id = '00000000-0000-0000-0000-00000000000a';
+insert into public.customer_visits (user_id, customer_id, recipe_code, arrive_at, leave_at, status)
+values ('00000000-0000-0000-0000-00000000000a', 1, 'bread',
+        to_timestamp(1440 * 20000 + 700), to_timestamp(1440 * 20000 + 940), 'cooking');
+select ok((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20000 + 720)) ->> 'generated')::int
+          between 1 and 2,
+  'giờ cao điểm có khách ghé, nhưng khách đang chờ bánh cũng tính vào giới hạn');
+select is((select count(*) from public.customer_visits where user_id = '00000000-0000-0000-0000-00000000000a'
+           and status in ('waiting', 'cooking'))::int, 3,
+  'giờ cao điểm: tối đa 3 khách cùng lúc');
 
 -- Dựng đơn cố định: khách dễ tính, không quịt, hào phóng; Bánh mì + sốt bơ tỏi + phô mai.
 delete from public.customer_visits;

@@ -9,6 +9,13 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-03",
+    title: "Tiệm bớt đông",
+    items: [
+      "Mỗi lúc chỉ có 2 khách trong tiệm (giờ cao điểm 3), tính cả khách đang chờ bánh. Phục vụ xong khách cũ thì khách mới mới vào.",
+    ],
+  },
+  {
     date: "2026-10-02",
     title: "Nấu bánh kéo thả & tiệm có chiều sâu",
     items: [
