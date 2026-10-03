@@ -10,9 +10,10 @@ export type ChangelogEntry = {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     date: "2026-10-03",
-    title: "Tiệm bớt đông",
+    title: "Tiệm bớt đông & mở cả ngày lẫn đêm",
     items: [
       "Mỗi lúc chỉ có 2 khách trong tiệm (giờ cao điểm 3), tính cả khách đang chờ bánh. Phục vụ xong khách cũ thì khách mới mới vào.",
+      "Bỏ giờ đóng cửa 0:00–7:00: mở tiệm là bán, đêm khuya vẫn có khách (vắng hơn ban ngày). Tiệm chỉ đóng khi bạn bấm “Đóng cửa” hoặc tắt app.",
     ],
   },
   {

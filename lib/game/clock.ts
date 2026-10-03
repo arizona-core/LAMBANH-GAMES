@@ -1,30 +1,21 @@
 // Đồng hồ game — trùng public._game_minute: 1 giây thật = 1 phút game, chung cả server.
-// Tiệm mở 7:00 → 24:00 giờ game. Chỉ để HIỂN THỊ; server tự kiểm tra giờ mở cửa.
+// Tiệm mở cả ngày lẫn đêm (migration 0017) — chỉ đóng khi chủ tiệm tự đóng hoặc offline.
+// Giờ game chỉ đổi lượng khách và ánh sáng cảnh tiệm. Chỉ để HIỂN THỊ.
 
-export const OPEN_MINUTE = 7 * 60;
 export const DAY_MINUTES = 24 * 60;
 
 export type GameClock = {
   minuteOfDay: number;
   hour: number;
   minute: number;
-  open: boolean;
-  /** Số giây thật còn lại tới lúc mở cửa (0 nếu đang mở). */
-  secondsToOpen: number;
-  /** Số giây thật còn lại tới lúc đóng cửa (0 nếu đang đóng). */
-  secondsToClose: number;
 };
 
 export function gameClock(nowMs: number): GameClock {
   const minuteOfDay = Math.floor(nowMs / 1000) % DAY_MINUTES;
-  const open = minuteOfDay >= OPEN_MINUTE;
   return {
     minuteOfDay,
     hour: Math.floor(minuteOfDay / 60),
     minute: minuteOfDay % 60,
-    open,
-    secondsToOpen: open ? 0 : OPEN_MINUTE - minuteOfDay,
-    secondsToClose: open ? DAY_MINUTES - minuteOfDay : 0,
   };
 }
 
@@ -32,11 +23,12 @@ export function formatGameTime(c: Pick<GameClock, "hour" | "minute">): string {
   return `${String(c.hour).padStart(2, "0")}:${String(c.minute).padStart(2, "0")}`;
 }
 
-// Lượng khách theo giờ game — trùng public._traffic_mult (migration 0009). Chỉ để HIỂN THỊ.
-export type Traffic = "closed" | "rush" | "normal" | "quiet";
+// Lượng khách theo giờ game — trùng public._traffic_mult (migration 0017). Chỉ để HIỂN THỊ.
+export type Traffic = "rush" | "normal" | "quiet";
 
 const TRAFFIC_BANDS: { from: number; to: number; mult: number }[] = [
-  { from: 0, to: 420, mult: 0 },
+  { from: 0, to: 420, mult: 0.4 }, // đêm khuya
+
   { from: 420, to: 540, mult: 1.3 },
   { from: 540, to: 660, mult: 0.8 },
   { from: 660, to: 780, mult: 1.8 },
@@ -53,7 +45,6 @@ export function trafficMult(minuteOfDay: number): number {
 
 export function trafficLevel(minuteOfDay: number): Traffic {
   const m = trafficMult(minuteOfDay);
-  if (m === 0) return "closed";
   if (m >= 1.5) return "rush";
   if (m <= 0.5) return "quiet";
   return "normal";

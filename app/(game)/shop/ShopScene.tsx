@@ -138,9 +138,8 @@ export function ShopScene({
   }
 
   const serverNow = now + offset;
-  const gameTime = gameClock(serverNow);
-  // Chủ tiệm tự đóng cửa → coi như ngoài giờ mở cửa.
-  const clock = { ...gameTime, open: gameTime.open && shopOpen };
+  // Tiệm mở cả ngày lẫn đêm; chỉ đóng khi chủ tiệm tự đóng (hoặc offline).
+  const clock = gameClock(serverNow);
   const traffic = trafficLevel(clock.minuteOfDay);
   const rushNext = nextRush(clock.minuteOfDay);
   const present = visits.filter(
@@ -181,7 +180,7 @@ export function ShopScene({
   return (
     <>
       <div
-        className={`card row ${clock.open ? styles.clockOpen : styles.clockClosed}`}
+        className={`card row ${shopOpen ? styles.clockOpen : styles.clockClosed}`}
         role="timer"
         aria-live="off"
       >
@@ -190,11 +189,7 @@ export function ShopScene({
           {formatGameTime(clock)}
         </strong>
         <span className="small" style={{ fontWeight: 800 }}>
-          {!shopOpen
-            ? "Bạn đã đóng cửa tiệm"
-            : clock.open
-              ? `Đang mở cửa · đóng lúc 24:00 (còn ${Math.ceil(clock.secondsToClose / 60)} phút)`
-              : `Đóng cửa · mở lúc 07:00 (còn ${clock.secondsToOpen} giây)`}
+          {shopOpen ? "Đang mở cửa · bán cả ngày lẫn đêm" : "Bạn đã đóng cửa tiệm"}
         </span>
         <span className="spacer" />
         <button
@@ -208,11 +203,17 @@ export function ShopScene({
         </button>
       </div>
 
-      {clock.open && (
+      {shopOpen && (
         <div className={`${styles.traffic} ${styles[`traffic_${traffic}`]}`} role="status">
           <span className={styles.trafficDot} aria-hidden="true" />
           <strong>
-            {traffic === "rush" ? "Giờ cao điểm — khách đông!" : traffic === "quiet" ? "Vắng khách" : "Khách bình thường"}
+            {traffic === "rush"
+              ? "Giờ cao điểm — khách đông!"
+              : traffic === "quiet"
+                ? clock.hour < 7
+                  ? "Đêm khuya — vắng khách"
+                  : "Vắng khách"
+                : "Khách bình thường"}
           </strong>
           <span className="small" style={{ fontWeight: 700 }}>
             {traffic === "rush"
@@ -238,7 +239,7 @@ export function ShopScene({
       <section aria-label="Cửa tiệm" className={styles.isoWrap}>
         <ShopIso config={{ theme, decor, chefImage, hour: clock.hour }} customers={sceneCustomers} />
         <div className={styles.waiting}>
-          {!clock.open
+          {!shopOpen
             ? "Tiệm đang đóng cửa"
             : present.length > 0
               ? `${present.length} khách ở quầy`
@@ -259,11 +260,9 @@ export function ShopScene({
             </Link>
           ) : (
             <span className={styles.counterText}>
-              {clock.open
+              {shopOpen
                 ? `${sitting.length} khách đang ngồi ăn · nhận đơn bên dưới`
-                : !shopOpen
-                  ? "Bấm “Mở cửa” khi sẵn sàng đón khách"
-                  : "Tranh thủ vào Bếp mua nguyên liệu nhé!"}
+                : "Bấm “Mở cửa” khi sẵn sàng đón khách"}
             </span>
           )}
         </div>
@@ -320,7 +319,7 @@ export function ShopScene({
           <div style={{ flex: 1 }}>
             <strong>Bếp trưởng Cam</strong>
             <p className="small" style={{ margin: "2px 0 8px" }}>
-              Tiệm mở từ 7:00 đến 24:00 (1 giờ game = 1 phút). Khách tới sẽ gọi món — nhận đơn, bỏ
+              Tiệm mở cả ngày lẫn đêm (1 giờ game = 1 phút). Khách tới sẽ gọi món — nhận đơn, bỏ
               đúng nguyên liệu, nấu, thêm sốt &amp; topping khách thích, đóng gói rồi giao trước khi
               khách hết kiên nhẫn (mỗi khách chờ tối đa 4 phút)! Bận thì bấm “Đóng cửa”;
               tắt app thì tiệm tự đóng, không bị trừ uy tín.
@@ -336,9 +335,9 @@ export function ShopScene({
         {queue.map((v) => (
           <QueueCard key={v.id} visit={v} serverNow={serverNow} busy={!!cooking} />
         ))}
-        {clock.open && queue.length === 0 && loaded && !cooking && (
+        {shopOpen && queue.length === 0 && loaded && !cooking && (
           <p className="empty" style={{ padding: 12 }}>
-            Chưa có khách chờ — khách tới liên tục trong giờ mở cửa.
+            Chưa có khách chờ — khách tới liên tục khi tiệm mở cửa.
           </p>
         )}
       </section>

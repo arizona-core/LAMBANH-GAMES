@@ -93,7 +93,8 @@ nhiệm vụ. Không bán sức mạnh trực tiếp ảnh hưởng cạnh tranh
 ### Thời gian & khách (đã làm)
 
 - **Đồng hồ game chung cả server:** 1 giây thật = 1 phút game (1 giờ game = 1 phút thật,
-  1 ngày game = 24 phút thật). Tiệm mở **7:00 → 24:00** (17 phút thật), đóng 0:00 → 7:00.
+  1 ngày game = 24 phút thật). Tiệm **mở cả ngày lẫn đêm** — chỉ đóng khi chủ tiệm tự bấm
+  "Đóng cửa" hoặc offline; 0:00 → 7:00 là đêm khuya, vắng khách.
 - **500 khách NPC** cố định trong bảng `customers`: tên, tính cách, **hay hối** (chờ ít, bỏ đi thì
   −1 uy tín), **hay quịt** (10–30% không trả tiền), **khó khăn** (đòi bánh ≥4–5★, thiếu sao chỉ trả
   nửa giá), món/sốt/topping ưa thích, độ hào phóng (tip).

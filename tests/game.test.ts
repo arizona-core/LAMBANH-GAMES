@@ -93,18 +93,16 @@ describe("định dạng", () => {
 });
 
 describe("đồng hồ game (1 giây thật = 1 phút game)", () => {
-  it("7:00 mở cửa, 6:59 đóng cửa", async () => {
+  it("420 giây = 7:00 game", async () => {
     const { gameClock, formatGameTime } = await import("@/lib/game/clock");
-    expect(gameClock(420_000).open).toBe(true);
     expect(formatGameTime(gameClock(420_000))).toBe("07:00");
-    expect(gameClock(419_000).open).toBe(false);
-    expect(gameClock(419_000).secondsToOpen).toBe(1);
+    expect(formatGameTime(gameClock(419_000))).toBe("06:59");
   });
 
   it("ngày game dài 24 phút thật", async () => {
     const { gameClock } = await import("@/lib/game/clock");
     expect(gameClock(1440_000).minuteOfDay).toBe(0);
-    expect(gameClock(1439_000).secondsToClose).toBe(1);
+    expect(gameClock(1439_000).minuteOfDay).toBe(1439);
   });
 });
 
@@ -118,13 +116,14 @@ describe("mô tả đơn", () => {
 });
 
 describe("lượng khách theo giờ (trùng public._traffic_mult)", () => {
-  it("trưa & tối là cao điểm, chiều vắng, đêm đóng cửa", async () => {
-    const { trafficLevel } = await import("@/lib/game/clock");
+  it("trưa & tối là cao điểm, chiều và đêm khuya vắng (không đóng cửa)", async () => {
+    const { trafficLevel, trafficMult } = await import("@/lib/game/clock");
     expect(trafficLevel(12 * 60)).toBe("rush");
     expect(trafficLevel(19 * 60)).toBe("rush");
     expect(trafficLevel(14 * 60)).toBe("quiet");
     expect(trafficLevel(8 * 60)).toBe("normal");
-    expect(trafficLevel(3 * 60)).toBe("closed");
+    expect(trafficLevel(3 * 60)).toBe("quiet");
+    for (let m = 0; m < 1440; m++) expect(trafficMult(m)).toBeGreaterThan(0);
   });
 
   it("báo giờ cao điểm kế tiếp", async () => {
@@ -132,6 +131,7 @@ describe("lượng khách theo giờ (trùng public._traffic_mult)", () => {
     expect(nextRush(9 * 60)).toEqual({ start: 660, end: 780, inSeconds: 120 });
     expect(nextRush(14 * 60)?.start).toBe(1080);
     expect(nextRush(23 * 60)?.start).toBe(660);
+    expect(nextRush(3 * 60)).toEqual({ start: 660, end: 780, inSeconds: 480 });
     expect(nextRush(12 * 60)).toBeNull();
   });
 });

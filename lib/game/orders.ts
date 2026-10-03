@@ -54,7 +54,7 @@ export type Visit = {
 export type TickResult = {
   server_now: string;
   clock: { minute_of_day: number; hour: number; minute: number; open: boolean };
-  traffic: "closed" | "rush" | "normal" | "quiet";
+  traffic: "rush" | "normal" | "quiet";
   /** Chủ tiệm đang mở cửa (false = tự đóng, không sinh khách). */
   shop_open: boolean;
   left: number;

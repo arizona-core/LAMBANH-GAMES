@@ -55,14 +55,14 @@ select throws_ok($$ select public.buy_ingredient('00000000-0000-0000-0000-000000
 
 -- ---------------------------------------------------------------- đồng hồ game (1 giây thật = 1 phút game)
 select is(public._game_clock(to_timestamp(420)) ->> 'hour', '7', '420 giây sau nửa đêm UTC = 7:00 game');
-select ok(public._game_open(to_timestamp(420)), '7:00 game mở cửa');
-select ok(not public._game_open(to_timestamp(419)), '6:59 game còn đóng');
-select ok(not public._game_open(to_timestamp(1440)), '0:00 game (ngày mới) đóng cửa');
+select ok(public._game_open(to_timestamp(180)), '3:00 game vẫn mở cửa (mở cả ngày lẫn đêm)');
+select ok((public._game_clock(to_timestamp(1440)) ->> 'open')::boolean, '0:00 game (ngày mới) vẫn mở cửa');
+select ok((select min(public._traffic_mult(m)) from generate_series(0, 1439) m) > 0, 'giờ nào cũng có khách ghé');
 
 -- ---------------------------------------------------------------- đông / vắng theo giờ
 select is(public._traffic_level(12 * 60), 'rush', '12:00 trưa là giờ cao điểm');
 select is(public._traffic_level(14 * 60), 'quiet', '14:00 chiều vắng khách');
-select is(public._traffic_level(3 * 60), 'closed', '3:00 sáng đóng cửa');
+select is(public._traffic_level(3 * 60), 'quiet', '3:00 sáng: đêm khuya vắng khách');
 -- Mô phỏng 1 giờ game (60 giây thật) ở giờ cao điểm và giờ vắng: cao điểm nhiều khách hơn.
 create temp table t_traffic as
   select sum(public._traffic_mult(12 * 60 + m)) as rush, sum(public._traffic_mult(14 * 60 + m)) as quiet
@@ -77,9 +77,11 @@ select ok((select count(*) from public.customers where impatient) > 0
       and (select count(*) from public.customers where dine_and_dash) > 0
       and (select count(*) from public.customers where picky) > 0, 'có đủ khách hay hối / hay quịt / khó khăn');
 
--- ---------------------------------------------------------------- sinh khách (chỉ giờ mở cửa)
-select is((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20000 + 60)) ->> 'generated')::int,
-  0, 'giờ đóng cửa (0:01) không có khách');
+-- ---------------------------------------------------------------- sinh khách (mở cả ngày lẫn đêm)
+-- 3:00 sáng của 20 đêm liên tiếp: xác suất cả 20 lần đều không có khách ≈ 1e-9.
+select ok((select sum((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * d + 180)) ->> 'generated')::int)
+           from generate_series(19980, 19999) d) > 0,
+  'đêm khuya (3:00) tiệm vẫn mở, vẫn có khách ghé');
 update public.profiles set visits_until = null where id = '00000000-0000-0000-0000-00000000000a';
 select setseed(0.42);  -- sinh khách ngẫu nhiên → cố định seed để test không chập chờn
 select ok((public._customer_tick_at('00000000-0000-0000-0000-00000000000a', to_timestamp(1440 * 20000 + 600)) ->> 'generated')::int > 0,
