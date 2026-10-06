@@ -32,6 +32,8 @@ const MESSAGES: Record<string, string> = {
   ORDER_IN_PROGRESS: "Bạn đang làm dở một đơn khác, giao xong đã nhé.",
   QUEST_CLAIMED: "Bạn đã nhận thưởng nhiệm vụ này rồi.",
   QUEST_NOT_DONE: "Nhiệm vụ chưa hoàn thành.",
+  ALREADY_CLEAN: "Tiệm đang sạch bong rồi!",
+  ALREADY_OPENED: "Bao lì xì này đã mở rồi.",
 };
 
 export function errorMessage(code: string): string {

@@ -71,6 +71,17 @@
   border: 2px solid #c9b6ee;
 }
 
+.lixi {
+  background: linear-gradient(120deg, #fde2e0, #fff 70%);
+  border: 2px solid #f3b3ab;
+  box-shadow: none;
+}
+
+.opsDirty {
+  border: 2px solid #f3b3ab;
+  background: #fff6f5;
+}
+
 .patience {
   flex: 1;
   height: 10px;

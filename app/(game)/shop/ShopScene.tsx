@@ -5,21 +5,35 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomerAvatar, TraitChips } from "@/components/CustomerAvatar";
+import { HygieneMeter } from "@/components/HygieneMeter";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { LuckyEnvelope } from "@/components/LuckyEnvelope";
 import { Stars } from "@/components/Stars";
-import { IconCalendar, IconCheck, IconClock } from "@/components/icons";
+import { IconBroom, IconCalendar, IconCheck, IconClock, IconReceipt } from "@/components/icons";
+import { useAction } from "@/components/useAction";
 import { callAction } from "@/lib/api/actions";
 import { LATEST_UPDATE, UPDATES_SEEN_KEY, formatUpdateDate } from "@/lib/game/changelog";
 import { formatGameTime, formatMinute, gameClock, nextRush, trafficLevel } from "@/lib/game/clock";
 import { errorMessage } from "@/lib/game/errors";
 import { formatNumber } from "@/lib/game/format";
+import {
+  HYGIENE_FINE,
+  HYGIENE_RISK,
+  INSPECTOR_STAY_MS,
+  inspectionRevealed,
+  type BillsSummary,
+  type Inspection,
+} from "@/lib/game/operations";
 import { orderText, type Visit } from "@/lib/game/orders";
 import { useToast } from "@/lib/store/toast";
 import type { SceneCustomer } from "@/game/scenes/IsoShopScene";
+import { InspectionModal } from "./InspectionModal";
 import { ShopIso } from "./ShopIso";
 import styles from "./shop.module.css";
 
 const TUTORIAL_KEY = "sweetshop.tutorial.v2";
+/** localStorage: biên bản thanh tra cuối cùng người chơi đã xem (để không hiện lại). */
+const INSPECTION_SEEN_KEY = "sweetshop.inspection.seen";
 const TICK_MS = 15_000;
 
 export function ShopScene({
@@ -32,6 +46,8 @@ export function ShopScene({
   reviewSummary,
   onlineCount,
   shopOpen: initialShopOpen,
+  hygiene: initialHygiene,
+  envelopesUnopened,
 }: {
   revenueToday: number;
   canClaimDaily: boolean;
@@ -42,6 +58,8 @@ export function ShopScene({
   reviewSummary: { avg: number; total: number };
   onlineCount: number;
   shopOpen: boolean;
+  hygiene: number;
+  envelopesUnopened: number;
 }) {
   const router = useRouter();
   const push = useToast((s) => s.push);
@@ -54,6 +72,14 @@ export function ShopScene({
   const [shopOpen, setShopOpen] = useState(initialShopOpen);
   const [hasNewUpdate, setHasNewUpdate] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [hygiene, setHygiene] = useState(initialHygiene);
+  const [bills, setBills] = useState<BillsSummary | null>(null);
+  const [envelopes, setEnvelopes] = useState(envelopesUnopened);
+  const [inspection, setInspection] = useState<Inspection | null>(null);
+  const [seenInspection, setSeenInspection] = useState<string | null>(null);
+  // Đóng modal lúc đoàn đang kiểm tra → ẩn tạm, tới lúc công bố kết quả thì hiện lại.
+  const [hiddenInspection, setHiddenInspection] = useState<string | null>(null);
+  const clean = useAction("clean-shop");
   const errorShown = useRef(false);
 
   const tick = useCallback(async () => {
@@ -70,6 +96,19 @@ export function ShopScene({
     setSeated(res.data.seated ?? []);
     setShopOpen(res.data.shop_open);
     setLoaded(true);
+    // Server cũ (đang deploy dở) chưa trả `ops` → bỏ qua phần vận hành.
+    const ops = res.data.ops as typeof res.data.ops | undefined;
+    if (ops) {
+      setHygiene(ops.hygiene);
+      setBills(ops.bills);
+      setEnvelopes(ops.envelopes_unopened);
+      setInspection(ops.inspection);
+      if (ops.envelopes_new > 0) push(`Bạn nhận được ${ops.envelopes_new} bao lì xì! Vào mục Lì xì để mở`, "success");
+      if (ops.autopaid > 0) {
+        push(`Hóa đơn quá hạn: đã tự trừ ${formatNumber(ops.autopaid)} ₵ (kèm phí trễ hạn)`, "error");
+        router.refresh();
+      }
+    }
     if (res.data.closed_offline > 0) {
       push(`Bạn vừa offline nên tiệm tạm đóng — ${res.data.closed_offline} khách đã về, không bị trừ uy tín`);
     }
@@ -125,6 +164,7 @@ export function ShopScene({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowTip(welcome || !localStorage.getItem(TUTORIAL_KEY));
       setHasNewUpdate(localStorage.getItem(UPDATES_SEEN_KEY) !== LATEST_UPDATE);
+      setSeenInspection(localStorage.getItem(INSPECTION_SEEN_KEY));
     } catch {
       setShowTip(welcome);
     }
@@ -134,6 +174,23 @@ export function ShopScene({
     setShowTip(false);
     try {
       localStorage.setItem(TUTORIAL_KEY, "1");
+    } catch {}
+  }
+
+  async function cleanShop() {
+    const res = await clean.run({}, { success: (d) => `Tiệm sạch bong! Tốn ${d.water} m³ nước`, refresh: false });
+    if (res) setHygiene(res.hygiene);
+  }
+
+  function closeInspection() {
+    if (!inspection) return;
+    if (!inspectionRevealed(inspection, Date.now() + offset)) {
+      setHiddenInspection(inspection.id);
+      return;
+    }
+    setSeenInspection(inspection.id);
+    try {
+      localStorage.setItem(INSPECTION_SEEN_KEY, inspection.id);
     } catch {}
   }
 
@@ -149,9 +206,20 @@ export function ShopScene({
   const cooking = present.find((v) => v.status === "cooking");
   const queue = present.filter((v) => v.status === "waiting");
   const sitting = seated.filter((v) => new Date(v.served_at).getTime() + 40_000 > serverNow);
+  // Cán bộ thanh tra đứng trong tiệm ~35 giây kể từ lúc tới.
+  const inspectorHere =
+    inspection && serverNow < new Date(inspection.created_at).getTime() + INSPECTOR_STAY_MS ? inspection : null;
+  const showInspection =
+    inspection &&
+    inspection.id !== seenInspection &&
+    !(hiddenInspection === inspection.id && !inspectionRevealed(inspection, serverNow));
 
   // Danh sách khách cho cảnh isometric — chỉ đổi khi có người tới/đi/đổi trạng thái.
-  const sceneKey = [...present.map((v) => v.id + v.status), ...sitting.map((v) => v.id + "s")].join("|");
+  const sceneKey = [
+    ...present.map((v) => v.id + v.status),
+    ...sitting.map((v) => v.id + "s"),
+    inspectorHere ? `i${inspectorHere.id}` : "",
+  ].join("|");
   const sceneCustomers = useMemo<SceneCustomer[]>(
     () => [
       ...present.map((v) => ({
@@ -172,6 +240,25 @@ export function ShopScene({
         impatient: v.customer.impatient,
         order: new Date(v.served_at).getTime(),
       })),
+      ...(inspectorHere
+        ? [
+            {
+              id: `insp-${inspectorHere.id}`,
+              status: "inspector" as const,
+              image: null,
+              name: "Thanh tra",
+              look: 0,
+              impatient: false,
+              order: new Date(inspectorHere.created_at).getTime(),
+              leave:
+                inspectorHere.result === "pass"
+                  ? { text: "Đạt chuẩn!", color: "#3E7A4A" }
+                  : inspectorHere.result === "fined"
+                    ? { text: "Lập biên bản!", color: "#B3261E" }
+                    : { text: "Nhắc nhở!", color: "#7A5514" },
+            },
+          ]
+        : []),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [sceneKey],
@@ -225,6 +312,39 @@ export function ShopScene({
         </div>
       )}
 
+      <section className={`card stack ${hygiene < HYGIENE_FINE ? styles.opsDirty : ""}`} style={{ gap: 10 }} aria-label="Vận hành tiệm">
+        <div className="row" style={{ gap: 8 }}>
+          <IconBroom size={20} color="var(--primary)" />
+          <strong>Vệ sinh</strong>
+          <HygieneMeter value={hygiene} />
+          <strong style={{ minWidth: 40, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{hygiene}%</strong>
+          <button type="button" className="btn btn--soft btn--sm" onClick={cleanShop} disabled={clean.busy || hygiene >= 100}>
+            Dọn dẹp
+          </button>
+        </div>
+        {hygiene < HYGIENE_RISK && (
+          <p className="small" style={{ margin: 0, fontWeight: 800, color: "var(--danger)" }}>
+            {hygiene < HYGIENE_FINE
+              ? "Tiệm bẩn! Thanh tra tới sẽ phạt, khách dễ bị ngộ độc — dọn ngay nhé."
+              : "Tiệm bắt đầu bẩn — khách dễ bị ngộ độc hơn."}
+          </p>
+        )}
+        <Link href="/bills" className="row" style={{ gap: 8 }}>
+          <IconReceipt size={20} color="var(--primary)" />
+          <strong>Hóa đơn &amp; thuế</strong>
+          <span className="small muted" style={{ fontWeight: 700 }}>
+            {!bills ? "…" : bills.count > 0 ? `${bills.count} cần đóng · ${formatNumber(bills.owed)} ₵` : "Đã đóng đủ"}
+          </span>
+          {bills && bills.overdue > 0 && (
+            <span className="badge" style={{ background: "var(--danger)", color: "#fff" }}>
+              {bills.overdue} quá hạn
+            </span>
+          )}
+          <span className="spacer" />
+          <span className="btn btn--white btn--sm">Xem</span>
+        </Link>
+      </section>
+
       <InstallAppButton variant="banner" />
 
       {canClaimDaily && (
@@ -235,6 +355,21 @@ export function ShopScene({
           <span className="btn btn--gem btn--sm">Nhận</span>
         </Link>
       )}
+
+      <Link href="/lixi" className={`card row ${styles.lixi}`} style={{ gap: 10 }}>
+        <LuckyEnvelope size={24} />
+        <strong>Lì xì</strong>
+        <span className="small muted" style={{ fontWeight: 700 }}>
+          {envelopes > 0 ? `${envelopes} bao chưa mở` : "Online, giao đơn, bán hàng… để nhận bao"}
+        </span>
+        <span className="spacer" />
+        {envelopes > 0 && (
+          <span className="badge" style={{ background: "var(--strawberry-strong)", color: "#fff" }}>
+            {envelopes}
+          </span>
+        )}
+        <span className="btn btn--soft btn--sm">{envelopes > 0 ? "Mở" : "Xem"}</span>
+      </Link>
 
       <section aria-label="Cửa tiệm" className={styles.isoWrap}>
         <ShopIso config={{ theme, decor, chefImage, hour: clock.hour }} customers={sceneCustomers} />
@@ -345,6 +480,10 @@ export function ShopScene({
       <Link href="/kitchen" className="btn btn--primary btn--block btn--lg">
         Vào bếp · công thức &amp; nguyên liệu
       </Link>
+
+      {showInspection && inspection && (
+        <InspectionModal inspection={inspection} serverNow={serverNow} onClose={closeInspection} />
+      )}
     </>
   );
 }
@@ -376,6 +515,7 @@ function QueueCard({ visit, serverNow, busy }: { visit: Visit; serverNow: number
             dineAndDash={c.dine_and_dash}
             picky={c.picky}
             minQuality={c.min_quality}
+            sensitive={c.sensitive}
           />
           <p className="small" style={{ margin: "4px 0 0", fontWeight: 800 }}>
             Gọi: {orderText(visit)}

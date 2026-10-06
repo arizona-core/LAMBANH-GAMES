@@ -23,6 +23,8 @@ giữa người chơi thật. Không có thanh toán bằng tiền thật: xu v�
 | Bảng xếp hạng | `/leaderboard` | Xếp theo doanh thu hoặc số sao, podium top 3, hạng của bạn. |
 | Cửa hàng | `/store` | Nâng cấp lò/tủ trưng bày; trang trí: bàn ghế (thêm chỗ ngồi → đông khách), đồ treo tường/sàn/trần, 4 theme đổi kiểu tiệm. |
 | Điểm danh | `/daily` | Chuỗi 7 ngày, thưởng xu và gem. |
+| Lì xì | `/lixi` | 9 mốc/ngày (online, giao đơn, bán ở chợ, nhiệm vụ, đóng hóa đơn, thanh tra đạt) → bao lì xì; mở bao trúng ngẫu nhiên tới 888 ₵ hoặc lời chúc. |
+| Chi phí & thuế | `/bills` | Tiền nhà, điện, nước, thuế 5%, tiền phạt; vệ sinh tiệm + dọn dẹp; biên bản thanh tra (an toàn thực phẩm, thuế). |
 | Cài đặt | `/settings` | Đổi tên quán (20 gem), tùy chọn âm thanh, đăng xuất. |
 
 Nguyên tắc bảo mật "client hiển thị, server quyết định":
@@ -72,7 +74,7 @@ Chưa cấu hình Google thì dùng khung **"Đăng nhập dev"** ở màn đăn
 
 ```bash
 npm run lint && npm run typecheck && npm run test   # ESLint, TypeScript, Vitest
-npm run test:db                                      # pgTAP: kinh tế, khách, đơn, đánh giá, RLS (64 test)
+npm run test:db                                      # pgTAP: kinh tế, khách, đơn, đánh giá, vận hành tiệm, RLS (197 test)
 node scripts/smoke-functions.mjs                     # gọi thật các Edge Function (cần giờ game mở cửa để test đơn)
 npm run build
 ```

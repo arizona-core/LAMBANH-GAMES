@@ -1,0 +1,79 @@
+.meter {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: #eee0c6;
+  overflow: hidden;
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  transition: width 0.4s ease;
+}
+
+.billRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px dashed var(--border);
+}
+
+.billRow:first-of-type {
+  border-top: none;
+}
+
+.billIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--placeholder-bg);
+  color: var(--ink-strong);
+}
+
+.billIcon_tax {
+  background: var(--gem-bg);
+  color: var(--gem-border);
+}
+
+.billIcon_fine {
+  background: #fde2e0;
+  color: var(--danger);
+}
+
+.overdue {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 2px solid var(--border);
+  font-weight: 800;
+}
+
+.rates {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.rates dt {
+  color: var(--ink-muted);
+}
+
+.rates dd {
+  margin: 0;
+  text-align: right;
+}

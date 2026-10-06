@@ -60,16 +60,19 @@ export function CustomerAvatar({
   );
 }
 
-export function TraitChips({ impatient, dineAndDash, picky, minQuality }: {
+export function TraitChips({ impatient, dineAndDash, picky, minQuality, sensitive = false }: {
   impatient: boolean;
   dineAndDash: boolean;
   picky: boolean;
   minQuality: number;
+  /** Bụng yếu: làm sai là dễ ngộ độc. */
+  sensitive?: boolean;
 }) {
   const chips: [string, string, string][] = [];
   if (impatient) chips.push(["Hay hối", "#fbe3e0", "#9b2a1f"]);
   if (dineAndDash) chips.push(["Hay quịt", "#f3e6ce", "#6e3810"]);
   if (picky) chips.push([`Khó tính · ≥${minQuality}★`, "#efe3fb", "#4d3d9e"]);
+  if (sensitive) chips.push(["Bụng yếu", "#e3f0dc", "#2f6a3b"]);
   if (chips.length === 0) return null;
   return (
     <span className="row" style={{ gap: 4, flexWrap: "wrap" }}>

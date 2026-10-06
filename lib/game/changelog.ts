@@ -9,6 +9,19 @@ export type ChangelogEntry = {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    date: "2026-10-06",
+    title: "Lì xì, hóa đơn, thuế & thanh tra",
+    items: [
+      "Lì xì: mỗi ngày nhận tới 9 bao khi online 10/30/60 phút, giao 10/30 đơn, bán hàng ở Chợ, nhận thưởng 5 nhiệm vụ, tự đóng hóa đơn hoặc được thanh tra chấm “Đạt”. Mở bao trúng ngẫu nhiên tới 888 ₵ (đôi khi kèm gem) — hoặc chỉ là một lời chúc may mắn!",
+      "Tiền nhà, điện, nước: tính theo ngày có bán hàng (không chơi thì không mất tiền nhà). Điện theo cách nấu, nước theo số đơn và lần dọn dẹp. Chốt sổ lúc 0:00, hạn đóng hết ngày hôm sau; quá hạn bị cộng 20% và tự trừ vào xu.",
+      "Thuế kinh doanh 5% doanh thu. Không đóng thì không bị tự trừ — nhưng thanh tra phát hiện nợ thuế quá hạn sẽ truy thu và phạt gấp đôi.",
+      "Vệ sinh tiệm: mỗi đơn làm tiệm bẩn đi một chút. Bấm “Dọn dẹp” ở màn Tiệm để sạch lại (tốn nước).",
+      "Thanh tra an toàn thực phẩm và cán bộ thuế ghé tiệm bất chợt khi đang mở cửa: tiệm sạch, không có khách ngộ độc thì được +uy tín; bẩn hoặc có khách ngộ độc thì bị lập biên bản phạt.",
+      "Khách ngộ độc: nấu sai cách, bánh sống/cháy, bỏ nguyên liệu lạ hay bếp bẩn có thể làm khách đau bụng — khách không trả tiền, tiệm bồi thường, mất uy tín và hay bị báo thanh tra. Cẩn thận với khách “Bụng yếu”!",
+      "Màn mới “Chi phí & thuế” xem hóa đơn, bảng giá và biên bản thanh tra.",
+    ],
+  },
+  {
     date: "2026-10-03",
     title: "Tiệm bớt đông & mở cả ngày lẫn đêm",
     items: [

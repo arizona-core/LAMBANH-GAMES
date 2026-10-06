@@ -19,6 +19,7 @@ export default async function OrderPage({ params }: PageProps<"/order/[visitId]"
       <OrderFlow
         visitId={visitId}
         level={profile.level}
+        hygiene={profile.hygiene}
         ingredients={ingredients.map((i) => ({
           code: i.code,
           name: i.name,

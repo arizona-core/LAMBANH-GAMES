@@ -488,3 +488,18 @@ verify_jwt = false
 
 [functions.claim-quest]
 verify_jwt = false
+
+[functions.get-bills]
+verify_jwt = false
+
+[functions.pay-bills]
+verify_jwt = false
+
+[functions.clean-shop]
+verify_jwt = false
+
+[functions.lucky-envelopes]
+verify_jwt = false
+
+[functions.open-envelope]
+verify_jwt = false

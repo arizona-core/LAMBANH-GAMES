@@ -52,6 +52,9 @@ export const QUEUE = [
 ];
 /** Khách đang được làm bánh đứng đầu quầy, cạnh máy tính tiền. */
 export const COOKING_SPOT = { tx: 7.1, ty: 1.0 };
+/** Cán bộ thanh tra: ghé xem lò (INSPECT_OVEN) rồi đứng ghi biên bản giữa tiệm (INSPECTOR_SPOT). */
+export const INSPECT_OVEN = { tx: 7.6, ty: 1.9 };
+export const INSPECTOR_SPOT = { tx: 6.0, ty: 2.7 };
 
 /** Vị trí bàn: bàn cơ bản luôn có; bàn mua thêm lần lượt vào các vị trí sau. */
 export const TABLE_SPOTS = [

@@ -12,6 +12,8 @@ import {
   FLOOR_SPOTS,
   GRID_H,
   GRID_W,
+  INSPECT_OVEN,
+  INSPECTOR_SPOT,
   OVEN_SPOT,
   QUEUE,
   TABLE_SPOTS,
@@ -24,13 +26,16 @@ import {
 
 export type SceneCustomer = {
   id: string;
-  status: "waiting" | "cooking" | "seated";
+  /** "inspector" = cán bộ thanh tra (không phải khách). */
+  status: "waiting" | "cooking" | "seated" | "inspector";
   image: string | null;
   name: string;
   look: number;
   impatient: boolean;
   /** Thứ tự sắp xếp: arrive_at (hàng chờ) hoặc served_at (ghế). */
   order: number;
+  /** Bong bóng khi ra về (thanh tra: kết quả kiểm tra). */
+  leave?: { text: string; color: string };
 };
 
 export type IsoShopConfig = {
@@ -48,13 +53,19 @@ type Actor = {
   ring: Phaser.GameObjects.Arc;
   status: SceneCustomer["status"];
   target: string;
+  leave?: SceneCustomer["leave"];
 };
 
 const AVATAR_R = 14; // bán kính avatar khách (px)
 const HEAD_Y = -26; // tâm avatar so với chân
 const BG = [0xffe0c4, 0xf6d2da, 0xd9ead3, 0xd6e4f5];
-/** Viền avatar theo trạng thái: chờ = vàng, đang làm = cam, đang ăn = xanh. */
-const RING: Record<SceneCustomer["status"], number> = { waiting: 0xe7b23c, cooking: 0xd98a3d, seated: 0x6fa678 };
+/** Viền avatar theo trạng thái: chờ = vàng, đang làm = cam, đang ăn = xanh, thanh tra = xanh đậm. */
+const RING: Record<SceneCustomer["status"], number> = {
+  waiting: 0xe7b23c,
+  cooking: 0xd98a3d,
+  seated: 0x6fa678,
+  inspector: 0x1f3357,
+};
 const WALL_H = 78;
 const WALL_T = 0.16; // độ dày tường (ô), lộ ra ở mặt cắt đầu tường + mặt trên
 const SLAB = 10; // độ dày khối nền dưới sàn (px)
@@ -1019,7 +1030,12 @@ export class IsoShopScene extends Phaser.Scene {
 
     const headKey = c.image ? this.headKey(c.image) : null;
     const round = headKey && this.textures.exists(headKey) ? this.roundKey(c.image!) : null;
-    if (round) {
+    if (c.status === "inspector") {
+      // Thanh tra: mũ xanh đậm có phù hiệu sao vàng + bìa kẹp hồ sơ.
+      box.add(this.add.circle(0, HEAD_Y, AVATAR_R, 0x34507f));
+      box.add(this.add.star(0, HEAD_Y, 5, 4, 9, 0xffd54f));
+      box.add(this.add.rectangle(11, HEAD_Y + 18, 9, 12, 0xf6e7cc).setStrokeStyle(1.5, 0x7a3e12));
+    } else if (round) {
       box.add(this.add.image(0, HEAD_Y, round).setDisplaySize(AVATAR_R * 2, AVATAR_R * 2));
     } else {
       box.add(this.add.circle(0, HEAD_Y, AVATAR_R, BG[c.look % 4]));
@@ -1029,7 +1045,7 @@ export class IsoShopScene extends Phaser.Scene {
           .setOrigin(0.5),
       );
     }
-    const short = c.name.split(" ").pop() ?? c.name;
+    const short = c.status === "inspector" ? c.name : (c.name.split(" ").pop() ?? c.name);
     box.add(
       this.add
         .text(0, HEAD_Y + AVATAR_R + 9, short, {
@@ -1043,7 +1059,7 @@ export class IsoShopScene extends Phaser.Scene {
         .setOrigin(0.5),
     );
     box.setDepth(p.y);
-    const actor: Actor = { box, ring, status: c.status, target: `${at.tx},${at.ty}` };
+    const actor: Actor = { box, ring, status: c.status, target: `${at.tx},${at.ty}`, leave: c.leave };
     this.actors.set(c.id, actor);
     return actor;
   }
@@ -1102,13 +1118,15 @@ export class IsoShopScene extends Phaser.Scene {
     const targets = new Map<string, Pt>();
     waiting.forEach((c, i) => targets.set(c.id, QUEUE[Math.min(i, QUEUE.length - 1)]));
     list.filter((c) => c.status === "cooking").forEach((c) => targets.set(c.id, COOKING_SPOT));
+    list.filter((c) => c.status === "inspector").forEach((c) => targets.set(c.id, INSPECTOR_SPOT));
     seated.forEach((c, i) => targets.set(c.id, this.seats[i % this.seats.length]));
 
     // Khách rời đi
     for (const [id, actor] of this.actors) {
       if (targets.has(id)) continue;
       this.actors.delete(id);
-      if (actor.status !== "seated") this.bubble(actor, "Chờ lâu quá!", "#B3261E");
+      if (actor.leave) this.bubble(actor, actor.leave.text, actor.leave.color);
+      else if (actor.status !== "seated") this.bubble(actor, "Chờ lâu quá!", "#B3261E");
       else this.bubble(actor, "Ngon!", "#3E7A4A");
       this.walk(actor, [DOOR_INSIDE, DOOR], () => actor.box.destroy());
     }
@@ -1121,10 +1139,17 @@ export class IsoShopScene extends Phaser.Scene {
       if (!actor) {
         const startAtSpot = this.firstSync;
         actor = this.makeActor(c, startAtSpot ? to : c.status === "seated" ? COOKING_SPOT : DOOR);
-        if (!startAtSpot) this.walk(actor, c.status === "seated" ? [to] : [DOOR_INSIDE, to]);
+        if (c.status === "inspector" && !startAtSpot) {
+          // Thanh tra vào thẳng chỗ lò xem xét rồi mới đứng ghi biên bản.
+          this.bubble(actor, "Thanh tra đây!", "#1F3357");
+          this.walk(actor, [DOOR_INSIDE, INSPECT_OVEN, to]);
+        } else if (!startAtSpot) {
+          this.walk(actor, c.status === "seated" ? [to] : [DOOR_INSIDE, to]);
+        }
       } else if (actor.target !== key) {
         this.walk(actor, [to]);
       }
+      actor.leave = c.leave;
       if (c.status === "seated" && actor.status !== "seated") this.bubble(actor, "Cảm ơn!", "#3E7A4A");
       if (actor.status !== c.status) actor.ring.setFillStyle(RING[c.status]);
       actor.status = c.status;

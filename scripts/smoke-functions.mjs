@@ -94,7 +94,32 @@ if (!r.data?.clock?.open) {
     await sleep(((r.ok ? 0 : 12) + 1) * 1000);
     r = await call(a, "complete-order", body);
     expect("complete-order làm đúng → ≥4 sao", r.ok && r.data.quality >= 4, r);
+    expect("làm đúng, bếp sạch → không ngộ độc", r.ok && r.data.poisoned === false && r.data.hygiene < 100, r);
   }
+}
+
+// Vận hành tiệm: hóa đơn, vệ sinh, lì xì.
+r = await call(a, "customer-tick", {});
+expect("customer-tick trả phần vận hành", r.ok && typeof r.data.ops?.hygiene === "number" && r.data.ops.bills, r);
+r = await call(a, "get-bills", {});
+expect("get-bills", r.ok && Array.isArray(r.data.due) && Array.isArray(r.data.today) && r.data.rates.tax_pct === 5, r);
+r = await call(a, "clean-shop", {});
+expect("clean-shop (hoặc tiệm đã sạch)", r.ok ? r.data.hygiene === 100 : r.error === "ALREADY_CLEAN", r);
+r = await call(a, "clean-shop", {});
+expect("clean-shop lần 2 → đã sạch", !r.ok && r.error === "ALREADY_CLEAN", r);
+r = await call(a, "pay-bills", {});
+expect("pay-bills: chưa có hóa đơn đến hạn", !r.ok && r.error === "NOT_FOUND", r);
+r = await call(a, "pay-bills", { billIds: ["khong-phai-uuid"] });
+expect("pay-bills chặn id sai", !r.ok && r.error === "INVALID_INPUT", r);
+r = await call(a, "pay-bills", { billIds: [], amount: 1 });
+expect("pay-bills chặn field lạ / danh sách rỗng", !r.ok && r.error === "INVALID_INPUT", r);
+r = await call(a, "lucky-envelopes", {});
+expect("lucky-envelopes trả 9 mốc", r.ok && r.data.milestones.length === 9, r);
+r = await call(a, "open-envelope", { envelopeId: "00000000-0000-0000-0000-000000000000" });
+expect("open-envelope bao không tồn tại", !r.ok && r.error === "NOT_FOUND", r);
+{
+  const { error } = await a.from("lucky_envelopes").insert({ user_id: "00000000-0000-0000-0000-000000000000", day: "2026-01-01", source: "online_10" });
+  expect("client không tự tạo bao lì xì", !!error, error);
 }
 
 // Nhiệm vụ hằng ngày.

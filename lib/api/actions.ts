@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "@/lib/supabase/env";
 import type { Avatar, AvatarKind, ShopColor } from "@/lib/game/constants";
+import type { BillsData, EnvelopeReward, EnvelopeState } from "@/lib/game/operations";
 import type { AcceptResult, CookMethod, OrderResult, Packaging, TickResult } from "@/lib/game/orders";
 import type { DailyQuests } from "@/lib/game/quests";
 
@@ -49,6 +50,12 @@ type Actions = {
   };
   "buy-listing": { input: { listingId: string }; output: { paid: number; fee: number; coins: number } };
   "cancel-listing": { input: { listingId: string }; output: { listing_id: string } };
+  "get-bills": { input: Record<string, never>; output: BillsData };
+  /** billIds bỏ trống = đóng tất cả hóa đơn đang chờ. */
+  "pay-bills": { input: { billIds?: string[] }; output: { paid: number; count: number; coins: number } };
+  "clean-shop": { input: Record<string, never>; output: { hygiene: number; water: number } };
+  "lucky-envelopes": { input: Record<string, never>; output: EnvelopeState };
+  "open-envelope": { input: { envelopeId: string }; output: EnvelopeReward };
 };
 
 export type ActionName = keyof Actions;

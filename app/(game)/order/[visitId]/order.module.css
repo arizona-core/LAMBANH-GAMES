@@ -54,6 +54,19 @@
   color: var(--ink-strong);
 }
 
+/* Cảnh báo nguy cơ ngộ độc (bếp bẩn / khách bụng yếu). */
+.risk {
+  margin: 0;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #fde2e0;
+  border: 2px solid #f3b3ab;
+  color: #9b2a1f;
+  font-weight: 800;
+}
+
 .pick,
 .choice {
   appearance: none;

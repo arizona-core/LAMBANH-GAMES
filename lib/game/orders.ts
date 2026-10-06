@@ -1,4 +1,5 @@
 // Kiểu dữ liệu đơn khách (khớp public._visit_json) + nhãn hiển thị.
+import type { OpsTick } from "./operations";
 
 export type CookMethod = "bake" | "fry" | "steam" | "chill";
 export type Packaging = "box" | "bag";
@@ -31,6 +32,8 @@ export type VisitCustomer = {
   dine_and_dash: boolean;
   picky: boolean;
   min_quality: number;
+  /** Bụng yếu: dễ bị ngộ độc gấp đôi. */
+  sensitive: boolean;
   look: number;
   /** Ảnh chân dung (người dùng gửi sau); null → dùng avatar vẽ bằng SVG. */
   image: string | null;
@@ -66,15 +69,22 @@ export type TickResult = {
   seats: number;
   /** Khách vừa ăn xong đang ngồi ghế (served trong ~40 giây). */
   seated: (Visit & { served_at: string })[];
+  /** Vận hành: vệ sinh, hóa đơn, thanh tra, lì xì. */
+  ops: OpsTick;
 };
 
 export type AcceptResult = Visit & { session_id: string; min_play_seconds: number; oven_bonus: number };
 
 export type OrderResult = {
   dashed: boolean;
+  /** Khách bị ngộ độc thực phẩm: không trả tiền, tiệm bồi thường `compensation`. */
+  poisoned: boolean;
+  compensation?: number;
   paid?: number;
   lost?: number;
   tip?: number;
+  /** Mức vệ sinh sau đơn này. */
+  hygiene: number;
   quality: number;
   score: number;
   reputation_delta?: number;

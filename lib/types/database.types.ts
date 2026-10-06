@@ -9,10 +9,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      graphql: {
-        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json };
-        Returns: Json;
-      };
+      graphql: { Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;
@@ -239,6 +236,7 @@ export type Database = {
           patience_seconds: number;
           personality: string;
           picky: boolean;
+          sensitive: boolean;
           spend: number;
         };
         Insert: {
@@ -259,6 +257,7 @@ export type Database = {
           patience_seconds: number;
           personality: string;
           picky?: boolean;
+          sensitive?: boolean;
           spend?: number;
         };
         Update: {
@@ -279,6 +278,7 @@ export type Database = {
           patience_seconds?: number;
           personality?: string;
           picky?: boolean;
+          sensitive?: boolean;
           spend?: number;
         };
         Relationships: [
@@ -358,6 +358,33 @@ export type Database = {
           },
         ];
       };
+      envelope_catalog: {
+        Row: {
+          code: string;
+          description: string;
+          metric: string;
+          sort: number;
+          target: number;
+          title: string;
+        };
+        Insert: {
+          code: string;
+          description: string;
+          metric: string;
+          sort?: number;
+          target: number;
+          title: string;
+        };
+        Update: {
+          code?: string;
+          description?: string;
+          metric?: string;
+          sort?: number;
+          target?: number;
+          title?: string;
+        };
+        Relationships: [];
+      };
       ingredients: {
         Row: {
           category: string | null;
@@ -390,6 +417,70 @@ export type Database = {
           sort?: number;
         };
         Relationships: [];
+      };
+      inspections: {
+        Row: {
+          created_at: string;
+          findings: NonNullable<Json>;
+          fine: number;
+          hygiene: number | null;
+          id: string;
+          inspector: string;
+          kind: string;
+          reputation_delta: number;
+          result: string;
+          reveal_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          findings?: NonNullable<Json>;
+          fine?: number;
+          hygiene?: number | null;
+          id?: string;
+          inspector: string;
+          kind: string;
+          reputation_delta?: number;
+          result: string;
+          reveal_at: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          findings?: NonNullable<Json>;
+          fine?: number;
+          hygiene?: number | null;
+          id?: string;
+          inspector?: string;
+          kind?: string;
+          reputation_delta?: number;
+          result?: string;
+          reveal_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "inspections_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "leaderboard";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inspections_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inspections_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "public_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       inventory: {
         Row: {
@@ -431,6 +522,71 @@ export type Database = {
           },
           {
             foreignKeyName: "inventory_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "public_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lucky_envelopes: {
+        Row: {
+          coins: number | null;
+          created_at: string;
+          day: string;
+          gems: number | null;
+          id: string;
+          opened_at: string | null;
+          source: string;
+          user_id: string;
+          wish: string | null;
+        };
+        Insert: {
+          coins?: number | null;
+          created_at?: string;
+          day: string;
+          gems?: number | null;
+          id?: string;
+          opened_at?: string | null;
+          source: string;
+          user_id: string;
+          wish?: string | null;
+        };
+        Update: {
+          coins?: number | null;
+          created_at?: string;
+          day?: string;
+          gems?: number | null;
+          id?: string;
+          opened_at?: string | null;
+          source?: string;
+          user_id?: string;
+          wish?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lucky_envelopes_source_fkey";
+            columns: ["source"];
+            isOneToOne: false;
+            referencedRelation: "envelope_catalog";
+            referencedColumns: ["code"];
+          },
+          {
+            foreignKeyName: "lucky_envelopes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "leaderboard";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lucky_envelopes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lucky_envelopes_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "public_profiles";
@@ -537,10 +693,13 @@ export type Database = {
           color: string;
           created_at: string;
           gems: number;
+          hygiene: number;
           id: string;
           last_checkin: string | null;
           last_seen_at: string | null;
           level: number;
+          online_day: string | null;
+          online_seconds: number;
           owner_name: string;
           reputation: number;
           revenue_day: string | null;
@@ -565,10 +724,13 @@ export type Database = {
           color: string;
           created_at?: string;
           gems?: number;
+          hygiene?: number;
           id: string;
           last_checkin?: string | null;
           last_seen_at?: string | null;
           level?: number;
+          online_day?: string | null;
+          online_seconds?: number;
           owner_name: string;
           reputation?: number;
           revenue_day?: string | null;
@@ -592,10 +754,13 @@ export type Database = {
           color?: string;
           created_at?: string;
           gems?: number;
+          hygiene?: number;
           id?: string;
           last_checkin?: string | null;
           last_seen_at?: string | null;
           level?: number;
+          online_day?: string | null;
+          online_seconds?: number;
           owner_name?: string;
           reputation?: number;
           revenue_day?: string | null;
@@ -805,6 +970,92 @@ export type Database = {
             columns: ["visit_id"];
             isOneToOne: true;
             referencedRelation: "customer_visits";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      shop_bills: {
+        Row: {
+          amount: number;
+          autopaid: boolean;
+          base: number;
+          created_at: string;
+          day: string;
+          due_at: string | null;
+          id: string;
+          inspection_id: string | null;
+          kind: string;
+          late_fee: number;
+          note: string | null;
+          paid: number;
+          paid_at: string | null;
+          status: string;
+          units: number;
+          user_id: string;
+        };
+        Insert: {
+          amount?: number;
+          autopaid?: boolean;
+          base?: number;
+          created_at?: string;
+          day: string;
+          due_at?: string | null;
+          id?: string;
+          inspection_id?: string | null;
+          kind: string;
+          late_fee?: number;
+          note?: string | null;
+          paid?: number;
+          paid_at?: string | null;
+          status?: string;
+          units?: number;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          autopaid?: boolean;
+          base?: number;
+          created_at?: string;
+          day?: string;
+          due_at?: string | null;
+          id?: string;
+          inspection_id?: string | null;
+          kind?: string;
+          late_fee?: number;
+          note?: string | null;
+          paid?: number;
+          paid_at?: string | null;
+          status?: string;
+          units?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_bills_inspection_id_fkey";
+            columns: ["inspection_id"];
+            isOneToOne: false;
+            referencedRelation: "inspections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_bills_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "leaderboard";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_bills_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_bills_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "public_profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -1051,59 +1302,30 @@ export type Database = {
           shop_name: string | null;
           slug: string | null;
         };
-        Insert: {
-          active_theme?: string | null;
-          avatar?: string | null;
-          avatar_url?: string | null;
-          bio?: string | null;
-          color?: string | null;
-          created_at?: string | null;
-          id?: string | null;
-          last_seen_at?: string | null;
-          level?: number | null;
-          owner_name?: string | null;
-          reputation?: number | null;
-          revenue_total?: number | null;
-          review_avg?: never;
-          review_count?: never;
-          shop_name?: never;
-          slug?: string | null;
-        };
-        Update: {
-          active_theme?: string | null;
-          avatar?: string | null;
-          avatar_url?: string | null;
-          bio?: string | null;
-          color?: string | null;
-          created_at?: string | null;
-          id?: string | null;
-          last_seen_at?: string | null;
-          level?: number | null;
-          owner_name?: string | null;
-          reputation?: number | null;
-          revenue_total?: number | null;
-          review_avg?: never;
-          review_count?: never;
-          shop_name?: never;
-          slug?: string | null;
-        };
         Relationships: [];
       };
     };
     Functions: {
-      _add_inventory: {
-        Args: { p_code: string; p_qty: number; p_user: string };
+      _accrue_bills: {
+        Args: { p_level: number; p_method: string; p_revenue: number; p_user: string };
         Returns: undefined;
       };
+      _add_inventory: { Args: { p_code: string; p_qty: number; p_user: string }; Returns: undefined };
+      _bill_json: { Args: { b: Database["public"]["Tables"]["shop_bills"]["Row"]; p_now: string }; Returns: Json };
+      _bills_summary: { Args: { p_now: string; p_user: string }; Returns: Json };
+      _clean_water: { Args: { p_hygiene: number }; Returns: number };
       _customer_tick_at: { Args: { p_now: string; p_user: string }; Returns: Json };
-      _ensure_daily_quests: {
-        Args: { p_day: string; p_level: number; p_user: string };
-        Returns: undefined;
-      };
+      _electric_units: { Args: { p_method: string }; Returns: number };
+      _ensure_daily_quests: { Args: { p_day: string; p_level: number; p_user: string }; Returns: undefined };
+      _envelope_progress: { Args: { p_day: string; p_user: string }; Returns: Json };
+      _envelope_reward: { Args: { p_pick: number; p_roll: number }; Returns: Json };
       _fail: { Args: { p_code: string }; Returns: undefined };
+      _fmt_coins: { Args: { p_n: number }; Returns: string };
       _game_clock: { Args: { p_at: string }; Returns: Json };
       _game_minute: { Args: { p_at: string }; Returns: number };
       _game_open: { Args: { p_at: string }; Returns: boolean };
+      _grant_envelopes: { Args: { p_user: string }; Returns: number };
+      _inspection_json: { Args: { p_id: string }; Returns: Json };
       _is_bad_name: { Args: { p_text: string }; Returns: boolean };
       _level_for_xp: { Args: { p_xp: number }; Returns: number };
       _lock_profile: {
@@ -1118,15 +1340,19 @@ export type Database = {
           color: string;
           created_at: string;
           gems: number;
+          hygiene: number;
           id: string;
           last_checkin: string | null;
           last_seen_at: string | null;
           level: number;
+          online_day: string | null;
+          online_seconds: number;
           owner_name: string;
           reputation: number;
           revenue_day: string | null;
           revenue_today: number;
           revenue_total: number;
+          review_counts: number[];
           shop_name: string;
           shop_open: boolean;
           slug: string;
@@ -1142,35 +1368,33 @@ export type Database = {
         };
       };
       _log: {
-        Args: {
-          p_coins: number;
-          p_gems: number;
-          p_kind: string;
-          p_meta: Json;
-          p_ref: string;
-          p_user: string;
-        };
+        Args: { p_coins: number; p_gems: number; p_kind: string; p_meta: Json; p_ref: string; p_user: string };
         Returns: undefined;
       };
-      _market_eligible: {
-        Args: { p: Database["public"]["Tables"]["profiles"]["Row"] };
-        Returns: boolean;
-      };
+      _market_eligible: { Args: { p: Database["public"]["Tables"]["profiles"]["Row"] }; Returns: boolean };
+      _maybe_inspect: { Args: { p_now: string; p_user: string }; Returns: string };
+      _ops_rates: { Args: { p_level: number; p_seats: number }; Returns: Json };
+      _ops_tick: { Args: { p_now: string; p_user: string }; Returns: Json };
       _pick: { Args: { p_options: string[] }; Returns: string };
-      _quality_pct: { Args: { p_quality: number }; Returns: number };
-      _quest_progress: {
+      _poison_chance: {
         Args: {
-          p_day: string;
-          p_user: string;
-          q: Database["public"]["Tables"]["quest_catalog"]["Row"];
+          p_cook_score: number;
+          p_extra: number;
+          p_hygiene: number;
+          p_quality: number;
+          p_sensitive: boolean;
+          p_wrong_method: boolean;
         };
         Returns: number;
       };
-      _quests_json: { Args: { p_day: string; p_user: string }; Returns: Json };
-      _rate_limit: {
-        Args: { p_kind: string; p_max: number; p_user: string; p_window: string };
-        Returns: undefined;
+      _quality_pct: { Args: { p_quality: number }; Returns: number };
+      _quest_progress: {
+        Args: { p_day: string; p_user: string; q: Database["public"]["Tables"]["quest_catalog"]["Row"] };
+        Returns: number;
       };
+      _quests_json: { Args: { p_day: string; p_user: string }; Returns: Json };
+      _rate_limit: { Args: { p_kind: string; p_max: number; p_user: string; p_window: string }; Returns: undefined };
+      _rent_for: { Args: { p_level: number; p_seats: number }; Returns: number };
       _review_comment: {
         Args: {
           c: Database["public"]["Tables"]["customers"]["Row"];
@@ -1180,18 +1404,23 @@ export type Database = {
         };
         Returns: string;
       };
+      _run_inspection: { Args: { p_kind: string; p_now: string; p_user: string }; Returns: string };
       _seat_count: { Args: { p_user: string }; Returns: number };
+      _settle_bills: { Args: { p_now: string; p_user: string }; Returns: number };
       _slugify: { Args: { p_text: string }; Returns: string };
       _take_item: {
         Args: { p_code: string; p_kind: string; p_qty: number; p_quality: number; p_user: string };
         Returns: undefined;
       };
       _today: { Args: Record<PropertyKey, never>; Returns: string };
+      _touch_online: { Args: { p_now: string; p_user: string }; Returns: string };
       _traffic_level: { Args: { p_minute_of_day: number }; Returns: string };
       _traffic_mult: { Args: { p_minute_of_day: number }; Returns: number };
       _upgrade_bonus: { Args: { p_kind: string; p_user: string }; Returns: number };
       _validate_names: { Args: { p_owner_name: string; p_shop_name: string }; Returns: undefined };
       _visit_json: { Args: { p_visit: string }; Returns: Json };
+      _vn_day: { Args: { p_at: string }; Returns: string };
+      _water_units: { Args: { p_method: string }; Returns: number };
       accept_order: { Args: { p_user: string; p_visit: string }; Returns: Json };
       buy_ingredient: { Args: { p_code: string; p_qty: number; p_user: string }; Returns: Json };
       buy_listing: { Args: { p_listing: string; p_user: string }; Returns: Json };
@@ -1199,6 +1428,7 @@ export type Database = {
       cancel_listing: { Args: { p_listing: string; p_user: string }; Returns: Json };
       claim_daily: { Args: { p_user: string }; Returns: Json };
       claim_quest: { Args: { p_code: string; p_user: string }; Returns: Json };
+      clean_shop: { Args: { p_user: string }; Returns: Json };
       complete_order: {
         Args: {
           p_ingredients: string[];
@@ -1213,30 +1443,21 @@ export type Database = {
         Returns: Json;
       };
       create_listing: {
-        Args: {
-          p_item: string;
-          p_kind: string;
-          p_price: number;
-          p_qty: number;
-          p_quality: number;
-          p_user: string;
-        };
+        Args: { p_item: string; p_kind: string; p_price: number; p_qty: number; p_quality: number; p_user: string };
         Returns: Json;
       };
       create_profile: {
-        Args: {
-          p_avatar: string;
-          p_color: string;
-          p_owner_name: string;
-          p_shop_name: string;
-          p_user: string;
-        };
+        Args: { p_avatar: string; p_color: string; p_owner_name: string; p_shop_name: string; p_user: string };
         Returns: Json;
       };
       customer_tick: { Args: { p_user: string }; Returns: Json };
+      get_bills: { Args: { p_user: string }; Returns: Json };
       get_daily_quests: { Args: { p_user: string }; Returns: Json };
+      get_envelopes: { Args: { p_user: string }; Returns: Json };
       heartbeat: { Args: { p_user: string }; Returns: Json };
       market_fee: { Args: { p_price: number }; Returns: number };
+      open_envelope: { Args: { p_envelope: string; p_user: string }; Returns: Json };
+      pay_bills: { Args: { p_ids: string[]; p_user: string }; Returns: Json };
       rename_shop: { Args: { p_shop_name: string; p_user: string }; Returns: Json };
       reply_review: { Args: { p_reply: string; p_review: string; p_user: string }; Returns: Json };
       set_avatar_photo: { Args: { p_url: string; p_user: string }; Returns: Json };
@@ -1264,8 +1485,7 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof (DefaultSchema["Tables"] & DefaultSchema["Views"]) | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -1288,9 +1508,7 @@ export type Tables<
     : never;
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -1311,9 +1529,7 @@ export type TablesInsert<
     : never;
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -1334,9 +1550,7 @@ export type TablesUpdate<
     : never;
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -1350,8 +1564,7 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }

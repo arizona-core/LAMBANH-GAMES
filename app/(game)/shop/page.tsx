@@ -12,10 +12,11 @@ export const metadata: Metadata = { title: "Tiệm" };
 
 export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   const { supabase, profile } = await requirePlayer();
-  const [params, { data: owned }, online] = await Promise.all([
+  const [params, { data: owned }, online, { count: envelopes }] = await Promise.all([
     searchParams,
     supabase.from("upgrades").select("upgrade_code"),
     countOnline(supabase),
+    supabase.from("lucky_envelopes").select("id", { count: "exact", head: true }).is("opened_at", null),
   ]);
   const decor = (owned ?? []).map((u) => u.upgrade_code);
   const today = todayVN();
@@ -34,6 +35,8 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
           onlineCount={Math.max(1, online)}
           reviewSummary={reviewSummary(profile.review_counts)}
           shopOpen={profile.shop_open}
+          hygiene={profile.hygiene}
+          envelopesUnopened={envelopes ?? 0}
         />
       </div>
       <BottomNav />

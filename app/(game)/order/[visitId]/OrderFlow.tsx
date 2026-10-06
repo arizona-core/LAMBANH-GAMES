@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CustomerAvatar, TraitChips } from "@/components/CustomerAvatar";
-import { CoinIcon, IconBack, IconCheck } from "@/components/icons";
+import { CoinIcon, IconAlert, IconBack, IconCheck } from "@/components/icons";
 import { ItemImage } from "@/components/ItemImage";
 import { Modal } from "@/components/Modal";
 import { Stars } from "@/components/Stars";
@@ -22,6 +22,7 @@ import {
   mixColor,
 } from "@/lib/game/cooking";
 import { formatNumber } from "@/lib/game/format";
+import { HYGIENE_FINE, HYGIENE_RISK } from "@/lib/game/operations";
 import {
   COOK_METHODS,
   orderText,
@@ -79,11 +80,14 @@ function phaseUi(phase: BakePhase, method: CookMethod) {
 export function OrderFlow({
   visitId,
   level,
+  hygiene,
   ingredients,
   recipes,
 }: {
   visitId: string;
   level: number;
+  /** Vệ sinh tiệm lúc mở đơn (bếp bẩn → khách dễ ngộ độc). */
+  hygiene: number;
   ingredients: Item[];
   recipes: RecipeInfo[];
 }) {
@@ -255,13 +259,25 @@ export function OrderFlow({
       </header>
 
       <section className={`card row ${styles.customer}`} aria-label="Khách hàng">
-        <CustomerAvatar look={c.look} gender={c.gender} image={c.image} size={52} mood={result ? (result.dashed ? "normal" : "happy") : secondsLeft < 20 ? "angry" : "normal"} />
+        <CustomerAvatar
+          look={c.look}
+          gender={c.gender}
+          image={c.image}
+          size={52}
+          mood={result ? (result.poisoned ? "angry" : result.dashed ? "normal" : "happy") : secondsLeft < 20 ? "angry" : "normal"}
+        />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
             <strong>{c.name}</strong>
             <span className="badge">{c.personality}</span>
           </div>
-          <TraitChips impatient={c.impatient} dineAndDash={c.dine_and_dash} picky={c.picky} minQuality={c.min_quality} />
+          <TraitChips
+            impatient={c.impatient}
+            dineAndDash={c.dine_and_dash}
+            picky={c.picky}
+            minQuality={c.min_quality}
+            sensitive={c.sensitive}
+          />
           <p className="small" style={{ margin: "4px 0 0", fontWeight: 800 }}>
             Gọi: {orderText(order)}
           </p>
@@ -272,6 +288,17 @@ export function OrderFlow({
           </span>
         )}
       </section>
+
+      {!result && (hygiene < HYGIENE_RISK || c.sensitive) && (
+        <p className={`row small ${styles.risk}`} role="note">
+          <IconAlert size={16} />
+          <span>
+            {hygiene < HYGIENE_RISK
+              ? `Bếp đang bẩn (vệ sinh ${hygiene}%) — khách dễ bị ngộ độc${hygiene < HYGIENE_FINE ? ", thanh tra tới sẽ phạt" : ""}. Dọn dẹp ở màn Tiệm.`
+              : "Khách bụng yếu — nấu sai cách hay bánh sống/cháy là dễ bị ngộ độc."}
+          </span>
+        </p>
+      )}
 
       {!result && (
         <ol className={styles.steps} aria-label="Các bước">
@@ -493,7 +520,23 @@ function ResultCard({ result, dish }: { result: OrderResult; dish: Dish }) {
         {[dish.name, dish.sauce?.name, dish.topping?.name, dish.packaging].filter(Boolean).join(" · ")}
       </p>
       <Stars value={result.quality} size={30} />
-      {result.dashed ? (
+      {result.poisoned ? (
+        <>
+          <h2 style={{ fontSize: 22, color: "var(--danger)" }}>Khách bị ngộ độc thực phẩm!</h2>
+          <p className="muted" style={{ margin: 0, fontWeight: 700 }}>
+            {result.customer} đau bụng ngay sau khi ăn. Khách không trả tiền, tiệm phải bồi thường viện phí — và khách có thể báo
+            thanh tra!
+          </p>
+          <p className="row" style={{ margin: 0, fontWeight: 800, fontSize: 18, color: "var(--danger)" }}>
+            <CoinIcon /> −{formatNumber(result.compensation ?? 0)}
+          </p>
+          {result.reputation_delta !== undefined && (
+            <p className="small" style={{ margin: 0, fontWeight: 800, color: "var(--danger)" }}>
+              Uy tín {result.reputation_delta}
+            </p>
+          )}
+        </>
+      ) : result.dashed ? (
         <>
           <h2 style={{ fontSize: 22, color: "var(--danger)" }}>Khách quịt tiền!</h2>
           <p className="muted" style={{ margin: 0, fontWeight: 700 }}>
@@ -528,6 +571,11 @@ function ResultCard({ result, dish }: { result: OrderResult; dish: Dish }) {
       {result.tired && (
         <p className="small muted" style={{ margin: 0, fontWeight: 700 }}>
           Đầu bếp đã làm rất nhiều đơn hôm nay — bánh tối đa 3★ cho tới khi nghỉ ngơi.
+        </p>
+      )}
+      {result.hygiene < HYGIENE_RISK && (
+        <p className="small" style={{ margin: 0, fontWeight: 800, color: "var(--danger)" }}>
+          Vệ sinh tiệm còn {result.hygiene}% — nhớ dọn dẹp để tránh khách ngộ độc và bị thanh tra phạt.
         </p>
       )}
       <Link href="/shop" className="btn btn--primary btn--block btn--lg">

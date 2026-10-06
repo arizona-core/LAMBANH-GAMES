@@ -1,0 +1,143 @@
+.bag {
+  background: linear-gradient(160deg, #fde2e0, #fbefdd 70%);
+  border: 2px solid #f3b3ab;
+  box-shadow: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.envelope {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 4px 0 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--ink-strong);
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.envelope:hover:not(:disabled) {
+  transform: translateY(-3px) rotate(-2deg);
+}
+
+.envelope:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* ---------- Mở bao ---------- */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.shake {
+  animation: shake 0.45s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-7deg) scale(1.03);
+  }
+  75% {
+    transform: rotate(7deg) scale(1.03);
+  }
+}
+
+.pop {
+  animation: pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4) translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.amount {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1;
+  color: #b3261e;
+}
+
+.wish {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--ink-strong);
+  margin: 0;
+}
+
+.sparkles {
+  position: relative;
+}
+
+.sparkles::before,
+.sparkles::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--coin);
+  box-shadow:
+    40px -20px 0 -2px var(--coin),
+    -46px -10px 0 -1px var(--coin),
+    60px 30px 0 -3px var(--strawberry),
+    -60px 40px 0 -2px var(--strawberry);
+  animation: twinkle 1.2s ease-in-out infinite;
+}
+
+.sparkles::before {
+  top: 0;
+  left: 20%;
+}
+
+.sparkles::after {
+  bottom: 10px;
+  right: 15%;
+  animation-delay: 0.4s;
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: 0.2;
+    transform: scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shake,
+  .pop,
+  .sparkles::before,
+  .sparkles::after {
+    animation: none;
+  }
+}

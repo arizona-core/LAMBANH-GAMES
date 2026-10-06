@@ -101,6 +101,44 @@ export const IconCheck = (p: P) => (
     <path d="m5 12 5 5L20 7" />
   </Svg>
 );
+/** Hóa đơn (tờ giấy răng cưa). */
+export const IconReceipt = (p: P) => (
+  <Svg {...p}>
+    <path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z" />
+    <path d="M9 8h6M9 12h6M9 16h3" />
+  </Svg>
+);
+/** Dọn dẹp (chổi + lấp lánh). */
+export const IconBroom = (p: P) => (
+  <Svg {...p}>
+    <path d="m14 4 6 6" />
+    <path d="M17 7 9.5 14.5" />
+    <path d="M9.5 14.5 4 20h5l3-3-2.5-2.5z" />
+    <path d="M5 4v3M3.5 5.5h3" />
+  </Svg>
+);
+/** Thanh tra (khiên có dấu tích). */
+export const IconShield = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z" />
+    <path d="m9 12 2 2 4-4" />
+  </Svg>
+);
+/** Phong bì lì xì. */
+export const IconEnvelope = (p: P) => (
+  <Svg {...p}>
+    <rect x="5" y="3" width="14" height="18" rx="2" />
+    <path d="m5 7 7 5 7-5" />
+    <circle cx="12" cy="15" r="2" />
+  </Svg>
+);
+/** Cảnh báo (tam giác chấm than). */
+export const IconAlert = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 4 2.5 20h19z" />
+    <path d="M12 10v4M12 17h.01" />
+  </Svg>
+);
 
 export function GemIcon({ size = 16 }: { size?: number }) {
   return (

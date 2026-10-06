@@ -114,6 +114,26 @@ nhiệm vụ. Không bán sức mạnh trực tiếp ảnh hưởng cạnh tranh
 - **Trang trí:** bàn ghế (mỗi chỗ ngồi +3 lượt khách/ngày, tối đa 90), đồ treo tường/sàn/trần
   (+uy tín), 4 theme đổi kiểu tiệm. Cảnh tiệm 2.5D isometric vẽ bằng Phaser.
 
+### Vận hành tiệm (đã làm — migration 0018)
+
+- **Hóa đơn** (`shop_bills`) theo ngày thật giờ VN, chốt sổ 0:00, hạn hết ngày hôm sau; quá hạn +20% phí trễ.
+  - Tiền nhà: chỉ ngày có bán hàng, 50 + 10 × cấp + 10 × mỗi chỗ ngồi thêm.
+  - Điện 2 ₵/kWh theo cách nấu (nướng 2, chiên 1, hấp 1, làm lạnh 2); nước 1 ₵/m³ (1/đơn, hấp 2, dọn dẹp 2 + thiếu/5).
+  - Thuế 5% tiền khách trả. Tiền nhà/điện/nước/phạt quá hạn bị **tự trừ** (tối đa số xu đang có, phần còn lại
+    trừ dần); **thuế không tự trừ** — thanh tra phát hiện nợ thuế quá hạn thì truy thu + phạt 100%.
+- **Vệ sinh** (`profiles.hygiene`): mỗi đơn −2% (chiên −3%), dọn dẹp → 100% (tốn nước).
+- **Ngộ độc** (server tung trong `complete_order`): sai cách nấu +30%, điểm nấu < 30 +15%, mỗi nguyên liệu lạ +8%,
+  vệ sinh < 50% +8% (< 25% +20%); khách "bụng yếu" (~12%) ×2 và +5% nếu bánh ≤ 2★; tối đa 70%. Làm đúng + bếp
+  sạch = 0%. Ngộ độc: không trả tiền, bồi thường bằng giá món, −3 uy tín, đánh giá 1★.
+- **Thanh tra** (`inspections`): chỉ khi tiệm mở + chủ online + tiệm ≥ 6 giờ tuổi, tung ở mỗi `customer-tick`.
+  Thực phẩm ~1 lần/3,5 giờ chơi (vệ sinh < 40% → ~1/50 phút, mỗi khách ngộ độc gần đây +3%/nhịp); thuế ~1/5 giờ
+  (nợ thuế quá hạn → ~1/50 phút). Mỗi loại cách ≥ 40 phút, 2 lần bất kỳ cách ≥ 10 phút, tối đa 4/24 giờ.
+  Phạt vệ sinh < 40%: 50 + 15 × cấp (< 20%: gấp đôi); mỗi khách ngộ độc chưa xử lý: 100 + 20 × cấp. Đạt: +2 uy tín
+  (thuế +1); phạt: −3 (có ngộ độc −5). Tiền phạt là hóa đơn hạn 24 giờ.
+- **Lì xì** (`lucky_envelopes`): 9 mốc/ngày (online 10/30/60 phút, giao 10/30 đơn, bán ở chợ, 5 nhiệm vụ, tự đóng
+  hóa đơn, thanh tra đạt), tiến độ server tính từ dữ liệu thật. Mở bao: 30% chỉ lời chúc, còn lại 10–888 ₵
+  (3% kèm 2 gem), kỳ vọng ~77 ₵/bao. Thời gian online cộng dồn từ heartbeat/customer-tick (≤ 60 giây/lần).
+
 ### Quy tắc kinh tế đã chốt (MVP)
 
 - Tiền khởi đầu 500 ₵ + 10 gem + nguyên liệu cơ bản. Cấp = 1 + ⌊√(XP/30)⌋.

@@ -67,7 +67,7 @@ lib/
   store/                  # Zustand (toast)
   types/                  # database.types.ts (auto-gen) + alias trong index.ts
 supabase/
-  migrations/             # 0001 schema+RLS · 0002 hàm kinh tế · 0003 danh mục · 0004 gia cố · 0005 khách + đơn · 0006–0007 ảnh/avatar · 0008 đánh giá + trang trí · 0011 sổ công thức 72 món (docs/Bakery_Recipe_Database.docx)
+  migrations/             # 0001 schema+RLS · 0002 hàm kinh tế · 0003 danh mục · 0004 gia cố · 0005 khách + đơn · 0006–0007 ảnh/avatar · 0008 đánh giá + trang trí · 0011 sổ công thức 72 món (docs/Bakery_Recipe_Database.docx) · 0018 vận hành tiệm (hóa đơn, thuế, vệ sinh, thanh tra, ngộ độc, lì xì)
   functions/              # _shared/action.ts + mỗi action 1 thư mục
   tests/database/         # pgTAP (npx supabase test db)
 tests/                    # Vitest cho lib/game
